@@ -1,0 +1,27 @@
+diff --git a/Makefile.in b/Makefile.in
+index b0c1fc6..c21da84 100755
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -35,7 +35,7 @@ COMMON_H = config.h ${srcdir}/slirp.h
+ 
+ BINDIR = @prefix@/bin
+ 
+-MANDIR = @prefix@/man/man1
++MANDIR = @prefix@/share/man/man1
+ 
+ MANEXT = 1
+ 
+@@ -45,11 +45,10 @@ slirp: $(PROTO) $(OBJ)
+ 	$(CC) @LDFLAGS@ -o slirp $(OBJ) $(LIBS)
+ 
+ install: slirp install.man
+-	strip slirp
+-	cp slirp $(BINDIR)
++	install -D slirp $(DESTDIR)$(BINDIR)/slirp
+ 
+ install.man:
+-	cp slirp.man $(MANDIR)/slirp.$(MANEXT)
++	install -D -m 644 slirp.man $(DESTDIR)$(MANDIR)/slirp.$(MANEXT)
+ 
+ objclean:
+ 	rm -f $(OBJ)

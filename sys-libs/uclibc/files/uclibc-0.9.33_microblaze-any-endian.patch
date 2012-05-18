@@ -1,0 +1,30 @@
+diff --git a/extra/Configs/Config.microblaze b/extra/Configs/Config.microblaze
+index 2dfd4a7..a97ddc3 100644
+--- a/extra/Configs/Config.microblaze
++++ b/extra/Configs/Config.microblaze
+@@ -6,3 +6,8 @@
+ config TARGET_ARCH
+ 	string
+ 	default "microblaze"
++
++config FORCE_OPTIONS_FOR_ARCH
++        bool
++        default y
++        select ARCH_ANY_ENDIAN
+diff --git a/libc/sysdeps/linux/microblaze/bits/endian.h b/libc/sysdeps/linux/microblaze/bits/endian.h
+index 56fcd5d..6945ba5 100644
+--- a/libc/sysdeps/linux/microblaze/bits/endian.h
++++ b/libc/sysdeps/linux/microblaze/bits/endian.h
+@@ -17,10 +17,9 @@
+ # error "Never use <bits/endian.h> directly; include <endian.h> instead."
+ #endif
+ 
+-/* Note: Toolchain supplies _BIG_ENDIAN or _LITTLE_ENDIAN */
+-#if defined(_BIG_ENDIAN)
++#if defined(__ARCH_BIG_ENDIAN__)
+ # define __BYTE_ORDER __BIG_ENDIAN
+-#elif defined(_LITTLE_ENDIAN)
++#elif defined(__ARCH_LITTLE_ENDIAN__)
+ # define __BYTE_ORDER __LITTLE_ENDIAN
+ #else
+ # error "Endianness is unknown"

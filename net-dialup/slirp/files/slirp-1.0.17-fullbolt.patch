@@ -1,0 +1,12 @@
+diff -Naurp slirp-1.0.17.old//config.h.in slirp-1.0.17/config.h.in
+--- slirp-1.0.17.old//config.h.in	2011-02-16 00:57:54.000000000 +0900
++++ slirp-1.0.17/config.h.in	2011-02-16 00:58:43.000000000 +0900
+@@ -30,7 +30,7 @@
+ /* pretty good job on single modems already, and seting this will make */
+ /* interactive sessions less responsive */
+ /* XXXXX Talk about having fast modem as unit 0 */
+-#undef FULL_BOLT
++#define FULL_BOLT
+ 
+ /*
+  * Define if you want slirp to use less CPU

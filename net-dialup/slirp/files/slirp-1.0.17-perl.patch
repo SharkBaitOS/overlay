@@ -1,0 +1,15 @@
+# this is a fix for use with perl-5.12, where split no longer 
+# affects @_ by default.
+
+diff -Naurp slirp-1.0.17.old/mkpro slirp-1.0.17/mkpro
+--- slirp-1.0.17.old/mkpro	2004-09-01 18:58:51.000000000 +0900
++++ slirp-1.0.17/mkpro	2011-02-15 22:09:37.000000000 +0900
+@@ -87,7 +87,7 @@ STATE0:
+ 		$1 =~ /([^\*]+)/;	# Remove "*"
+ 		$type = $1;
+ 		
+-		$n = split(/,/);
++		$n = @_ = split /,/;
+ 		$nargs += $n;
+ 		goto STATE0 if ($nargs > $nargs_guess);
+ 		

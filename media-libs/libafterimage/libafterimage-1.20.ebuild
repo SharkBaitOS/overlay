@@ -1,0 +1,85 @@
+# Copyright 1999-2011 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: /var/cvsroot/gentoo-x86/media-libs/libafterimage/libafterimage-1.20.ebuild,v 1.2 2011/03/28 18:07:53 bicatali Exp $
+
+EAPI=3
+inherit eutils autotools
+
+MY_PN=libAfterImage
+
+DESCRIPTION="Afterstep's standalone generic image manipulation library"
+HOMEPAGE="http://www.afterstep.org/afterimage/index.php"
+SRC_URI="ftp://ftp.afterstep.org/stable/${MY_PN}/${MY_PN}-${PV}.tar.bz2"
+
+LICENSE="LGPL-2.1"
+SLOT="0"
+KEYWORDS="~amd64-linux ~x86-linux"
+IUSE="gif jpeg mmx nls png svg tiff examples static-libs truetype"
+
+RDEPEND="x11-libs/libSM
+	x11-libs/libXext
+	x11-libs/libXrender
+	png?  ( >=media-libs/libpng-1.4 )
+	jpeg? ( virtual/jpeg )
+	gif?  ( media-libs/giflib )
+	svg? ( gnome-base/librsvg )
+	tiff? ( media-libs/tiff )
+	truetype? ( media-libs/freetype )"
+DEPEND="${RDEPEND}
+	dev-util/pkgconfig
+	x11-proto/xextproto
+	!x11-wm/afterstep"
+
+S="${WORKDIR}/${MY_PN}-${PV}"
+
+src_prepare() {
+	# fix some ldconfig problem in makefile.in
+	epatch "${FILESDIR}"/${PN}-makefile.in.patch
+	# fix lib paths in afterimage-config
+	epatch "${FILESDIR}"/${PN}-config.patch
+	# fix gif unbundle
+	epatch "${FILESDIR}"/${PN}-gif.patch
+	# remove forced flags
+	sed -i \
+		-e 's/CFLAGS="-O3"//' \
+		-e 's/ -rdynamic//' \
+		configure.in || die "sed failed"
+	eautoreconf
+}
+
+src_configure() {
+	econf \
+		$(use_enable static-libs staticlibs) \
+		$(use_enable nls i18n) \
+		$(use_enable mmx mmx-optimization) \
+		$(use_with png) \
+		$(use_with jpeg) \
+		$(use_with gif) \
+		$(use_with svg) \
+		$(use_with tiff) \
+		$(use_with truetype ttf) \
+		--enable-glx \
+		--enable-sharedlibs \
+		--with-x \
+		--with-xpm \
+		--without-builtin-gif \
+		--without-builtin-jpeg \
+		--without-builtin-png \
+		--without-builtin-zlib \
+		--without-afterbase
+}
+
+src_install() {
+	emake \
+		DESTDIR="${D}" \
+		AFTER_DOC_DIR="${D}/usr/share/doc/${PF}" \
+		install || die "emake install failed"
+	dodoc ChangeLog README || die
+	if use examples; then
+		cd apps || die
+		emake clean
+		rm -f Makefile*
+		insinto /usr/share/doc/${PF}/examples
+		doins * || die "install examples failed"
+	fi
+}

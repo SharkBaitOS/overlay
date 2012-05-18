@@ -1,0 +1,73 @@
+diff -u -d --minimal --ignore-all-space -r wondershaper-1.1a/wshaper wondershaper-1.1a_patched/wshaper
+--- wondershaper-1.1a/wshaper	2002-04-16 16:26:35.000000000 +0200
++++ wondershaper-1.1a_patched/wshaper	2003-05-09 11:58:51.000000000 +0200
+@@ -102,14 +102,24 @@
+ # some traffic however suffers a worse fate
+ for a in $NOPRIOPORTDST
+ do
++	PORT=${a%/*}
++	MASK=${a#*/}
++	if [ "${PORT}" = "${a}" ]; then
++		MASK='0xffff'
++	fi
+ 	tc filter add dev $DEV parent 1: protocol ip prio 14 u32 \
+-	   match ip dport $a 0xffff flowid 1:30
++	   match ip dport ${PORT} ${MASK} flowid 1:30
+ done
+ 
+ for a in $NOPRIOPORTSRC
+ do
++	PORT=${a%/*}
++	MASK=${a#*/}
++	if [ "${PORT}" = "${a}" ]; then
++		MASK='0xffff'
++	fi
+  	tc filter add dev $DEV parent 1: protocol ip prio 15 u32 \
+-	   match ip sport $a 0xffff flowid 1:30
++	   match ip sport ${PORT} ${MASK} flowid 1:30
+ done
+ 
+ for a in $NOPRIOHOSTSRC
+diff -u -d --minimal --ignore-all-space -r wondershaper-1.1a/wshaper.htb wondershaper-1.1a_patched/wshaper.htb
+--- wondershaper-1.1a/wshaper.htb	2002-04-16 16:26:51.000000000 +0200
++++ wondershaper-1.1a_patched/wshaper.htb	2003-05-09 11:59:07.000000000 +0200
+@@ -66,10 +66,10 @@
+ # and a lower priority:
+ 
+ tc class add dev $DEV parent 1:1 classid 1:20 htb rate $[9*$UPLINK/10]kbit \
+-   burst 6k prio 2
++   ceil ${UPLINK}kbit burst 6k prio 2
+ 
+ tc class add dev $DEV parent 1:1 classid 1:30 htb rate $[8*$UPLINK/10]kbit \
+-   burst 6k prio 2
++   ceil ${UPLINK}kbit burst 6k prio 2
+ 
+ # all get Stochastic Fairness:
+ tc qdisc add dev $DEV parent 1:10 handle 10: sfq perturb 10
+@@ -101,14 +101,24 @@
+ # some traffic however suffers a worse fate
+ for a in $NOPRIOPORTDST
+ do
++	PORT=${a%/*}
++	MASK=${a#*/}
++	if [ "${PORT}" = "${a}" ]; then
++		MASK='0xffff'
++	fi
+ 	tc filter add dev $DEV parent 1: protocol ip prio 14 u32 \
+-	   match ip dport $a 0xffff flowid 1:30
++	   match ip dport ${PORT} ${MASK} flowid 1:30
+ done
+ 
+ for a in $NOPRIOPORTSRC
+ do
++	PORT=${a%/*}
++	MASK=${a#*/}
++	if [ "${PORT}" = "${a}" ]; then
++		MASK='0xffff'
++	fi
+  	tc filter add dev $DEV parent 1: protocol ip prio 15 u32 \
+-	   match ip sport $a 0xffff flowid 1:30
++	   match ip sport ${PORT} ${MASK} flowid 1:30
+ done
+ 
+ for a in $NOPRIOHOSTSRC

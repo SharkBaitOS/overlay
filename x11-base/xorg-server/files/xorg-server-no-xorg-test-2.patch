@@ -1,0 +1,30 @@
+--- tmp/Makefile.in	2012-03-28 11:00:37.086315000 +0900
++++ test/Makefile.in	2012-03-28 11:10:24.000000000 +0900
+@@ -125,9 +125,9 @@ am__DEPENDENCIES_1 =
+ @ENABLE_UNIT_TESTS_TRUE@@XORG_TRUE@	$(top_builddir)/hw/xfree86/ddc/libddc.la \
+ @ENABLE_UNIT_TESTS_TRUE@@XORG_TRUE@	$(top_builddir)/hw/xfree86/i2c/libi2c.la \
+ @ENABLE_UNIT_TESTS_TRUE@@XORG_TRUE@	$(top_builddir)/hw/xfree86/dixmods/libxorgxkb.la
+-@ENABLE_UNIT_TESTS_TRUE@@XORG_FALSE@nodist_libxservertest_la_OBJECTS =  \
++@ENABLE_UNIT_TESTS_TRUE@@XORG_TRUE@nodist_libxservertest_la_OBJECTS =  \
+ @ENABLE_UNIT_TESTS_TRUE@@XORG_TRUE@	ddxstubs.lo miinitext.lo \
+-@ENABLE_UNIT_TESTS_TRUE@@XORG_FALSE@	dpmsstubs.lo stubs.lo
++@ENABLE_UNIT_TESTS_TRUE@@XORG_TRUE@	dpmsstubs.lo stubs.lo
+ @ENABLE_UNIT_TESTS_TRUE@@XORG_TRUE@nodist_libxservertest_la_OBJECTS =  \
+ @ENABLE_UNIT_TESTS_TRUE@@XORG_TRUE@	sdksyms.lo
+ libxservertest_la_OBJECTS = $(nodist_libxservertest_la_OBJECTS)
+@@ -597,11 +597,11 @@ top_srcdir = @top_srcdir@
+ @ENABLE_UNIT_TESTS_TRUE@	$(am__append_7) $(am__append_8) \
+ @ENABLE_UNIT_TESTS_TRUE@	$(am__append_9) $(am__append_10) \
+ @ENABLE_UNIT_TESTS_TRUE@	$(am__append_11) $(am__append_13)
+-@ENABLE_UNIT_TESTS_TRUE@@XORG_FALSE@nodist_libxservertest_la_SOURCES = \
++@ENABLE_UNIT_TESTS_TRUE@@XORG_TRUE@nodist_libxservertest_la_SOURCES = \
+ @ENABLE_UNIT_TESTS_TRUE@@XORG_TRUE@            ddxstubs.c \
+-@ENABLE_UNIT_TESTS_TRUE@@XORG_FALSE@            $(top_srcdir)/mi/miinitext.c \
+-@ENABLE_UNIT_TESTS_TRUE@@XORG_FALSE@            $(top_srcdir)/Xext/dpmsstubs.c \
+-@ENABLE_UNIT_TESTS_TRUE@@XORG_FALSE@            $(top_srcdir)/Xi/stubs.c
++@ENABLE_UNIT_TESTS_TRUE@@XORG_TRUE@            $(top_srcdir)/mi/miinitext.c \
++@ENABLE_UNIT_TESTS_TRUE@@XORG_TRUE@            $(top_srcdir)/Xext/dpmsstubs.c \
++@ENABLE_UNIT_TESTS_TRUE@@XORG_TRUE@            $(top_srcdir)/Xi/stubs.c
+ 
+ @ENABLE_UNIT_TESTS_TRUE@@XORG_TRUE@nodist_libxservertest_la_SOURCES = $(top_builddir)/hw/xfree86/sdksyms.c
+ @ENABLE_UNIT_TESTS_TRUE@libxservertest_la_DEPENDENCIES = $(libxservertest_la_LIBADD)

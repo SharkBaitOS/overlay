@@ -1,0 +1,26 @@
+#!/sbin/runscript
+
+# wraps wondershaper
+
+opts="${opts} showstatus"
+
+start() {
+	ebegin "Starting wondershaper"
+	real_shaper start
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping wondershaper"
+	real_shaper stop
+	eend $?
+}
+
+showstatus() {
+	ebegin "Status"
+	real_shaper status
+	eend $?
+}
+
+real_shaper() {
+

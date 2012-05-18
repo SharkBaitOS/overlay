@@ -1,0 +1,20 @@
+install in /usr/libexec always, instead of using /usr/lib/cups, as that makes more 
+sense when facing multilib support.
+--- config-scripts/cups-directories.m4	2011-05-12 14:21:56.000000000 +0900
++++ config-scripts/cups-directories.m4.new	2012-05-16 17:00:22.000000000 +0900
+@@ -403,14 +403,13 @@ case "$uname" in
+ 	*BSD* | Darwin*)
+ 		# *BSD and Darwin (MacOS X)
+ 		INSTALL_SYSV=""
+-		CUPS_SERVERBIN="$exec_prefix/libexec/cups"
+ 		;;
+ 	*)
+ 		# All others
+ 		INSTALL_SYSV="install-sysv"
+-		CUPS_SERVERBIN="$exec_prefix/lib/cups"
+ 		;;
+ esac
++CUPS_SERVERBIN="$exec_prefix/libexec/cups"
+ 
+ AC_DEFINE_UNQUOTED(CUPS_SERVERBIN, "$CUPS_SERVERBIN")
+ AC_SUBST(CUPS_SERVERBIN)
