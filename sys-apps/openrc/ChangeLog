@@ -1,43 +1,6 @@
 # ChangeLog for sys-apps/openrc
 # Copyright 1999-2012 Gentoo Foundation; Distributed under the GPL v2
-# $Header: /var/cvsroot/gentoo-x86/sys-apps/openrc/ChangeLog,v 1.225 2012/07/04 14:36:33 williamh Exp $
-
-*openrc-0.10.5 (04 Jul 2012)
-
-  04 Jul 2012; William Hubbs <williamh@gentoo.org> +openrc-0.10.5.ebuild:
-  version bump
-
-*openrc-0.10.4 (02 Jul 2012)
-
-  02 Jul 2012; William Hubbs <williamh@gentoo.org> +openrc-0.10.4.ebuild:
-  version bump
-
-*openrc-0.10.3 (11 Jun 2012)
-
-  11 Jun 2012; William Hubbs <williamh@gentoo.org> +openrc-0.10.3.ebuild:
-  version bump
-
-*openrc-0.10.2 (27 May 2012)
-
-  27 May 2012; William Hubbs <williamh@gentoo.org> +openrc-0.10.2.ebuild:
-  version bump to fix termencoding to not run on lxc.
-
-*openrc-0.10.1 (24 May 2012)
-
-  24 May 2012; William Hubbs <williamh@gentoo.org> +openrc-0.10.1.ebuild:
-  version bump to fix regression in bug #417227
-
-*openrc-0.10 (22 May 2012)
-
-  22 May 2012; William Hubbs <williamh@gentoo.org> +openrc-0.10.ebuild:
-  version bump, bug #405503 tracks changes
-
-  16 May 2012; William Hubbs <williamh@gentoo.org> openrc-9999.ebuild:
-  update live ebuild for migration to /run on linux systems.
-
-  26 Apr 2012; Alexis Ballier <aballier@gentoo.org> openrc-0.9.9.3.ebuild,
-  openrc-9999.ebuild:
-  keyword ~amd64-fbsd
+# $Header: /var/cvsroot/gentoo-x86/sys-apps/openrc/ChangeLog,v 1.217 2012/04/02 17:45:49 williamh Exp $
 
   02 Apr 2012; William Hubbs <williamh@gentoo.org> -openrc-0.8.3-r1.ebuild,
   -openrc-0.9.4.ebuild:
