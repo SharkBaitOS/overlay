@@ -429,6 +429,9 @@ pkg_postinst() {
 		chmod +x "${EROOT}"etc/local.d/*{start,stop}
 	fi
 
+	# in Prefix, invoke this command to prepare ${EPREFIX}/run dir
+	use prefix && "${EROOT}/sbin/rc sysinit"
+
 	# update the dependency tree after touching all files #224171
 	[[ "${ROOT}" = "/" ]] && "${EROOT}/${LIBDIR}"/rc/bin/rc-depend -u
 
