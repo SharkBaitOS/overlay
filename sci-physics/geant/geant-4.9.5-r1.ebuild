@@ -1,6 +1,6 @@
 # Copyright 1999-2012 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/sci-physics/geant/geant-4.9.5-r1.ebuild,v 1.1 2012/03/13 21:52:56 bicatali Exp $
+# $Header: /var/cvsroot/gentoo-x86/sci-physics/geant/geant-4.9.5-r1.ebuild,v 1.7 2012/05/20 16:46:58 heroxbd Exp $
 
 EAPI=4
 
@@ -17,7 +17,7 @@ SRC_URI="http://geant4.cern.ch/support/source/${MYP}.tar.gz"
 
 LICENSE="geant4"
 SLOT="4"
-KEYWORDS="~amd64-linux ~x86-linux"
+KEYWORDS="~amd64 ~x86 ~amd64-linux ~x86-linux"
 IUSE="+data dawn examples gdml geant3 granular motif opengl openinventor
 	raytracerx qt4 static-libs test vrml zlib"
 
@@ -38,13 +38,10 @@ S="${WORKDIR}/${MYP}"
 PATCHES=( "${FILESDIR}"/${PN}-4.9.4-zlib.patch \
 	"${FILESDIR}"/${PN}-4.9.5-scripts-only-dataenv.patch )
 
-src_prepare() {
-	sed "s,-lG4clhep,$(clhep-config --libs)," config/binmake.gmk || die "sed failed"
-}
-
 src_configure() {
 	mycmakeargs=(
 		-DGEANT4_USE_SYSTEM_CLHEP=ON
+		-DCMAKE_INSTALL_LIBDIR="${EPREFIX}"/usr/$(get_libdir)
 		$(use openinventor && echo "-DINVENTOR_SOXT_LIBRARY=${EROOT}usr/$(get_libdir)/libInventorXt.so")
 		$(cmake-utils_use data GEANT4_INSTALL_DATA)
 		$(cmake-utils_use dawn GEANT4_USE_NETWORKDAWN)
@@ -65,6 +62,10 @@ src_configure() {
 }
 
 src_install() {
+	# adjust clhep linking flags for system clhep
+	# binmake.gmk is only useful for legacy build systems
+	sed -i "s,-lG4clhep,-lCLHEP," config/binmake.gmk || die "sed failed"
+
 	cmake-utils_src_install
 	insinto /usr/share/doc/${PF}
 	local mypv="${PV1}.${PV2}.${PV3}"

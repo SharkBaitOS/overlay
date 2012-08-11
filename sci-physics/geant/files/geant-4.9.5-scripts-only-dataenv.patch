@@ -1,3 +1,4 @@
+tweak Geant4ToolchainBackwardCompatibility.cmake to get the envvars we want. bug 409853
 diff --git a/cmake/Modules/Geant4ToolchainBackwardCompatibility.cmake b/cmake/Modules/Geant4ToolchainBackwardCompatibility.cmake
 index 41a88c4..e93b923 100644
 --- a/cmake/Modules/Geant4ToolchainBackwardCompatibility.cmake

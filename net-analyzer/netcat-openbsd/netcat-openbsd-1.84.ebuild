@@ -6,7 +6,7 @@ inherit eutils toolchain-funcs rpm
 
 DESCRIPTION="the network swiss army knife openbsd porting"
 HOMEPAGE="http://www.openbsd.org/cgi-bin/cvsweb/src/usr.bin/nc/"
-SRC_URI="http://mirror.centos.org/centos/5/os/SRPMS/nc-1.84-10.fc6.src.rpm"
+SRC_URI="http://vault.centos.org/5.7/os/SRPMS/nc-1.84-10.fc6.src.rpm"
 LICENSE="as-is"
 SLOT="0"
 

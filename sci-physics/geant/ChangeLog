@@ -1,6 +1,39 @@
 # ChangeLog for sci-physics/geant
 # Copyright 1999-2012 Gentoo Foundation; Distributed under the GPL v2
-# $Header: /var/cvsroot/gentoo-x86/sci-physics/geant/ChangeLog,v 1.56 2012/03/13 21:52:56 bicatali Exp $
+# $Header: /var/cvsroot/gentoo-x86/sci-physics/geant/ChangeLog,v 1.64 2012/06/16 13:08:36 ago Exp $
+
+  16 Jun 2012; Agostino Sarubbo <ago@gentoo.org> geant-4.9.4_p03.ebuild:
+  Stable for amd64, wrt bug #420295
+
+  20 May 2012; Benda Xu <heroxbd@gentoo.org> geant-4.9.5-r1.ebuild,
+  geant-4.9.5_p01.ebuild:
+  I have massed up the keywords and Changelog with blind rsync with my overlay.
+  This is just a fix.
+
+  20 May 2012; Benda Xu <heroxbd@gentoo.org> +geant-4.9.5-r1.ebuild,
+  +files/geant-4.9.5_p01-scripts-only-dataenv.patch,
+  files/geant-4.9.5-scripts-only-dataenv.patch:
+  add back geant-4.9.5-r1.ebuild because geant-python cannot function correctly
+  with 4.9.5_p01, upstream http://bugzilla-geant4.kek.jp/show_bug.cgi?id=1317
+
+*geant-4.9.5_p01 (19 May 2012)
+ 
+  19 May 2012; Benda Xu <heroxbd@gentoo.org> +geant-4.9.5_p01.ebuild,
+  -geant-4.9.5-r1.ebuild, files/geant-4.9.4-zlib.patch,
+  files/geant-4.9.5-scripts-only-dataenv.patch:
+  version bump to 4.9.5_p01
+
+  19 May 2012; Benda Xu <heroxbd@gentoo.org> geant-4.9.5-r1.ebuild:
+  delete the wrong sed phrase.
+
+  18 May 2012; Benda Xu <heroxbd@gentoo.org>
+  +files/geant-4.9.5-scripts-only-dataenv.patch, geant-4.9.5-r1.ebuild:
+  keyword amd64-linux and x86-linux; handle data dir via envd; fix clhep linking
+
+  16 Mar 2012; Sébastien Fabbro <bicatali@gentoo.org> -geant-4.9.5.ebuild,
+  geant-4.9.5-r1.ebuild:
+  Fix for openinventor to use SGI OpenInventor in portage instead of SoXt, bug
+  #408187
 
 *geant-4.9.5-r1 (13 Mar 2012)
 

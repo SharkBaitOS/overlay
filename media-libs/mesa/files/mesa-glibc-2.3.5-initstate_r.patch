@@ -1,0 +1,25 @@
+# http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=323811
+--- src/glx/glxhash.c.old	2011-11-29 23:51:43.000000000 +0900
++++ src/glx/glxhash.c	2011-11-29 23:52:23.000000000 +0900
+@@ -88,21 +88,10 @@
+ 
+ #define HASH_ALLOC malloc
+ #define HASH_FREE  free
+-#ifndef __GLIBC__
+ #define HASH_RANDOM_DECL	char *ps, rs[256]
+ #define HASH_RANDOM_INIT(seed)	ps = initstate(seed, rs, sizeof(rs))
+ #define HASH_RANDOM		random()
+ #define HASH_RANDOM_DESTROY	setstate(ps)
+-#else
+-#define HASH_RANDOM_DECL	struct random_data rd; int32_t rv; char rs[256]
+-#define HASH_RANDOM_INIT(seed)					\
+-   do {								\
+-      (void) memset(&rd, 0, sizeof(rd));			\
+-      (void) initstate_r(seed, rs, sizeof(rs), &rd);		\
+-   } while(0)
+-#define HASH_RANDOM             ((void) random_r(&rd, &rv), rv)
+-#define HASH_RANDOM_DESTROY
+-#endif
+ 
+ typedef struct __glxHashBucket
+ {

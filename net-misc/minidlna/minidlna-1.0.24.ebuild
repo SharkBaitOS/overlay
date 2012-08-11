@@ -44,7 +44,7 @@ src_compile() {
 }
 
 src_install() {
-	emake DESTDIR="${D}" install install-conf
+	emake DESTDIR="${ED}" install install-conf
 
 	newconfd "${FILESDIR}"/${PN}-1.0.23.confd ${PN}
 	newinitd "${FILESDIR}"/${PN}-1.0.23-r1.initd ${PN}

@@ -1,0 +1,43 @@
+--- configure.old	2009-11-20 12:36:51.000000000 +0900
++++ configure	2012-07-14 10:18:19.000000000 +0900
+@@ -3,12 +3,6 @@
+ # ======================================================================
+ #  A configure script for Geant4Py
+ # ======================================================================
+-export LANG=C
+-
+-IFS='
+- 	'
+-PATH=/bin:/usr/bin
+-export PATH
+ 
+ # ======================================================================
+ # testing the echo features
+@@ -323,15 +317,18 @@ echo "lib${clhep_lib}.${shlib}"
+ 
+ # ---
+ echo $ac_n "Checking for Python include dir (pyconfig.h) ... $ac_c"
+-# check version
+-set python python2.6 python2.5 python2.4 python2.3 python2.2
+-for aincdir in $*
+-do
+-  if [ -d /usr/include/"$aincdir" ]; then
+-    python_incdir=/usr/include/$aincdir
+-    break
+-  fi
+-done
++
++if [ ! -d "$python_incdir" ]; then
++  # check version
++  set python python2.6 python2.5 python2.4 python2.3 python2.2
++  for aincdir in $*
++  do
++    if [ -d /usr/include/"$aincdir" ]; then
++      python_incdir=/usr/include/$aincdir
++      break
++    fi
++  done
++fi
+ 
+ if [ ! -f "$python_incdir"/pyconfig.h ]; then
+   echo "no"

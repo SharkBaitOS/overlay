@@ -1,0 +1,12 @@
+expose secondaries for debugging of scintillation. Not yet reported upstream.
+--- source/tracking/pyG4TrackingManager.cc.old	2011-12-03 00:12:32.000000000 +0900
++++ source/tracking/pyG4TrackingManager.cc	2012-07-12 14:19:30.000000000 +0900
+@@ -51,6 +51,8 @@ void export_G4TrackingManager()
+     .def("GetVerboseLevel",    &G4TrackingManager::GetVerboseLevel)
+     .def("SetUserTrackInformation", 
+ 	 &G4TrackingManager::SetUserTrackInformation)
++    .def("GimmeSecondaries",   &G4TrackingManager::GimmeSecondaries, 
++         return_value_policy<return_by_value>())
+     ;
+ }
+ 

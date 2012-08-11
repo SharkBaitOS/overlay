@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/net-analyzer/ssldump/ssldump-0.9-r1.ebuild,v 1.7 2011/12/09 16:15:55 jer Exp $
 
-EAPI=2
+EAPI=4
 inherit autotools eutils
 
 MY_P=${PN}-0.9b3
@@ -47,7 +47,7 @@ src_configure() {
 	else
 		myconf="${myconf} --without-openssl"
 	fi
-	
+
 	econf ${myconf}
 }
 

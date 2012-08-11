@@ -1,0 +1,10 @@
+--- source/graphics_reps/pyG4VisAttributes.cc	2009-12-19 02:23:08.000000000 +0900
++++ source/graphics_reps/pyG4VisAttributes.cc.new	2012-07-12 12:04:50.000000000 +0900
+@@ -31,6 +31,7 @@
+ //                                         2005 Q
+ // ====================================================================
+ #include <boost/python.hpp>
++#include "G4AttDef.hh"
+ #include "G4VisAttributes.hh"
+ 
+ using namespace boost::python;
