@@ -5,7 +5,7 @@
 EAPI=4
 
 EGIT_REPO_URI="http://git.heroxbd.z.tuna.tsinghua.edu.cn/${PN}.git"
-EGIT_BRANCH=$(use runit && echo "prefix" || echo "prefix-runit")
+use runit && EGIT_BRANCH="prefix-runit" || EGIT_BRANCH="prefix"
 [[ ${PV} == "9999" ]] && SCM_ECLASS="git-2"
 inherit eutils flag-o-matic multilib pam toolchain-funcs ${SCM_ECLASS}
 unset SCM_ECLASS
