@@ -2,6 +2,8 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/net-analyzer/jnettop/jnettop-0.13.0-r1.ebuild,v 1.3 2009/06/02 11:55:36 flameeyes Exp $
 
+EAPI="4"
+
 inherit autotools eutils
 
 DESCRIPTION="A top like console network traffic visualiser"
@@ -17,17 +19,14 @@ RDEPEND="net-libs/libpcap
 	>=dev-libs/glib-2.0.1"
 
 DEPEND="${RDEPEND}
-	dev-util/pkgconfig"
+	virtual/pkgconfig"
 
-src_unpack() {
-	unpack ${A}
-	cd "${S}"
-
+src_prepare() {
 	epatch "${FILESDIR}/${P}-asneeded.patch"
 	eautoreconf
 }
 
 src_install() {
-	make DESTDIR="${D}" install || die
+	emake DESTDIR="${D}" install
 	dodoc AUTHORS ChangeLog NEWS README .jnettop
 }
