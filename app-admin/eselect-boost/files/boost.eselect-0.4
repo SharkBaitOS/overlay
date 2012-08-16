@@ -53,7 +53,7 @@ remove_installation() {
 
 	local python_module python_module_dir
 	for python_module in mpi.py mpi_debug.py ; do
-		for python_module_dir in "${EROOT}"usr/lib/python*/site-packages ; do
+		for python_module_dir in "${EROOT}"usr/%LIBDIR%/python*/site-packages ; do
 			if [[ -e "${python_module_dir}/${python_module}" ]] ; then
 				rm "${python_module_dir}/${python_module}" || die -q "Unable to remove \"${python_module_dir}/${python_module}\""
 			fi
@@ -62,7 +62,7 @@ remove_installation() {
 
 	# Deprecated code for older versions of Boost.
 	local mod="mpi.so"
-	for moddir in "${EROOT}"/usr/lib/python*/site-packages ; do
+	for moddir in "${EROOT}"/usr/%LIBDIR%/python*/site-packages ; do
 		if [ -L "${moddir}/${mod}" ] ; then
 			rm "${moddir}/${mod}" || die -q "Unable to remove \"${moddir}/${mod}\" symlink"
 		else
@@ -113,7 +113,7 @@ set_installation() {
 
 	[[ -d "${ROOT}${includes}" ]] || die -q "\"${includes}\" does not exist"
 	pushd "${EROOT}/usr/include" 1>/dev/null
-	ln -s ${includes#*/usr/include/} boost || die -q "Couldn't create symlink \"/usr/include/boost\""
+	ln -s ${includes//"${EROOT}/usr/include/"} boost || die -q "Couldn't create symlink \"/usr/include/boost\""
 	popd 1>/dev/null
 
 	local python_module

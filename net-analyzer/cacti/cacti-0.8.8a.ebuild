@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/net-analyzer/cacti/cacti-0.8.7i.ebuild,v 1.4 2012/01/01 15:12:25 armin76 Exp $
 
-EAPI="2"
+EAPI="4"
 
 inherit eutils webapp depend.php
 

@@ -10,7 +10,7 @@ SRC_URI="http://jnettop.kubs.info/dist/${P}.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~x86-linux"
+KEYWORDS="~x86-linux ~arm"
 IUSE=""
 
 RDEPEND="net-libs/libpcap
