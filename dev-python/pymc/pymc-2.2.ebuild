@@ -2,28 +2,24 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/dev-python/pytables/pytables-2.2.1.ebuild,v 1.1 2010/11/05 16:03:39 xarthisius Exp $
 
-EAPI="3"
+EAPI=3
 
-PYTHON_DEPEND="2"
+PYTHON_DEPEND=2
 
-inherit distutils eutils git
+inherit distutils
 
-EGIT_REPO_URI="http://github.com/pymc-devs/pymc.git"
-DESCRIPTION="Markov chain Monte Carlo for Python."
+DESCRIPTION="Markov Chain Monte Carlo sampling toolkit."
 HOMEPAGE="http://code.google.com/p/${PN} http://pypi.python.org/pypi/${PN}"
+SRC_URI="http://pypi.python.org/packages/source/p/pymc/${P}.tar.gz"
 
-SLOT="0"
+SLOT=0
 KEYWORDS="~amd64-linux ~x86-linux"
-LICENSE="MIT"
+LICENSE=AFL
 
-DEPEND="
+DEPEND="dev-python/setuptools
 	dev-python/pytables
 	dev-python/numpy
-"
+	virtual/blas"
 
-S="${WORKDIR}/${PV}"
-DISTUTILS_GLOBAL_OPTIONS=("config_fc" "--fcompiler=gfortran")
-
-src_compile() {
-        distutils_src_compile
-}
+S="${WORKDIR}/${P}"
+DISTUTILS_GLOBAL_OPTIONS=( config_fc --fcompiler=gfortran )
