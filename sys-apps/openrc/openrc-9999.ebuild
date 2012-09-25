@@ -39,7 +39,7 @@ DEPEND="${RDEPEND}
 make_args() {
 	unset LIBDIR #266688
 
-	MAKE_ARGS="${MAKE_ARGS} LIBNAME=$(get_libdir) LIBEXECDIR=${EPREFIX}/$(get_libdir)/rc"
+	MAKE_ARGS="${MAKE_ARGS} MKNET=oldnet LIBNAME=$(get_libdir) LIBEXECDIR=${EPREFIX}/$(get_libdir)/rc"
 
 	local brand="Unknown"
 	if use kernel_linux ; then
@@ -58,6 +58,7 @@ make_args() {
 	fi
 
 	MAKE_ARGS="${MAKE_ARGS} PREFIX=${EPREFIX} PKG_PREFIX=${EPREFIX}/usr LOCAL_PREFIX=${EPREFIX}/usr/local"
+	use prefix && MAKE_ARGS="${MAKE_ARGS} MKPREFIX=yes"
 }
 
 pkg_setup() {
@@ -74,12 +75,6 @@ src_prepare() {
 		local ver="git-${EGIT_VERSION:0:6}"
 		sed -i "/^GITVER[[:space:]]*=/s:=.*:=${ver}:" mk/git.mk || die
 	fi
-
-	# The build requires einfo.h. /usr/include/einfo.h itself
-	# belongs to openrc. While it is not a problem when it comes
-	# with stage3 tarball, such assumption does it stand in prefix
-	use prefix && ( cd src/includes; ln -snf ../libeinfo/einfo.h \
-		|| die "symlink einfo.h failed" )
 
 	# Allow user patches to be applied without modifying the ebuild
 	epatch_user
