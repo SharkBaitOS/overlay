@@ -1,10 +1,10 @@
-# Copyright 1999-2012 Gentoo Foundation
+# Copyright 1999-2013 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/x11-libs/wxGTK/wxGTK-2.8.12.1.ebuild,v 1.11 2012/05/31 13:25:49 jlec Exp $
+# $Header: /var/cvsroot/gentoo-x86/x11-libs/wxGTK/wxGTK-2.8.12.1.ebuild,v 1.15 2013/02/04 01:50:56 heroxbd Exp $
 
 EAPI="4"
 
-inherit eutils versionator flag-o-matic
+inherit eutils versionator flag-o-matic multilib
 
 DESCRIPTION="GTK+ version of wxWidgets, a cross-platform C++ GUI toolkit"
 HOMEPAGE="http://wxwidgets.org/"
@@ -36,8 +36,8 @@ RDEPEND="
 		gnome?  ( gnome-base/libgnomeprintui:2.2 )
 		gstreamer? (
 			gnome-base/gconf:2
-			>=media-libs/gstreamer-0.10
-			>=media-libs/gst-plugins-base-0.10 )
+			media-libs/gstreamer:0.10
+			media-libs/gst-plugins-base:0.10 )
 		opengl? ( virtual/opengl )
 		tiff?   ( media-libs/tiff:0 )
 		)
@@ -49,6 +49,7 @@ RDEPEND="
 
 DEPEND="${RDEPEND}
 		virtual/pkgconfig
+		opengl? ( virtual/glu )
 		X?  (
 			x11-proto/xproto
 			x11-proto/xineramaproto
@@ -106,6 +107,7 @@ src_configure() {
 			--with-libxpm=sys
 			--with-libjpeg=sys
 			$(use_enable gstreamer mediactrl)
+			$(use_enable opengl)
 			$(use_with opengl)
 			$(use_with gnome gnomeprint)
 			--without-gnomevfs"

@@ -1,6 +1,379 @@
 # ChangeLog for sys-libs/glibc
-# Copyright 1999-2012 Gentoo Foundation; Distributed under the GPL v2
-# $Header: /var/cvsroot/gentoo-x86/sys-libs/glibc/ChangeLog,v 1.827 2012/03/26 22:23:52 vapier Exp $
+# $Header: /var/cvsroot/gentoo-x86/sys-libs/glibc/ChangeLog,v 1.920 2013/01/25 03:12:18 vapier Exp $
+
+  25 Jan 2013; Mike Frysinger <vapier@gentoo.org>
+  files/eblits/pkg_preinst.eblit:
+  Refactor sanity checks a bit and include gcc in the search path #453760 by
+  William Throwe.
+
+  23 Jan 2013; Mike Frysinger <vapier@gentoo.org> glibc-2.16.0.ebuild,
+  glibc-2.17.ebuild:
+  Add fix from upstream for slow math calls on x86 #431938 by wbrana.
+
+  23 Jan 2013; Mike Frysinger <vapier@gentoo.org> glibc-2.17.ebuild:
+  Push out hppa fixes from upstream #452184 by Guy Martin.
+
+  12 Jan 2013; Raúl Porcel <armin76@gentoo.org> glibc-2.16.0.ebuild:
+  2.16.0 breaks some packages on alpha, 2.17 works fine
+
+  08 Jan 2013; Mike Frysinger <vapier@gentoo.org> glibc-2.17.ebuild:
+  Add hppa/fpu fix from Guy Martin #450676 by Jeroen Roovers.
+
+  02 Jan 2013; Mike Frysinger <vapier@gentoo.org>
+  files/eblits/src_compile.eblit, glibc-2.17.ebuild, glibc-9999.ebuild,
+  metadata.xml:
+  Add IUSE=nscd to control support for it.
+
+  30 Dec 2012; Ulrich Müller <ulm@gentoo.org> glibc-2.9_p20081201-r3.ebuild,
+  glibc-2.10.1-r1.ebuild, glibc-2.11.3.ebuild, glibc-2.12.1-r3.ebuild,
+  glibc-2.12.2.ebuild, glibc-2.13-r2.ebuild, glibc-2.13-r4.ebuild,
+  glibc-2.14.ebuild, glibc-2.14.1-r2.ebuild, glibc-2.14.1-r3.ebuild,
+  glibc-2.15-r1.ebuild, glibc-2.15-r2.ebuild, glibc-2.15-r3.ebuild,
+  glibc-2.16.0.ebuild, glibc-2.17.ebuild, glibc-9999.ebuild:
+  Specify LICENSE more precisely, bug 448132.
+
+  28 Dec 2012; Mike Frysinger <vapier@gentoo.org>
+  +files/2.17/glibc-2.17-hardened-pie.patch, glibc-2.17.ebuild:
+  Update hardened patch by Alphat-PC #448876.
+
+  28 Dec 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.16.0.ebuild:
+  Fix building w/sed-4.2.2+ #448224 by Viacheslav Gagara.  Fix use of gcc-4.2
+  and byteswap.h #448888 by Alphat-PC.
+
+  28 Dec 2012; Mike Frysinger <vapier@gentoo.org> files/eblits/common.eblit,
+  files/eblits/src_compile.eblit, files/eblits/src_unpack.eblit:
+  Use --with-{bugurl,pkgversion} with glibc-2.17+.
+
+*glibc-2.17 (25 Dec 2012)
+
+  25 Dec 2012; Mike Frysinger <vapier@gentoo.org> +glibc-2.17.ebuild,
+  glibc-9999.ebuild:
+  Version bump.
+
+  25 Dec 2012; Mike Frysinger <vapier@gentoo.org>
+  files/eblits/src_compile.eblit:
+  Force usage of bfd linker if active linker is gold #269274 by Chris Smith.
+
+  18 Nov 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.16.0.ebuild:
+  Fix arm cross-compile errors with _Unwind_Resume.
+
+  18 Nov 2012; Mike Frysinger <vapier@gentoo.org>
+  files/eblits/src_compile.eblit:
+  Disable fortify/ssp compiler checks when build glibc headers #443632 by Andrej
+  Gelenberg.
+
+  11 Nov 2012; Magnus Granberg <zorry@gentoo.org> glibc-2.16.0.ebuild,
+  +files/2.16/glibc-2.16-hardened-pie.patch:
+  Update the hardened pie patch for 2.16, bug #442712
+
+  11 Nov 2012; Mike Frysinger <vapier@gentoo.org>
+  files/eblits/src_install.eblit, files/eblits/src_unpack.eblit,
+  glibc-2.16.0.ebuild:
+  Fix cross-compile bootstrapping of glibc headers with 2.16.0.
+
+  02 Nov 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.10.1-r1.ebuild,
+  glibc-2.11.3.ebuild, glibc-2.12.1-r3.ebuild, glibc-2.12.2.ebuild,
+  glibc-2.13-r2.ebuild, glibc-2.13-r4.ebuild, glibc-2.14.1-r2.ebuild,
+  glibc-2.14.1-r3.ebuild, glibc-2.14.ebuild, glibc-2.15-r1.ebuild,
+  glibc-2.15-r2.ebuild, glibc-2.15-r3.ebuild, glibc-2.16.0.ebuild,
+  glibc-2.9_p20081201-r3.ebuild, glibc-9999.ebuild:
+  Drop libtool inherit since we do not use it.
+
+  01 Nov 2012; Raúl Porcel <armin76@gentoo.org> glibc-2.15-r3.ebuild:
+  sparc stable wrt #404993
+
+  31 Oct 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.16.0.ebuild:
+  Move into ~arch.
+
+  31 Oct 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.15-r3.ebuild:
+  Mark alpha/ia64/s390 stable #404993.
+
+  21 Oct 2012; Anthony G. Basile <blueness@gentoo.org> glibc-2.15-r3.ebuild:
+  stable arm, bug #404993
+
+  20 Oct 2012; Anthony G. Basile <blueness@gentoo.org> glibc-2.15-r3.ebuild:
+  stable ppc ppc64, bug #404993
+
+  18 Oct 2012; <ago@gentoo.org> glibc-2.15-r3.ebuild:
+  Stable for x86, wrt bug #404993
+
+  18 Oct 2012; <ago@gentoo.org> glibc-2.15-r3.ebuild:
+  Stable for amd64, wrt bug #404993
+
+  05 Oct 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.15-r3.ebuild,
+  glibc-2.16.0.ebuild:
+  Push out ppc fcntl.h fixes #436108 by Sean McGovern.
+
+  02 Oct 2012; Mike Frysinger <vapier@gentoo.org>
+  files/eblits/pkg_preinst.eblit:
+  Default host.conf:multi to on when /etc/hosts is small #436530 by Eray Aslan.
+
+  02 Oct 2012; Mike Frysinger <vapier@gentoo.org>
+  files/eblits/pkg_preinst.eblit:
+  Drop old /lib64 symlink migration as this has not been an issue for years.
+
+  26 Sep 2012; Matt Turner <mattst88@gentoo.org> glibc-2.15-r2.ebuild:
+  Stable on alpha, bug 430346.
+
+*glibc-2.15-r3 (25 Sep 2012)
+
+  25 Sep 2012; Mike Frysinger <vapier@gentoo.org> +glibc-2.15-r3.ebuild:
+  Add fixes for vfprintf/nargs bug #404993 and for xen/avx misbehavior #433884.
+
+  25 Sep 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.16.0.ebuild:
+  Add fix from upstream for x32 malloc failures #394175.
+
+  15 Sep 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.16.0.ebuild:
+  Drop PaX patch as it doesn't seem to be needed anymore #431810.
+
+  12 Sep 2012; Anthony G. Basile <blueness@gentoo.org> glibc-2.15-r2.ebuild:
+  Stable ppc, bug #430346
+
+  28 Aug 2012; Mike Frysinger <vapier@gentoo.org>
+  files/eblits/src_install.eblit:
+  Rework how we symlink in ldsos so it works for all targets even when
+  SYMLINK_LIB is not enabled.
+
+  27 Aug 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.15-r2.ebuild:
+  Mark ia64/s390 stable #430346.
+
+  25 Aug 2012; Anthony G. Basile <blueness@gentoo.org> glibc-2.15-r2.ebuild:
+  Stable arm, bug #430346
+
+  22 Aug 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.15-r2.ebuild:
+  Add fix from upstream for typo in mips n32 define #431676 by Jim Faulkner.
+
+  18 Aug 2012; Mike Frysinger <vapier@gentoo.org>
+  files/eblits/src_install.eblit:
+  Disable --foreground in init.d script for older versions #431886 by Nick
+  Bowler.
+
+  18 Aug 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.10.1-r1.ebuild,
+  glibc-2.11.3.ebuild, glibc-2.12.1-r3.ebuild, glibc-2.12.2.ebuild,
+  glibc-2.13-r2.ebuild, glibc-2.13-r4.ebuild, glibc-2.14.1-r2.ebuild,
+  glibc-2.14.1-r3.ebuild, glibc-2.14.ebuild, glibc-2.15-r1.ebuild,
+  glibc-2.15-r2.ebuild, glibc-2.16.0.ebuild, glibc-2.9_p20081201-r3.ebuild,
+  glibc-9999.ebuild:
+  Clean out more obsolete code.
+
+  18 Aug 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.16.0.ebuild:
+  Update alpha/s390 patches.
+
+  14 Aug 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.16.0.ebuild,
+  glibc-9999.ebuild:
+  Raise min gcc/binutil versions to match upstream configure checks.  Also split
+  version logic between host and target.
+
+  14 Aug 2012; Mike Frysinger <vapier@gentoo.org> files/eblits/src_unpack.eblit:
+  Fix inverted version logic with libgcc_eh #431304 by David Flogeras.
+
+  13 Aug 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.10.1-r1.ebuild,
+  glibc-2.11.3.ebuild, glibc-2.12.1-r3.ebuild, glibc-2.12.2.ebuild,
+  glibc-2.13-r2.ebuild, glibc-2.13-r4.ebuild, glibc-2.14.1-r2.ebuild,
+  glibc-2.14.1-r3.ebuild, glibc-2.14.ebuild, glibc-2.15-r1.ebuild,
+  glibc-2.15-r2.ebuild, glibc-2.16.0.ebuild, glibc-2.9_p20081201-r3.ebuild,
+  glibc-9999.ebuild:
+  Tweak CATEGORY processing to make it easier to understand.
+
+  13 Aug 2012; Mike Frysinger <vapier@gentoo.org> metadata.xml:
+  Document what USE=gd does.
+
+  12 Aug 2012; Mike Frysinger <vapier@gentoo.org> files/eblits/src_unpack.eblit:
+  Do not use the -lgcc_eh hack with glibc-2.17+ since its been addressed
+  upstream.
+
+  12 Aug 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.16.0.ebuild:
+  Add alpha/arm keywords since it builds for both.
+
+  12 Aug 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.15-r2.ebuild,
+  glibc-2.16.0.ebuild:
+  Drop ppc atomic patch to fix runtime crashes #413685 by hiyuh.
+
+  11 Aug 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.15-r2.ebuild:
+  Add some mips love #430346.
+
+  11 Aug 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.16.0.ebuild,
+  glibc-9999.ebuild:
+  Fix default hppa nptl kernel version #430904 by Hans.
+
+  11 Aug 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.15-r2.ebuild:
+  Add some alpha love #430346.
+
+  11 Aug 2012; Mike Frysinger <vapier@gentoo.org> glibc-9999.ebuild:
+  Upstream only has one git repo now #430772 by Robert McGehee.
+
+  10 Aug 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.15-r2.ebuild:
+  Get alpha building again.
+
+  10 Aug 2012; Mike Frysinger <vapier@gentoo.org> files/eblits/common.eblit:
+  Stop adding -U_FORTIFY_SOURCE for glibc-2.16+ since upstream does this
+  automatically now.
+
+  09 Aug 2012; Agostino Sarubbo <ago@gentoo.org> glibc-2.15-r2.ebuild:
+  Stable for X86, wrt bug #430346
+
+  09 Aug 2012; Agostino Sarubbo <ago@gentoo.org> glibc-2.15-r2.ebuild:
+  Stable for AMD64, wrt bug #430346
+
+  09 Aug 2012; Anthony G. Basile <blueness@gentoo.org> glibc-2.15-r2.ebuild:
+  Keyword ~arm, bug #430346
+
+  08 Aug 2012; Raúl Porcel <armin76@gentoo.org> glibc-2.15-r2.ebuild:
+  sparc stable wrt #430346
+
+  07 Aug 2012; Brent Baude <ranger@gentoo.org> glibc-2.15-r2.ebuild:
+  Marking glibc-2.15-r2 ppc64 for bug 430346
+
+*glibc-2.16.0 (03 Jul 2012)
+
+  03 Jul 2012; Mike Frysinger <vapier@gentoo.org> +glibc-2.16.0.ebuild,
+  files/eblits/src_compile.eblit, files/eblits/src_install.eblit,
+  glibc-9999.ebuild, metadata.xml:
+  Version bump.
+
+  19 Jun 2012; Mike Frysinger <vapier@gentoo.org> files/eblits/common.eblit:
+  Handle gold version strings too.
+
+  18 Jun 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.15-r2.ebuild:
+  Add fix from upstream for getconf writing too many bytes to local buffer
+  #411905 by Ryan Hill.
+
+  14 Jun 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.15-r2.ebuild:
+  Fix from upstream to for strtok on x32 #420951.
+
+  13 Jun 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.15-r2.ebuild:
+  Fix from upstream for warnings with fortify and FD_SET.
+
+  08 Jun 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.10.1-r1.ebuild,
+  glibc-2.11.3.ebuild, glibc-2.12.1-r3.ebuild, glibc-2.12.2.ebuild,
+  glibc-2.13-r2.ebuild, glibc-2.13-r4.ebuild, glibc-2.14.1-r2.ebuild,
+  glibc-2.14.1-r3.ebuild, glibc-2.14.ebuild, glibc-2.15-r1.ebuild,
+  glibc-2.15-r2.ebuild, glibc-2.9_p20081201-r3.ebuild, glibc-9999.ebuild:
+  Move to multiprocessing eclass for makeopts_jobs as pointed out by Christian
+  Ruppert.
+
+  03 Jun 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.15-r2.ebuild:
+  Update x32 patchset.
+
+  01 Jun 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.14.1-r2.ebuild,
+  glibc-2.14.1-r3.ebuild, glibc-2.14.ebuild, glibc-2.15-r1.ebuild,
+  glibc-2.15-r2.ebuild:
+  Add backwards compat ldso symlink for arm hardfp targets #417287 by Raúl
+  Porcel.
+
+  01 Jun 2012; Mike Frysinger <vapier@gentoo.org> files/eblits/common.eblit,
+  files/eblits/src_install.eblit, glibc-2.10.1-r1.ebuild, glibc-2.11.3.ebuild,
+  glibc-2.12.1-r3.ebuild, glibc-2.12.2.ebuild, glibc-2.13-r2.ebuild,
+  glibc-2.13-r4.ebuild, glibc-2.14.1-r2.ebuild, glibc-2.14.1-r3.ebuild,
+  glibc-2.14.ebuild, glibc-2.15-r1.ebuild, glibc-2.15-r2.ebuild,
+  glibc-2.9_p20081201-r3.ebuild, glibc-9999.ebuild:
+  Unify alt_libdir definition and use alt_prefix where possible.
+
+  01 Jun 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.14.1-r2.ebuild,
+  glibc-2.14.1-r3.ebuild, glibc-2.15-r1.ebuild, glibc-2.15-r2.ebuild:
+  Drop x32 patches for now as these are old and no longer work #418225 by
+  Ostashevskyi Viktor.
+
+  31 May 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.14.1-r3.ebuild:
+  Backport arm hardfp patch to stable version too #417287 by Raúl Porcel.
+
+  25 May 2012; Anthony G. Basile <blueness@gentoo.org> glibc-2.14.1-r3.ebuild:
+  Keyword mips
+
+*glibc-2.15-r2 (18 May 2012)
+
+  18 May 2012; Mike Frysinger <vapier@gentoo.org> +glibc-2.15-r2.ebuild:
+  Add fix from upstream for crashes in nscd code when nscd is not running
+  #416033 by Matthias Dahl.
+
+  12 May 2012; Raúl Porcel <armin76@gentoo.org> glibc-2.14.1-r3.ebuild:
+  alpha/sparc stable wrt #411903
+
+  10 May 2012; Mike Frysinger <vapier@gentoo.org>
+  files/eblits/src_compile.eblit:
+  Cache all arch tls variables when cross-compiling.
+
+  09 May 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.15-r1.ebuild:
+  Build with new arm hardfp ldso path.
+
+  09 May 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.14.1-r3.ebuild,
+  glibc-2.15-r1.ebuild:
+  Fix from upstream for building ia64/hardened #414625 by Dennis Schridde.
+
+  03 May 2012; Robin H. Johnson <robbat2@gentoo.org> glibc-2.15-r1.ebuild,
+  glibc-9999.ebuild:
+  New glibc now includes nss-db again, so block the old sys-libs/nss-db package.
+
+  03 May 2012; Mike Frysinger <vapier@gentoo.org>
+  files/eblits/src_compile.eblit:
+  Force ppc32 compile test when building headers #413735 by Frédéric Lochon.
+
+  02 May 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.13-r4.ebuild,
+  glibc-2.14.1-r3.ebuild, glibc-2.15-r1.ebuild:
+  Add patch from upstream for building on armv4 with eabi (no thumb) #414061 by
+  spock128.
+
+  30 Apr 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.14.1-r3.ebuild:
+  Mark ia64/s390 stable #411903.
+
+  29 Apr 2012; Markus Meier <maekke@gentoo.org> glibc-2.14.1-r3.ebuild:
+  arm stable, bug #411903
+
+  28 Apr 2012; Jeroen Roovers <jer@gentoo.org> glibc-2.14.1-r3.ebuild:
+  Stable for HPPA (bug #411903).
+
+  27 Apr 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.15-r1.ebuild:
+  Get this version cross-compiling too.
+
+  21 Apr 2012; Jeff Horelick <jdhore@gentoo.org> glibc-2.14.1-r3.ebuild:
+  marked x86 per bug 411903
+
+  21 Apr 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.14.1-r3.ebuild:
+  Also add fetestexcept libm hppa patch to 2.14.1 #412933 by Jeroen Roovers.
+
+*glibc-2.15-r1 (21 Apr 2012)
+
+  21 Apr 2012; Mike Frysinger <vapier@gentoo.org> -glibc-2.15.ebuild,
+  +glibc-2.15-r1.ebuild:
+  Unmask now that 2.14 is going stable.
+
+  21 Apr 2012; Mike Frysinger <vapier@gentoo.org>
+  glibc-2.9_p20081201-r3.ebuild, glibc-2.10.1-r1.ebuild, glibc-2.11.3.ebuild,
+  glibc-2.12.1-r3.ebuild, glibc-2.12.2.ebuild, glibc-2.13-r2.ebuild,
+  glibc-2.13-r4.ebuild, glibc-2.14.ebuild, glibc-2.14.1-r2.ebuild,
+  glibc-2.14.1-r3.ebuild, glibc-2.15.ebuild, glibc-9999.ebuild,
+  files/eblits/src_compile.eblit, metadata.xml:
+  Drop USE=glibc-omitfp support since upstream has as well.
+
+  21 Apr 2012; Agostino Sarubbo <ago@gentoo.org> glibc-2.14.1-r3.ebuild:
+  Stable for amd64, wrt bug #411903
+
+  17 Apr 2012; Brent Baude <ranger@gentoo.org> glibc-2.14.1-r3.ebuild:
+  Marking glibc-2.14.1-r3 ppc64 for bug 411903
+
+  16 Apr 2012; Brent Baude <ranger@gentoo.org> glibc-2.14.1-r3.ebuild:
+  Marking glibc-2.14.1-r3 ppc for bug 411903
+
+  15 Apr 2012; Mike Frysinger <vapier@gentoo.org>
+  files/eblits/pkg_postinst.eblit:
+  Use new makeopts_jobs helper from eutils.eclass.
+
+  14 Apr 2012; Mike Frysinger <vapier@gentoo.org>
+  files/eblits/src_compile.eblit:
+  Disable building of static ELFs for ia64 cross-compiler targets to workaround
+  a broken gcc-stage1 libgcc #411677 by Michael Kosarev.
+
+  14 Apr 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.13-r4.ebuild:
+  Mark s390 stable #382377.
+
+*glibc-2.14.1-r3 (14 Apr 2012)
+
+  14 Apr 2012; Mike Frysinger <vapier@gentoo.org> -glibc-2.14.1.ebuild,
+  -glibc-2.14.1-r1.ebuild, +glibc-2.14.1-r3.ebuild:
+  Fix regex crashes #389881 and missing hppa prlimit64.
+
+  14 Apr 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.15.ebuild:
+  Fix prlimit64 on hppa and drop some old patches.
 
   26 Mar 2012; Mike Frysinger <vapier@gentoo.org> glibc-2.15.ebuild:
   Add patch from upstream for libmemusage.so on arm targets #409721 by

@@ -1,6 +1,6 @@
 # Copyright 1999-2012 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/dev-python/wxpython/wxpython-2.8.12.1.ebuild,v 1.15 2012/05/29 14:46:19 aballier Exp $
+# $Header: /var/cvsroot/gentoo-x86/dev-python/wxpython/wxpython-2.8.12.1.ebuild,v 1.17 2012/09/05 09:36:33 jlec Exp $
 
 EAPI="4"
 PYTHON_DEPEND="2"
@@ -21,19 +21,17 @@ SRC_URI="mirror://sourceforge/wxpython/${MY_P}.tar.bz2
 
 LICENSE="wxWinLL-3"
 SLOT="2.8"
-KEYWORDS="alpha amd64 arm hppa ia64 ppc ppc64 sh sparc x86 ~amd64-fbsd ~x86-fbsd ~x86-freebsd ~x86-interix ~amd64-linux ~ia64-linux ~x86-linux ~ppc-macos ~x64-macos ~x86-macos"
-IUSE="aqua cairo doc examples opengl"
+KEYWORDS="alpha amd64 arm hppa ia64 ppc ppc64 sh sparc x86 ~amd64-fbsd ~x86-fbsd"
+IUSE="cairo doc examples opengl"
 
 RDEPEND="
-	aqua? (	>=dev-lang/python-2.6[aqua]
-		>=x11-libs/wxGTK-${PV}:${WX_GTK_VER}[opengl?,tiff,aqua] )
-	!aqua? ( >=x11-libs/wxGTK-${PV}:${WX_GTK_VER}[opengl?,tiff,X] )
+	>=x11-libs/wxGTK-${PV}:${WX_GTK_VER}[opengl?,tiff,X]
 	dev-libs/glib:2
 	dev-python/setuptools
 	media-libs/libpng:0
 	media-libs/tiff:0
 	virtual/jpeg
-	x11-libs/gtk+:2[aqua=]
+	x11-libs/gtk+:2
 	x11-libs/pango[X]
 	cairo?	( >=dev-python/pycairo-1.8.4 )
 	opengl?	( dev-python/pyopengl )"
@@ -59,7 +57,6 @@ src_prepare() {
 	if use doc; then
 		cd "${DOC_S}"
 		epatch "${FILESDIR}"/${PN}-${SLOT}-cache-writable.patch
-		[[ -e samples/embedded/embedded ]] && rm -f samples/embedded/embedded
 	fi
 
 	if use examples; then
@@ -68,6 +65,9 @@ src_prepare() {
 	fi
 
 	python_copy_sources
+
+	# Workaround, buildsystem uses CFLAGS as CXXFLAGS
+	export CFLAGS="${CXXFLAGS}"
 }
 
 src_configure() {
@@ -75,7 +75,7 @@ src_configure() {
 
 	DISTUTILS_GLOBAL_OPTIONS=(
 		"* WX_CONFIG=${WX_CONFIG}"
-		"* WXPORT=$(use aqua && echo mac || echo gtk2)"
+		"* WXPORT=gtk2"
 		"* UNICODE=1"
 		"* BUILD_GLCANVAS=$(use opengl && echo 1 || echo 0)"
 	)
@@ -96,7 +96,7 @@ src_install() {
 
 	# Collision protection.
 	rename_files() {
-		for file in "${ED}$(python_get_sitedir)/"wx{version.*,.pth}; do
+		for file in "${D}$(python_get_sitedir)/"wx{version.*,.pth}; do
 			mv "${file}" "${file}-${SLOT}" || return 1
 		done
 	}
@@ -104,21 +104,26 @@ src_install() {
 
 	dodoc "${S}"/docs/{CHANGES,PyManual,README,wxPackage,wxPythonManual}.txt
 
-	insinto /usr/share/applications
-	doins distrib/{Py{AlaMode,Crust,Shell},XRCed}.desktop
-	insinto /usr/share/pixmaps
-	newins wx/py/PyCrust_32.png PyCrust.png
-	newins wx/tools/XRCed/XRCed_32.png XRCed.png
+	domenu "${S}"/distrib/{Py{AlaMode,Crust,Shell},XRCed}.desktop
+	newicon "${S}"/wx/py/PyCrust_32.png PyCrust.png
+	newicon "${S}"/wx/tools/XRCed/XRCed_32.png XRCed.png
+
+	docdir=${D}usr/share/doc/${PF}
 
 	if use doc; then
-		dodoc -r "${DOC_S}"/docs
+		dodir /usr/share/doc/${PF}/docs
+		cp -R "${DOC_S}"/docs/* "${docdir}"/docs/
 		# For some reason newer API docs aren't available so use 2.8.9.2's
-		dodoc -r "${WORKDIR}"/wxPython-2.8.9.2/docs
+		cp -R "${WORKDIR}"/wxPython-2.8.9.2/docs/* "${docdir}"/docs/
 	fi
 
 	if use examples; then
-		dodoc -r "${DOC_S}"/demo
-		dodoc -r "${DOC_S}"/samples
+		dodir /usr/share/doc/${PF}/demo
+		cp -R "${DOC_S}"/demo/* "${docdir}"/demo
+		dodir /usr/share/doc/${PF}/samples
+		cp -R "${DOC_S}"/samples/* "${docdir}"/samples
+		[[ -e ${docdir}/samples/embedded/embedded ]] \
+			&& rm -f "${docdir}"/samples/embedded/embedded
 	fi
 }
 
