@@ -34,8 +34,6 @@ eblit-glibc-pkg_preinst() {
 	# nothing to do if just installing headers
 	just_headers && return
 
-	eprefix_env
-
 	# prepare /etc/ld.so.conf.d/ for files
 	mkdir -p "${EROOT}"/etc/ld.so.conf.d
 

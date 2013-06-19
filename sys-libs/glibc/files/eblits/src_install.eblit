@@ -221,8 +221,6 @@ src_strip() {
 }
 
 eblit-glibc-src_install() {
-	eprefix_env
-
 	if just_headers ; then
 		export ABI=default
 		toolchain-glibc_headers_install

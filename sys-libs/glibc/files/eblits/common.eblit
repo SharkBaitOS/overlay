@@ -24,11 +24,6 @@ alt_prefix() {
 
 TPREFIX=$(is_crosscompile || echo "${EPREFIX}")
 
-eprefix_env() {
-	ED="${D%/}${EPREFIX}/"
-	EROOT="${ROOT%/}${EPREFIX}/"
-}
-
 # We need to be able to set alternative headers for
 # compiling for non-native platform
 # Will also become useful for testing kernel-headers without screwing up
