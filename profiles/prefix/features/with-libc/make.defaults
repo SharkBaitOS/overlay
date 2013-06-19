@@ -1,0 +1,9 @@
+# We enable sysroot support for gcc and binutils
+# here. gen_usr_ldscript from toolchain-funcs inject full path into
+# the ld script wrapper, which results in double prefix. Furthermore,
+# the original motivation of this helper (bug #4411), putting dynamic
+# library into /lib and static one into /usr/lib while linking to
+# dynamic one first, does not apply Prefix as we don't rely on
+# {/usr,}/lib separation. 
+
+PREFIX_DISABLE_GEN_USR_LDSCRIPT="yes"

@@ -1,0 +1,144 @@
+Index: toolchain-prefix-wrapper-0.3.1723/ld/gnuplugin.c
+===================================================================
+--- toolchain-prefix-wrapper-0.3.1723.orig/ld/gnuplugin.c
++++ toolchain-prefix-wrapper-0.3.1723/ld/gnuplugin.c
+@@ -15,19 +15,27 @@
+ #include <unistd.h>
+ #include <sys/param.h>
+ 
++#if defined(DYNLINKER)
++#include <gnu/lib-names.h>
++#endif
++
+ #if defined(__cplusplus)
+ extern "C" {
+ #endif
+ 
+ int gnuplugin(LdPluginData* data)
+ {
++#ifdef DYNLINKER
++	const char _dynl[] = "--dynamic-linker=";
++	const int _dynl_len = strlen(_dynl);
++	String *dynlArg = NULL;
++#else
+ 	const char _rpath[] = "-rpath";
+ 	const int _rpath_len = strlen(_rpath);
+ 	const char _R[] = "-R";
+ 	const int _R_len = strlen(_R);
+ 
+ 	int argc = 0;
+-	int err;
+ 	StringList *runpathList = NULL;
+ 	String const *argString;
+ 	String *newString = NULL;
+@@ -36,10 +44,23 @@ int gnuplugin(LdPluginData* data)
+ 	char const *rpathArg = NULL;
+ 	int rpathArgLen = 0;
+ 	char str[MAXPATHLEN + 1];
++#endif
++	int err;
+ 
+ 	do {	/* dummy loop */
+ 		err = -1;
+ 
++#ifdef DYNLINKER
++		if (StringListAppendList(data->out->argList, data->in->argList, 1, -1) < 0)
++                        break;
++		/* add -<dlinker> /lib/LD_SO to command line */
++		dynlArg = StringCreateConcat(_dynl, _dynl_len,
++			StringGetBuffer(data->in->target.eprefix), StringGetLength(data->in->target.eprefix),
++			"/lib/", 5,
++			LD_SO, strlen(LD_SO),
++			NULL, 0);
++		if (StringListAppendString(data->out->argList, dynlArg) < 0) break;
++#else
+ 		runpathList = StringListCreate(NULL, 0, 0);
+ 		if (runpathList == NULL)
+ 			break;
+@@ -166,6 +187,7 @@ int gnuplugin(LdPluginData* data)
+ 			/* put runpath on commandline */
+ 			if (StringListAppendString(data->out->argList, newString) < 0) break;
+ 		}
++#endif
+ 
+ 		/* append sys libpath's with "-L" */
+ 		if (StringListAppendListModify(data->out->argList, data->in->sysLibpath, 0, -1, "-L", 2, NULL, 0) < 0)
+@@ -173,10 +195,10 @@ int gnuplugin(LdPluginData* data)
+ 
+ 		err = 0;
+ 	} while(0);	/* end dummy loop */
+-
++#ifndef DYNLINKER
+ 	if (newString != NULL) newString = StringDestroy(newString);
+ 	if (runpathList != NULL) runpathList = StringListDestroy(runpathList);
+-
++#endif
+ 	return err;
+ }
+ 
+Index: toolchain-prefix-wrapper-0.3.1723/ld/ldwrapper.c
+===================================================================
+--- toolchain-prefix-wrapper-0.3.1723.orig/ld/ldwrapper.c
++++ toolchain-prefix-wrapper-0.3.1723/ld/ldwrapper.c
+@@ -1061,16 +1061,26 @@ int main(int argc, char *argv[])
+ 		wrapper_exit("cannot create sys runpath list: %s\n", strerror(errno));
+ 	}
+ 
++#ifdef TARGETLIB
+ 	add_target_toolchain_libpath(&data);
++#endif
+ 	add_cross_toolchain_libpath(&data);
+ 	add_host_toolchain_libpath(&data);
+ 
++#ifndef DYNLINKER
++#ifdef TARGETLIB
+ 	add_target_toolchain_runpath(&data);
++#endif
+ 	add_cross_toolchain_runpath(&data);
++#endif
+ 
++#ifdef TARGETLIB
+ 	add_target_system(&data);
++#endif
+ 
++#ifndef DYNLINKER
+ 	add_host_toolchain_runpath(&data);
++#endif
+ 	add_host_system(&data);
+ 
+ 	/* filter out sys libpath's passed with "-L" */
+Index: toolchain-prefix-wrapper-0.3.1723/configure.ac
+===================================================================
+--- toolchain-prefix-wrapper-0.3.1723.orig/configure.ac
++++ toolchain-prefix-wrapper-0.3.1723/configure.ac
+@@ -116,4 +116,30 @@ AC_ARG_WITH([native-ld],
+ AC_MSG_RESULT([${NATIVELD}])
+ AC_SUBST(NATIVELD)
+ 
++AC_MSG_CHECKING([whether to use dynamic linker from prefix])
++AC_ARG_WITH([prefix-dynl],
++	[AC_HELP_STRING(
++	 	[--with-prefix-dynl],
++		[Use the dynamic linker from prefix (Linux only)]
++	)],
++	[DYNLINKER=${withval}],
++	[DYNLINKER=no]
++)
++AC_MSG_RESULT([${DYNLINKER}])
++AC_DEFINE([DYNLINKER], [], [use prefix dynamic linker])
++AC_SUBST(DYNLINKER)
++
++AC_MSG_CHECKING([whether to inject target library into libpath during cross-eprefix])
++AC_ARG_WITH([targetlib],
++	[AC_HELP_STRING(
++	 	[--with-targetlib],
++		[Inject target library into libpath during cross-eprefix]
++	)],
++	[TARGETLIB=${withval}],
++	[TARGETLIB=no]
++)
++AC_MSG_RESULT([${TARGETLIB}])
++AC_DEFINE([TARGETLIB], [], [cross-eprefix: inject target library])
++AC_SUBST(TARGETLIB)
++
+ AC_OUTPUT

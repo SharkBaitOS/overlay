@@ -1,9 +1,32 @@
-# Copyright 1999-2011 Gentoo Foundation
+# Copyright 1999-2012 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/sys-libs/glibc/files/eblits/common.eblit,v 1.25 2011/12/22 01:09:58 vapier Exp $
+# $Header: /var/cvsroot/gentoo-x86/sys-libs/glibc/files/eblits/common.eblit,v 1.29 2012/12/28 19:00:51 vapier Exp $
+
+# There are many directory offsets here that can lead to confusion. We summarize the senarios in this table
+# P:=Prefix X:=Cross-Triplet
+# example of configure host: --with-headers
+# example of configure target: --libdir
+#
+# variation   phase               PX                      X               P         solution
+# -----------+-------------------+-----------------------+---------------+---------+----------------------------------------
+# host        configure           EPREFIX/usr/CTARGET     /usr/CTARGET    EPREFIX   $EPREFIX/$(alt_prefix)
+# target      configure           NULL                    NULL            EPREFIX   $TPREFIX
+# -----------+-------------------+-----------------------+---------------+---------+----------------------------------------
+# host        install_root        D/EPREFIX/usr/CTARGET   D/usr/CTARGET   D         ${D}/${EPREFIX%$TPREFIX}/$(alt_prefix)
+# -----------+-------------------+-----------------------+---------------+---------+----------------------------------------
+# host        ebuild helper ED/   /usr/CTARGET            /usr/CTARGET    NULL      $(alt_prefix)
+#
+# alt_prefix and TPREFIX in the table are defined as followed
 
 alt_prefix() {
 	is_crosscompile && echo /usr/${CTARGET}
+}
+
+TPREFIX=$(is_crosscompile || echo "${EPREFIX}")
+
+eprefix_env() {
+	ED="${D%/}${EPREFIX}/"
+	EROOT="${ROOT%/}${EPREFIX}/"
 }
 
 # We need to be able to set alternative headers for
@@ -28,6 +51,9 @@ alt_build_headers() {
 	echo "${ALT_BUILD_HEADERS}"
 }
 
+alt_libdir() {
+	echo $(alt_prefix)/$(get_libdir)
+}
 alt_usrlibdir() {
 	echo $(alt_prefix)/usr/$(get_libdir)
 }
@@ -167,8 +193,9 @@ setup_flags() {
 	filter-flags -O?
 	append-flags -O2 -fno-strict-aliasing
 
-	# Cant build glibc itself with fortify code
-	append-cppflags -U_FORTIFY_SOURCE
+	# Can't build glibc itself with fortify code.  Newer versions add
+	# this flag for us, so no need to do it manually.
+	version_is_at_least 2.16 ${PV} || append-cppflags -U_FORTIFY_SOURCE
 
 	# building glibc with SSP is fraught with difficulty, especially
 	# due to __stack_chk_fail_local which would mean significant changes
@@ -238,7 +265,9 @@ want__thread() {
 
 use_multiarch() {
 	# Make sure binutils is new enough to support indirect functions #336792
-	local bver=$($(tc-getLD ${CTARGET}) -v | awk '{print $NF}') nver
+	# This funky sed supports gold and bfd linkers.
+	local bver nver
+	bver=$($(tc-getLD ${CTARGET}) -v | sed -n -r '1{s:[^0-9]*::;s:^([0-9.]*).*:\1:;p}')
 	case $(tc-arch ${CTARGET}) in
 		amd64|x86) nver="2.20" ;;
 		sparc)     nver="2.21" ;;
@@ -253,8 +282,8 @@ setup_env() {
 	# silly users
 	unset LD_RUN_PATH
 
-	multilib_env ${CTARGET_OPT:-${CTARGET}}
 	if is_crosscompile || tc-is-cross-compiler ; then
+		multilib_env ${CTARGET_OPT:-${CTARGET}}
 		if ! use multilib ; then
 			MULTILIB_ABIS=${DEFAULT_ABI}
 		else
@@ -282,4 +311,12 @@ setup_env() {
 
 just_headers() {
 	is_crosscompile && use crosscompile_opts_headers-only
+}
+
+glibc_banner() {
+	local b="Gentoo ${PVR}"
+	[[ -n ${SNAP_VER} ]] && b+=" snapshot ${SNAP_VER}"
+	[[ -n ${BRANCH_UPDATE} ]] && b+=" branch ${BRANCH_UPDATE}"
+	[[ -n ${PATCH_VER} ]] && ! use vanilla && b+=" p${PATCH_VER}"
+	echo "${b}"
 }

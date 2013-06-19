@@ -1,0 +1,13 @@
+--- files/eblits/common.eblit
++++ files/eblits/common.eblit
+@@ -279,8 +279,9 @@
+ 	# silly users
+ 	unset LD_RUN_PATH
+ 	
+-	multilib_env ${CTARGET_OPT:-${CTARGET}}
+ 	if is_crosscompile || tc-is-cross-compiler ; then
++		multilib_env ${CTARGET_OPT:-${CTARGET}}
++
+ 		if ! use multilib ; then
+ 			MULTILIB_ABIS=${DEFAULT_ABI}
+ 		else

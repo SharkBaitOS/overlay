@@ -74,9 +74,9 @@ eblit-glibc-pkg_setup() {
 	fi
 
 	# users have had a chance to phase themselves, time to give em the boot
-	if [[ -e ${ROOT}/etc/locale.gen ]] && [[ -e ${ROOT}/etc/locales.build ]] ; then
-		eerror "You still haven't deleted ${ROOT}/etc/locales.build."
-		eerror "Do so now after making sure ${ROOT}/etc/locale.gen is kosher."
+	if [[ -e ${EROOT}/etc/locale.gen ]] && [[ -e ${EROOT}/etc/locales.build ]] ; then
+		eerror "You still haven't deleted ${EROOT}/etc/locales.build."
+		eerror "Do so now after making sure ${EROOT}/etc/locale.gen is kosher."
 		die "lazy upgrader detected"
 	fi
 

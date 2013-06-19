@@ -1,0 +1,70 @@
+diff -Naurp /home/benda/gnto/usr/portage/profiles/prefix/features/with-libc/make.defaults prefix/features/with-libc/make.defaults
+--- /home/benda/gnto/usr/portage/profiles/prefix/features/with-libc/make.defaults	1970-01-01 09:00:00.000000000 +0900
++++ prefix/features/with-libc/make.defaults	2013-06-17 10:52:37.000000000 +0900
+@@ -0,0 +1,9 @@
++# We enable sysroot support for gcc and binutils
++# here. gen_usr_ldscript from toolchain-funcs inject full path into
++# the ld script wrapper, which results in double prefix. Furthermore,
++# the original motivation of this helper (bug #4411), putting dynamic
++# library into /lib and static one into /usr/lib while linking to
++# dynamic one first, does not apply Prefix as we don't rely on
++# {/usr,}/lib separation. 
++
++PREFIX_DISABLE_GEN_USR_LDSCRIPT="yes"
+diff -Naurp /home/benda/gnto/usr/portage/profiles/prefix/features/with-libc/package.use prefix/features/with-libc/package.use
+--- /home/benda/gnto/usr/portage/profiles/prefix/features/with-libc/package.use	1970-01-01 09:00:00.000000000 +0900
++++ prefix/features/with-libc/package.use	2013-06-17 16:03:02.000000000 +0900
+@@ -0,0 +1,7 @@
++# Copyright 1999-2011 Gentoo Foundation
++# Distributed under the terms of the GNU General Public License v2
++# $Header: /var/cvsroot/gentoo-x86/profiles/prefix/linux/package.use.mask,v 1.4 2011/12/01 22:50:18 darkside Exp $
++
++# Benda Xu <heroxbd@gentoo.org> (17 Jun 2013)
++# let binutils-config inject dynamic-linker of Prefix into executable
++sys-devel/binutils dynl
+diff -Naurp /home/benda/gnto/usr/portage/profiles/prefix/features/with-libc/profile.bashrc prefix/features/with-libc/profile.bashrc
+--- /home/benda/gnto/usr/portage/profiles/prefix/features/with-libc/profile.bashrc	1970-01-01 09:00:00.000000000 +0900
++++ prefix/features/with-libc/profile.bashrc	2013-06-17 22:34:15.000000000 +0900
+@@ -0,0 +1,29 @@
++# use sysroot of toolchain to get include and library at compile time work
++# Benda Xu <heroxbd@gentoo.org> (17 Jun, 2013)
++
++if [[ ${CATEGORY} == sys-devel ]] && [[ ${PN} == gcc || ${PN} == binutils || ${PN} == libtool ]] \
++	&& [[ ${EBUILD_PHASE} == unpack ]]; then
++	elog "append --with-sysroot=${EPREFIX} to configure for Prefix libc"
++	EXTRA_ECONF+="--with-sysroot=${EPREFIX}"
++fi
++
++# from bintuils info page: In case a sysroot prefix is configured, and
++# the filename starts with the `/' character, and the script being
++# processed was located inside the sysroot prefix, the filename will
++# be looked for in the sysroot prefix. Otherwise, the linker will try
++# to open the file in the current directory. glibc will append libdir
++# and slibdir, which is prepended with $EPREFIX, to libc.so and
++# libpthread.so linker scripts. That will cause double prefix if ld is
++# configured with sysroot support.
++# This is a dirty hack here, suggestion for alternatives welcome.
++# Benda Xu <heroxbd@gentoo.org> (17 Jun, 2013)
++
++if [[ ${CATEGORY}/${PN} == sys-libs/glibc ]]; then
++        eblit-src_install-post() {
++                elog "fixing ldscripts to prevent double prefix with sysroot-enabled ld"
++                for lds in "$ED"usr/lib/lib{c,pthread}.so; do
++                        sed -i "s,$EPREFIX,,g" "$lds"
++                done
++        }
++fi
++
+diff -Naurp /home/benda/gnto/usr/portage/profiles/prefix/linux/amd64/parent prefix/linux/amd64/parent
+--- /home/benda/gnto/usr/portage/profiles/prefix/linux/amd64/parent	2009-10-23 03:04:43.000000000 +0900
++++ prefix/linux/amd64/parent	2013-06-17 14:18:56.000000000 +0900
+@@ -1,2 +1,2 @@
+-../../../default/linux/amd64/10.0/no-multilib
++../../../default/linux/amd64/13.0/no-multilib
+ ..
+diff -Naurp /home/benda/gnto/usr/portage/profiles/prefix/linux/amd64/with-libc/parent prefix/linux/amd64/with-libc/parent
+--- /home/benda/gnto/usr/portage/profiles/prefix/linux/amd64/with-libc/parent	1970-01-01 09:00:00.000000000 +0900
++++ prefix/linux/amd64/with-libc/parent	2013-06-17 14:35:19.000000000 +0900
+@@ -0,0 +1,2 @@
++../../../features/with-libc
++..
