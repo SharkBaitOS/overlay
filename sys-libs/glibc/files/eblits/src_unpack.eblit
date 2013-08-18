@@ -110,6 +110,9 @@ toolchain-glibc_src_unpack() {
 		done
 	fi
 
+	epatch "${FILESDIR}"/2.17/locale-gen_prefix.patch
+	eprefixify "${WORKDIR}"/extra/locale/locale-gen
+
 	# XXX: We should do the branchupdate, before extracting the manpages and
 	# infopages else it does not help much (mtimes change if there is a change
 	# to them with branchupdate)

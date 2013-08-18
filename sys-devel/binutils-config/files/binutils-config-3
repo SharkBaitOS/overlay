@@ -1,25 +1,28 @@
-#!@GENTOO_PORTAGE_EPREFIX@/bin/bash
-# Copyright 1999-2012 Gentoo Foundation
+#!/bin/bash
+# Copyright 1999-2013 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/sys-devel/binutils-config/files/binutils-config-3,v 1.9 2012/08/18 03:57:50 vapier Exp $
+# $Header: /var/cvsroot/gentoo-x86/sys-devel/binutils-config/files/binutils-config-3,v 1.11 2013/05/05 05:20:42 vapier Exp $
 
 # Format of /etc/env.d/binutils/:
 #  config-TARGET:	CURRENT=version for TARGET
 #  TARGET-VER:		has a TARGET and VER variable
 
 EPREFIX="@GENTOO_PORTAGE_EPREFIX@"
+if [[ ${EPREFIX} == "@"GENTOO_PORTAGE_EPREFIX"@" ]] ; then
+       EPREFIX=""
+fi
 
 : ${ROOT:=/}
 [[ ${ROOT} != */ ]] && ROOT="${ROOT}/"
 [[ ${ROOT} != /* ]] && ROOT="${PWD%/}/${ROOT}"
 EROOT="${ROOT%/}${EPREFIX}/"
 
-cd ${EPREFIX}
+cd "${EPREFIX}"
 
 trap ":" INT QUIT TSTP
 
 argv0=${0##*/}
-source ${EPREFIX}/etc/init.d/functions.sh || {
+source "${EPREFIX}"/etc/init.d/functions.sh || {
 	echo "${argv0}: Could not source ${EPREFIX}/etc/init.d/functions.sh!" 1>&2
 	exit 1
 }
@@ -127,13 +130,13 @@ setup_env() {
 		# Older paths: /usr/${TARGET}/...
 		#
 		if [[ -d ${EROOT}/usr/${HOST}/${TARGET}/binutils-bin/${VER} ]] ; then
-			BINPATH=/usr/${HOST}/${TARGET}/binutils-bin/${VER}
-			BINPATH_LINKS=/usr/libexec/gcc/${TARGET}
+			BINPATH="${EPREFIX}"/usr/${HOST}/${TARGET}/binutils-bin/${VER}
+			BINPATH_LINKS="${EPREFIX}"/usr/libexec/gcc/${TARGET}
 		fi
 	fi
 	if [[ -z ${BINPATH} ]] ; then
-		BINPATH=/usr/${TARGET}/binutils-bin/${VER}
-		BINPATH_LINKS=/usr/${TARGET}/bin
+		BINPATH="${EPREFIX}"/usr/${TARGET}/binutils-bin/${VER}
+		BINPATH_LINKS="${EPREFIX}"/usr/${TARGET}/bin
 	fi
 }
 
@@ -142,32 +145,14 @@ switch_profile() {
 
 	setup_env || return 1
 
-	cd "${EROOT}/${BINPATH}" || exit 1
-	mkdir -p "${EROOT}/${BINPATH_LINKS}" "${EROOT}/usr/bin"
+	cd "${ROOT}/${BINPATH}" || exit 1
+	mkdir -p "${ROOT}/${BINPATH_LINKS}" "${EROOT}/usr/bin"
 	for x in * ; do
-		case ${x} in
-			ld|ld64)
-				# recompile the wrapper for the desired target
-				# not a huge fan of it, never have been
-				"${EROOT}"usr/lib/misc/binutils-config/create-ldwrapper \
-					--wrapper-name="${x}" \
-					--wrapper-source="${EROOT}usr/lib/misc/binutils-config" \
-					--output-file="${EROOT}/${BINPATH_LINKS}/${x}" \
-					--host="${HOST}" \
-					--target="${TARGET}" \
-					--binpath="${BINPATH}" \
-					--debug="${DEBUG}" \
-				|| return 1
-				touch -r "${EROOT}/${BINPATH}/${x}" "${EROOT}/${BINPATH_LINKS}/${x}"
-			;;
-			*)
-				atomic_ln "${EROOT}${BINPATH}/${x}" "${EROOT}/${BINPATH_LINKS}" "${x}"
-			;;
-		esac
-		atomic_ln "${EROOT}/${BINPATH_LINKS}/${x}" "${EROOT}/usr/bin/" "${TARGET}-${x}"
+		atomic_ln "${BINPATH}/${x}" "${ROOT}/${BINPATH_LINKS}" "${x}"
+		atomic_ln "${BINPATH_LINKS}/${x}" "${EROOT}/usr/bin/" "${TARGET}-${x}"
 		for fake in ${FAKE_TARGETS} ; do
 			[[ -f ${ENV_D}/config-${fake} ]] && continue
-			atomic_ln "${EROOT}/${BINPATH_LINKS}/${x}" "${EROOT}/usr/bin" "${fake}-${x}"
+			atomic_ln "${BINPATH_LINKS}/${x}" "${EROOT}/usr/bin" "${fake}-${x}"
 		done
 		if [[ ${TARGET} == ${HOST} ]] ; then
 			atomic_ln "${TARGET}-${x}" "${EROOT}/usr/bin" "${x}"
@@ -178,8 +163,7 @@ switch_profile() {
 	# Generate library / ldscripts symlinks
 	#
 	: ${LIBPATH:=/usr/lib/binutils/${TARGET}/${VER}}
-	[[ ${LIBPATH} == ${EPREFIX}* ]] && LIBPATH=${LIBPATH#${EPREFIX}}
-	cd "${EROOT}/${LIBPATH}" || exit 1
+	cd "${ROOT}/${LIBPATH}" || exit 1
 	if [[ ${TARGET} == ${HOST} ]] ; then
 		dstlib=${EROOT}/usr/${HOST}/lib
 	else
@@ -187,28 +171,23 @@ switch_profile() {
 	fi
 	# When upgrading, we need to clean up ldscripts and libs
 	mkdir -p "${dstlib}"
-	rm -rf "${EROOT}/${BINPATH_LINKS}"/ldscripts
-	# avoid pointless warning about removing non-existant ldscripts dir
-	if [[ -d ${EROOT}/${LIBPATH}/ldscripts ]] ; then
-		atomic_ln "${EROOT}/${LIBPATH}/ldscripts" "${dstlib}" "ldscripts"
-		find -L "${dstlib}" -type l -exec rm -v {} +
-	fi
+	rm -rf "${ROOT}/${BINPATH_LINKS}"/ldscripts
+	atomic_ln "${LIBPATH}/ldscripts" "${dstlib}" "ldscripts"
+	find -L "${dstlib}" -type l -exec rm -v {} +
 	for x in lib* ; do
-		# avoid symlink 'lib*' -> '/...' when no libs (native/nongnu binutils)
-		[[ ${x} != 'lib*' ]] || continue
-		atomic_ln "${EROOT}/${LIBPATH}/${x}" "${dstlib}" "${x}"
+		atomic_ln "${LIBPATH}/${x}" "${dstlib}" "${x}"
 	done
 
 	#
 	# Generate include symlinks
 	#
 	INCPATH=${LIBPATH}/include
-	if [[ -d ${EROOT}/${INCPATH} ]] ; then
-		cd "${EROOT}/${INCPATH}" || exit 1
+	if [[ -d ${ROOT}/${INCPATH} ]] ; then
+		cd "${ROOT}/${INCPATH}" || exit 1
 		if [[ ${HOST} == ${TARGET} ]] ; then
 			mkdir -p "${EROOT}/usr/include"
 			for x in * ; do
-				atomic_ln "${EROOT}/${INCPATH}/${x}" "${EROOT}/usr/include" "${x}"
+				atomic_ln "${INCPATH}/${x}" "${EROOT}/usr/include" "${x}"
 			done
 		else
 			# Clean out old path -- cannot use '-exec {} +' syntax here
@@ -223,7 +202,7 @@ switch_profile() {
 	# Make sure proper paths get updated
 	#
 	if [[ ${TARGET} == ${HOST} ]] ; then
-		DATAPATH=${EROOT}/usr/share/binutils-data/${TARGET}/${VER}
+		DATAPATH="${EPREFIX}"/usr/share/binutils-data/${TARGET}/${VER}
 		local e="${EROOT}"/etc/env.d/05binutils
 		local ee="${e}.tmp"
 		rm -f "${ee}"
@@ -233,7 +212,7 @@ switch_profile() {
 		if [[ -d ${EROOT}/etc/ld.so.conf.d ]] ; then
 			local l="${EROOT}"/etc/ld.so.conf.d/05binutils.conf
 			local ll="${l}.tmp"
-			echo "${EPREFIX}/usr/${TARGET}/lib" > "${ll}"
+			echo "/usr/${TARGET}/lib" > "${ll}"
 			mv_if_diff "${ll}" "${l}"
 		else
 			echo "LDPATH=${EPREFIX}/usr/${TARGET}/lib" >> "${ee}"
@@ -251,14 +230,12 @@ switch_profile() {
 	#
 	# Regen env.d if need/can be
 	#
-	if [[ ${ROOT} == / ]] && [[ ${TARGET} == ${HOST} ]] ; then
+	if [[ ${ROOT} == "/" ]] && [[ ${TARGET} == ${HOST} ]] ; then
 		env-update
 		echo
 		ewarn "Please remember to run:"
 		echo
-		ewarn " (bash) # . ${EPREFIX}/etc/profile"
-		ewarn "or"
-		ewarn " (tcsh) # source ${EPREFIX}/etc/csh.login"
+		ewarn "  # . /etc/profile"
 		echo
 	fi
 
@@ -283,12 +260,15 @@ uninstall_target() {
 		die "no profiles exist for '${TARGET}'"
 	fi
 
-	rm -f "${ENV_D}"/config-${TARGET} "${ROOT}"/etc/ld.so.conf.d/05binutils.conf
+	rm -f "${ENV_D}"/config-${TARGET} "${EROOT}"/etc/ld.so.conf.d/05binutils.conf
 
 	# XXX: we still leave behind FAKE_TARGETS in /usr/bin ...
 	local x
-	for x in addr2line ar as c++filt elf2flt flthdr gprof ld ld.real \
-	         nm objcopy objdump ranlib readelf size strings strip ; do
+	for x in \
+		addr2line ar as c++filt elf2flt elfedit flthdr gprof \
+		ld ld.{bfd,gold,real} \
+		nm objcopy objdump ranlib readelf size strings strip
+	do
 		x=(
 			"${EROOT}"/usr/bin/${TARGET}-${x}
 			"${EROOT}"/usr/{${HOST}/,}${TARGET}/bin/${x}
@@ -310,6 +290,8 @@ uninstall_target() {
 		"${destdir}"/{bin,include,lib,usr} \
 		"${destdir}" \
 		"${EROOT}"/var/db/pkg/cross-${TARGET} \
+		"${EROOT}"/usr/{${HOST}/,}${TARGET}/bin \
+		"${EROOT}"/usr/libexec/gcc/${TARGET} \
 		2>/dev/null
 
 	rm -f "${ENV_D}"/${TARGET}-*
@@ -390,7 +372,7 @@ switch_linker() {
 	esac
 
 	setup_env || return 1
-	bpath="${EROOT}/${BINPATH}"
+	bpath="${ROOT}/${BINPATH}"
 
 	# does this binutils even support the requested linker ?
 	if [[ ! -e ${bpath}/${ld} ]] ; then
@@ -440,7 +422,7 @@ while [[ $# -gt 0 ]] ; do
 		-h|--help)                 usage 0 ;;
 		-V|--version)
 			unset Header
-			cvsver="$Header: /var/cvsroot/gentoo-x86/sys-devel/binutils-config/files/binutils-config-3,v 1.9 2012/08/18 03:57:50 vapier Exp $"
+			cvsver="$Header: /var/cvsroot/gentoo-x86/sys-devel/binutils-config/files/binutils-config-3,v 1.11 2013/05/05 05:20:42 vapier Exp $"
 			cvsver=${cvsver##*binutils-config-}
 			bver=${cvsver%%,v *}
 			cvsver=${cvsver#* }

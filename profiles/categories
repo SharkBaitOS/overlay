@@ -157,3 +157,5 @@ x11-wm
 xfce-base
 xfce-extra
 virtual
+cross-armv7a-hardfloat-linux-gnueabi
+cross-armv5tel-softfloat-linux-gnueabi

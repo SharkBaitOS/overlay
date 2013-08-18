@@ -1,6 +1,186 @@
 # ChangeLog for sys-apps/portage
-# Copyright 1999-2012 Gentoo Foundation; Distributed under the GPL v2
-# $Id: ChangeLog 60419 2012-03-31 19:54:50Z grobian $
+# Copyright 1999-2013 Gentoo Foundation; Distributed under the GPL v2
+# $Id: ChangeLog 61638 2013-07-13 07:43:55Z grobian $
+
+*portage-2.2.01.22124-r1 (13 Jul 2013)
+
+  13 Jul 2013; Fabian Groffen <grobian@gentoo.org>
+  +portage-2.2.01.22124-r1.ebuild:
+  Bring ebuild in line with gentoo-x86 version
+
+*portage-2.2.01.22124 (10 Jul 2013)
+
+  10 Jul 2013; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.22124.ebuild,
+  -portage-2.2.01.22120.ebuild:
+  Version bump, matches 2.2.0_alpha188
+
+*portage-2.2.01.22120 (08 Jul 2013)
+
+  08 Jul 2013; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.22120.ebuild,
+  -portage-2.2.01.22007.ebuild:
+  Version bump, matches 2.2.0_alpha187
+
+*portage-2.2.01.22097 (29 Jun 2013)
+
+  29 Jun 2013; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.22097.ebuild,
+  -portage-2.2.01.21938.ebuild:
+  Version bump, matches v2.2.0_alpha186
+
+*portage-2.2.01.22013 (12 Jun 2013)
+
+  12 Jun 2013; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.22013.ebuild,
+  -portage-2.2.01.21890.ebuild:
+  bump for fix for bug #472984
+
+*portage-2.2.01.22007 (09 Jun 2013)
+
+  09 Jun 2013; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.22007.ebuild,
+  -portage-2.2.01.21882.ebuild:
+  Version bump, matches 2.2.0_alpha179
+
+*portage-2.2.01.21938 (05 May 2013)
+
+  05 May 2013; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.21938.ebuild,
+  -portage-2.2.01.21933.ebuild:
+  Bump for Darwin preserve-libs fix
+
+*portage-2.2.01.21933 (05 May 2013)
+
+  05 May 2013; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.21933.ebuild,
+  -portage-2.2.01.21864.ebuild:
+  Version bump, matches 2.2.0_alpha174
+
+*portage-2.2.01.21890 (02 Apr 2013)
+
+  02 Apr 2013; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.21890.ebuild,
+  -portage-2.2.01.21476.ebuild:
+  Version bump, matches v2.2.0_alpha171, fixes bug #460382
+
+*portage-2.2.01.21882 (31 Mar 2013)
+
+  31 Mar 2013; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.21882.ebuild,
+  -portage-2.2.01.21418.ebuild:
+  Version bump, matches 2.2.0_alpha170+
+
+*portage-2.2.01.21864 (24 Mar 2013)
+
+  24 Mar 2013; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.21864.ebuild,
+  -portage-2.2.01.21863.ebuild:
+  Apply patch for MacOSX sandbox by Michael Weiser, bug #462054
+
+*portage-2.2.01.21863 (24 Mar 2013)
+
+  24 Mar 2013; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.21863.ebuild,
+  -portage-2.2.01.21858.ebuild:
+  Version bump, more silent during bootstraps
+
+*portage-2.2.01.21858 (23 Mar 2013)
+
+  23 Mar 2013; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.21858.ebuild,
+  -portage-2.2.01.21688.ebuild:
+  Version bump, matches 2.2.0_alpha169+, fixes Error 35 on Darwin, bug #456296
+
+*portage-2.2.01.21688 (27 Jan 2013)
+
+  27 Jan 2013; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.21688.ebuild,
+  -portage-2.2.01.21580.ebuild:
+  Version bump, matches portage-2.2.0_alpha160+
+
+*portage-2.2.01.21580 (13 Jan 2013)
+
+  13 Jan 2013; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.21580.ebuild,
+  -portage-2.2.01.21313.ebuild:
+  Version bump, matches portage-2.2.0_alpha151.
+
+*portage-2.2.01.21476 (26 Dec 2012)
+
+  26 Dec 2012; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.21476.ebuild,
+  -portage-2.2.01.21165.ebuild:
+  Version bump, matches 2.2.0_alpha149+, fixes bugs #439488 and #442348
+
+*portage-2.2.01.21418 (02 Dec 2012)
+
+  02 Dec 2012; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.21418.ebuild,
+  -portage-2.2.01.21143.ebuild:
+  Version bump, matches 2.2.0_alpha144+, support for Python 3
+
+*portage-2.2.01.21313 (22 Oct 2012)
+
+  22 Oct 2012; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.21313.ebuild,
+  -portage-2.2.01.21003.ebuild:
+  Version bump, matches 2.2.0_alpha141+, has EAPI5 support
+
+*portage-2.2.01.21165 (30 Sep 2012)
+
+  30 Sep 2012; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.21165.ebuild,
+  -portage-2.2.01.20972.ebuild:
+  Version bump, matches 2.2.0_alpha134+, includes updated seatbelt/macosx
+  sandbox support
+
+*portage-2.2.01.21143 (26 Sep 2012)
+
+  26 Sep 2012; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.21143.ebuild,
+  -portage-2.2.01.20894.ebuild:
+  Version bump, matches v2.2.0_alpha133
+
+*portage-2.2.01.21003 (12 Sep 2012)
+
+  12 Sep 2012; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.21003.ebuild,
+  -portage-2.2.01.20837.ebuild:
+  Version bump, matches 2.2.0_alpha127
+
+*portage-2.2.01.20972 (09 Sep 2012)
+
+  09 Sep 2012; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.20972.ebuild,
+  -portage-2.2.01.20796.ebuild:
+  Version bump, matches 2.2.0_alpha125+
+
+*portage-2.2.01.20894 (27 Aug 2012)
+
+  27 Aug 2012; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.20894.ebuild,
+  -portage-2.2.01.20757.ebuild:
+  Version bump, matches 2.2.0_alpha123
+
+  20 Aug 2012; Fabian Groffen <grobian@gentoo.org> portage-2.2.01.20837.ebuild:
+  Up the requirement for bash to 4.1, since redirect_alloc_fd better relies on
+  bash' built-in to find a free filedescriptor than a rather Linux-specific way
+  to figure one out.
+
+  12 Aug 2012; Fabian Groffen <grobian@gentoo.org> portage-2.2.01.20837.ebuild:
+  Add sys-devel/patch to DEPEND for bug #429746
+
+  12 Aug 2012; Fabian Groffen <grobian@gentoo.org> portage-2.2.01.20837.ebuild:
+  Remove /etc/make.globals symlink code (bug #427862)
+
+*portage-2.2.01.20837 (12 Aug 2012)
+
+  12 Aug 2012; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.20837.ebuild,
+  -portage-2.2.01.20430.ebuild:
+  Version bump, matches 2.2.0_alpha121
+
+*portage-2.2.01.20796 (19 Jul 2012)
+
+  19 Jul 2012; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.20796.ebuild,
+  -portage-2.2.01.20389.ebuild:
+  Version bump, matches v2.2.0_alpha120
+
+*portage-2.2.01.20757 (08 Jul 2012)
+
+  08 Jul 2012; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.20757.ebuild:
+  Version bump, matches portage-2.2.0_alpha116+
+
+*portage-2.2.01.20430 (23 Apr 2012)
+
+  23 Apr 2012; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.20430.ebuild,
+  -portage-2.2.01.20271.ebuild, portage-2.2.01.20366.ebuild,
+  portage-2.2.01.20389.ebuild:
+  Version bump, matches 2.2.0_alpha101
+
+*portage-2.2.01.20389 (03 Apr 2012)
+
+  03 Apr 2012; Fabian Groffen <grobian@gentoo.org> +portage-2.2.01.20389.ebuild,
+  -portage-2.2.01.20239.ebuild:
+  Version bump, matches v2.2.0_alpha99+
 
 *portage-2.2.01.20366 (31 Mar 2012)
 

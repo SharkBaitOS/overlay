@@ -1,14 +1,14 @@
 # Copyright 1999-2013 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/sys-libs/glibc/glibc-2.17.ebuild,v 1.13 2013/04/28 04:00:36 vapier Exp $
+# $Header: /var/cvsroot/gentoo-x86/sys-libs/glibc/glibc-2.17.ebuild,v 1.16 2013/06/27 12:19:41 jer Exp $
 
-inherit eutils versionator toolchain-funcs flag-o-matic gnuconfig multilib unpacker multiprocessing
+inherit eutils versionator toolchain-funcs flag-o-matic gnuconfig multilib unpacker multiprocessing prefix
 
 DESCRIPTION="GNU libc6 (also called glibc2) C library"
 HOMEPAGE="http://www.gnu.org/software/libc/libc.html"
 
 LICENSE="LGPL-2.1+ BSD HPND ISC inner-net rc PCRE"
-KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86 ~amd64-linux ~x86-linux"
+KEYWORDS="~alpha ~amd64 ~arm hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86"
 RESTRICT="strip" # strip ourself #46186
 EMULTILIB_PKG="true"
 
@@ -24,7 +24,7 @@ case ${PV} in
 	RELEASE_VER=${PV}
 	;;
 esac
-PATCH_VER="5"                                  # Gentoo patchset
+PATCH_VER="7"                                  # Gentoo patchset
 NPTL_KERN_VER=${NPTL_KERN_VER:-"2.6.16"}       # min kernel version nptl requires
 
 IUSE="debug gd hardened multilib nscd selinux systemtap profile suid vanilla crosscompile_opts_headers-only"
@@ -189,6 +189,14 @@ eblit-src_unpack-post() {
 			nscd/Makefile \
 			|| die "Failed to ensure nscd builds with ssp-all"
 	fi
+
+	# RHEL(likely CentOS and SL) 5.6 have kernels with vdso bug,
+	#     https://bugzilla.redhat.com/show_bug.cgi?id=673616
+	# we disable vdso loading in ELF handler, as suggest by Mike Frysinger
+	#     http://article.gmane.org/gmane.comp.lib.glibc.user/1904
+	# Benda Xu <heroxbd@gentoo.org> (3 Jul, 2013)
+	elog "Your kernel is known to have vdso bug, disabling this feature"
+	epatch "${FILESDIR}"/2.17/vdso-disable.patch
 }
 
 eblit-pkg_preinst-post() {

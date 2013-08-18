@@ -1,0 +1,209 @@
+Index: binutils-config/files/binutils-config-3
+===================================================================
+--- binutils-config.orig/files/binutils-config-3	2013-07-01 00:00:01.290790244 +0900
++++ binutils-config/files/binutils-config-3	2013-07-01 00:27:56.899099185 +0900
+@@ -7,17 +7,23 @@
+ #  config-TARGET:	CURRENT=version for TARGET
+ #  TARGET-VER:		has a TARGET and VER variable
+ 
++EPREFIX="@GENTOO_PORTAGE_EPREFIX@"
++if [[ ${EPREFIX} == "@"GENTOO_PORTAGE_EPREFIX"@" ]] ; then
++       EPREFIX=""
++fi
++
+ : ${ROOT:=/}
+ [[ ${ROOT} != */ ]] && ROOT="${ROOT}/"
+ [[ ${ROOT} != /* ]] && ROOT="${PWD%/}/${ROOT}"
++EROOT="${ROOT%/}${EPREFIX}/"
+ 
+-cd /
++cd "${EPREFIX}"
+ 
+ trap ":" INT QUIT TSTP
+ 
+ argv0=${0##*/}
+-source /etc/init.d/functions.sh || {
+-	echo "${argv0}: Could not source /etc/init.d/functions.sh!" 1>&2
++source "${EPREFIX}"/etc/init.d/functions.sh || {
++	echo "${argv0}: Could not source ${EPREFIX}/etc/init.d/functions.sh!" 1>&2
+ 	exit 1
+ }
+ esyslog() { :; }
+@@ -123,14 +129,14 @@
+ 		# Newer paths: /usr/${HOST}/${TARGET}/...
+ 		# Older paths: /usr/${TARGET}/...
+ 		#
+-		if [[ -d ${ROOT}/usr/${HOST}/${TARGET}/binutils-bin/${VER} ]] ; then
+-			BINPATH=/usr/${HOST}/${TARGET}/binutils-bin/${VER}
+-			BINPATH_LINKS=/usr/libexec/gcc/${TARGET}
++		if [[ -d ${EROOT}/usr/${HOST}/${TARGET}/binutils-bin/${VER} ]] ; then
++			BINPATH="${EPREFIX}"/usr/${HOST}/${TARGET}/binutils-bin/${VER}
++			BINPATH_LINKS="${EPREFIX}"/usr/libexec/gcc/${TARGET}
+ 		fi
+ 	fi
+ 	if [[ -z ${BINPATH} ]] ; then
+-		BINPATH=/usr/${TARGET}/binutils-bin/${VER}
+-		BINPATH_LINKS=/usr/${TARGET}/bin
++		BINPATH="${EPREFIX}"/usr/${TARGET}/binutils-bin/${VER}
++		BINPATH_LINKS="${EPREFIX}"/usr/${TARGET}/bin
+ 	fi
+ }
+ 
+@@ -140,16 +146,16 @@
+ 	setup_env || return 1
+ 
+ 	cd "${ROOT}/${BINPATH}" || exit 1
+-	mkdir -p "${ROOT}/${BINPATH_LINKS}" "${ROOT}/usr/bin"
++	mkdir -p "${ROOT}/${BINPATH_LINKS}" "${EROOT}/usr/bin"
+ 	for x in * ; do
+ 		atomic_ln "${BINPATH}/${x}" "${ROOT}/${BINPATH_LINKS}" "${x}"
+-		atomic_ln "${BINPATH_LINKS}/${x}" "${ROOT}/usr/bin/" "${TARGET}-${x}"
++		atomic_ln "${BINPATH_LINKS}/${x}" "${EROOT}/usr/bin/" "${TARGET}-${x}"
+ 		for fake in ${FAKE_TARGETS} ; do
+ 			[[ -f ${ENV_D}/config-${fake} ]] && continue
+-			atomic_ln "${BINPATH_LINKS}/${x}" "${ROOT}/usr/bin" "${fake}-${x}"
++			atomic_ln "${BINPATH_LINKS}/${x}" "${EROOT}/usr/bin" "${fake}-${x}"
+ 		done
+ 		if [[ ${TARGET} == ${HOST} ]] ; then
+-			atomic_ln "${TARGET}-${x}" "${ROOT}/usr/bin" "${x}"
++			atomic_ln "${TARGET}-${x}" "${EROOT}/usr/bin" "${x}"
+ 		fi
+ 	done
+ 
+@@ -159,9 +165,9 @@
+ 	: ${LIBPATH:=/usr/lib/binutils/${TARGET}/${VER}}
+ 	cd "${ROOT}/${LIBPATH}" || exit 1
+ 	if [[ ${TARGET} == ${HOST} ]] ; then
+-		dstlib=${ROOT}/usr/${HOST}/lib
++		dstlib=${EROOT}/usr/${HOST}/lib
+ 	else
+-		dstlib=${ROOT}/usr/${HOST}/${TARGET}/lib
++		dstlib=${EROOT}/usr/${HOST}/${TARGET}/lib
+ 	fi
+ 	# When upgrading, we need to clean up ldscripts and libs
+ 	mkdir -p "${dstlib}"
+@@ -179,16 +185,16 @@
+ 	if [[ -d ${ROOT}/${INCPATH} ]] ; then
+ 		cd "${ROOT}/${INCPATH}" || exit 1
+ 		if [[ ${HOST} == ${TARGET} ]] ; then
+-			mkdir -p "${ROOT}/usr/include"
++			mkdir -p "${EROOT}/usr/include"
+ 			for x in * ; do
+-				atomic_ln "${INCPATH}/${x}" "${ROOT}/usr/include" "${x}"
++				atomic_ln "${INCPATH}/${x}" "${EROOT}/usr/include" "${x}"
+ 			done
+ 		else
+ 			# Clean out old path -- cannot use '-exec {} +' syntax here
+-			find . -type f -exec rm -f "${ROOT}/usr/${TARGET}/usr/include/{}" \;
+-			rmdir "${ROOT}/usr/${TARGET}/usr/include" >& /dev/null
+-			rmdir "${ROOT}/usr/${TARGET}/usr" >& /dev/null
+-			rmdir "${ROOT}/usr/${TARGET}" >& /dev/null
++			find . -type f -exec rm -f "${EROOT}/usr/${TARGET}/usr/include/{}" \;
++			rmdir "${EROOT}/usr/${TARGET}/usr/include" >& /dev/null
++			rmdir "${EROOT}/usr/${TARGET}/usr" >& /dev/null
++			rmdir "${EROOT}/usr/${TARGET}" >& /dev/null
+ 		fi
+ 	fi
+ 
+@@ -196,20 +202,20 @@
+ 	# Make sure proper paths get updated
+ 	#
+ 	if [[ ${TARGET} == ${HOST} ]] ; then
+-		DATAPATH=/usr/share/binutils-data/${TARGET}/${VER}
+-		local e="${ROOT}"/etc/env.d/05binutils
++		DATAPATH="${EPREFIX}"/usr/share/binutils-data/${TARGET}/${VER}
++		local e="${EROOT}"/etc/env.d/05binutils
+ 		local ee="${e}.tmp"
+ 		rm -f "${ee}"
+ 		[[ -d ${DATAPATH}/man  ]] && echo "MANPATH=${DATAPATH}/man"   >> "${ee}"
+ 		[[ -d ${DATAPATH}/info ]] && echo "INFOPATH=${DATAPATH}/info" >> "${ee}"
+ 		# hmm, `ld` has this in SEARCH_DIR(), but ld.so does not ...
+-		if [[ -d ${ROOT}/etc/ld.so.conf.d ]] ; then
+-			local l="${ROOT}"/etc/ld.so.conf.d/05binutils.conf
++		if [[ -d ${EROOT}/etc/ld.so.conf.d ]] ; then
++			local l="${EROOT}"/etc/ld.so.conf.d/05binutils.conf
+ 			local ll="${l}.tmp"
+ 			echo "/usr/${TARGET}/lib" > "${ll}"
+ 			mv_if_diff "${ll}" "${l}"
+ 		else
+-			echo "LDPATH=/usr/${TARGET}/lib" >> "${ee}"
++			echo "LDPATH=${EPREFIX}/usr/${TARGET}/lib" >> "${ee}"
+ 		fi
+ 		mv_if_diff "${ee}" "${e}"
+ 	fi
+@@ -254,7 +260,7 @@
+ 		die "no profiles exist for '${TARGET}'"
+ 	fi
+ 
+-	rm -f "${ENV_D}"/config-${TARGET} "${ROOT}"/etc/ld.so.conf.d/05binutils.conf
++	rm -f "${ENV_D}"/config-${TARGET} "${EROOT}"/etc/ld.so.conf.d/05binutils.conf
+ 
+ 	# XXX: we still leave behind FAKE_TARGETS in /usr/bin ...
+ 	local x
+@@ -264,28 +270,28 @@
+ 		nm objcopy objdump ranlib readelf size strings strip
+ 	do
+ 		x=(
+-			"${ROOT}"/usr/bin/${TARGET}-${x}
+-			"${ROOT}"/usr/{${HOST}/,}${TARGET}/bin/${x}
+-			"${ROOT}"/usr/libexec/gcc/${TARGET}/${x}
++			"${EROOT}"/usr/bin/${TARGET}-${x}
++			"${EROOT}"/usr/{${HOST}/,}${TARGET}/bin/${x}
++			"${EROOT}"/usr/libexec/gcc/${TARGET}/${x}
+ 		)
+ 		rm -f "${x[@]}"
+ 	done
+ 	for x in ansidecl.h bfd.h bfdlink.h dis-asm.h symcat.h ; do
+-		rm -f "${ROOT}"/usr/{${HOST}/,}${TARGET}/{usr/,}include/${x}
++		rm -f "${EROOT}"/usr/{${HOST}/,}${TARGET}/{usr/,}include/${x}
+ 	done
+ 	for x in bfd iberty opcodes ; do
+-		rm -f "${ROOT}"/usr/${HOST}/${TARGET}/lib/lib${x}{{-*,}.so,.a,.la}
++		rm -f "${EROOT}"/usr/${HOST}/${TARGET}/lib/lib${x}{{-*,}.so,.a,.la}
+ 	done
+ 	# Delete broken symlinks
+-	local destdir="${ROOT}/usr/${HOST}/${TARGET}"
++	local destdir="${EROOT}/usr/${HOST}/${TARGET}"
+ 	rm -f "${destdir}"/lib/ldscripts
+ 	find -L "${destdir}"/lib -type l -exec rm {} +
+ 	rmdir \
+ 		"${destdir}"/{bin,include,lib,usr} \
+ 		"${destdir}" \
+-		"${ROOT}"/var/db/pkg/cross-${TARGET} \
+-		"${ROOT}"/usr/{${HOST}/,}${TARGET}/bin \
+-		"${ROOT}"/usr/libexec/gcc/${TARGET} \
++		"${EROOT}"/var/db/pkg/cross-${TARGET} \
++		"${EROOT}"/usr/{${HOST}/,}${TARGET}/bin \
++		"${EROOT}"/usr/libexec/gcc/${TARGET} \
+ 		2>/dev/null
+ 
+ 	rm -f "${ENV_D}"/${TARGET}-*
+@@ -384,7 +390,7 @@
+ 	: ${HOST:=${CHOST:-$(portageq envvar CHOST)}}
+ }
+ 
+-ENV_D="${ROOT}etc/env.d/binutils"
++ENV_D="${EROOT}etc/env.d/binutils"
+ 
+ DEBUG="no"
+ NEED_ACTION="yes"
+Index: binutils-config/binutils-config-3-r3.ebuild
+===================================================================
+--- binutils-config.orig/binutils-config-3-r3.ebuild	2013-06-30 23:30:54.858130147 +0900
++++ binutils-config/binutils-config-3-r3.ebuild	2013-07-01 00:20:17.812822647 +0900
+@@ -13,7 +13,14 @@
+ 
+ RDEPEND="userland_GNU? ( !<sys-apps/findutils-4.2 )"
+ 
++inherit prefix
++
++src_unpack() {
++	cp "${FILESDIR}"/${P} ${PN} || die
++	eprefixify ${PN} || die
++}
++
+ src_install() {
+-	newbin "${FILESDIR}"/${PN}-${PV} ${PN} || die
++	dobin ${PN} || die
+ 	doman "${FILESDIR}"/${PN}.8
+ }

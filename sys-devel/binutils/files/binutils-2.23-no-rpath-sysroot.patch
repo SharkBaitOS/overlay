@@ -1,0 +1,44 @@
+do not prepend rpath with sysroot
+Index: binutils-2.23/ld/emultempl/elf32.em
+===================================================================
+--- binutils-2.23.orig/ld/emultempl/elf32.em
++++ binutils-2.23/ld/emultempl/elf32.em
+@@ -524,35 +524,10 @@ if [ "x${USE_LIBPATH}" = xyes ] ; then
+ static char *
+ gld${EMULATION_NAME}_add_sysroot (const char *path)
+ {
+-  int len, colons, i;
+-  char *ret, *p;
++  char *ret;
++  ret = xmalloc (strlen (path) + 1);
++  strcpy (ret, path);
+ 
+-  len = strlen (path);
+-  colons = 0;
+-  i = 0;
+-  while (path[i])
+-    if (path[i++] == config.rpath_separator)
+-      colons++;
+-
+-  if (path[i])
+-    colons++;
+-
+-  len = len + (colons + 1) * strlen (ld_sysroot);
+-  ret = xmalloc (len + 1);
+-  strcpy (ret, ld_sysroot);
+-  p = ret + strlen (ret);
+-  i = 0;
+-  while (path[i])
+-    if (path[i] == config.rpath_separator)
+-      {
+-	*p++ = path[i++];
+-	strcpy (p, ld_sysroot);
+-	p = p + strlen (p);
+-      }
+-    else
+-      *p++ = path[i++];
+-
+-  *p = 0;
+   return ret;
+ }
+ 

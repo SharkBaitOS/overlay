@@ -1,0 +1,117 @@
+diff --git a/gcc/Makefile.in b/gcc/Makefile.in
+index 6ddc853..5d91333 100644
+--- a/gcc/Makefile.in
++++ b/gcc/Makefile.in
+@@ -2059,7 +2059,8 @@ DRIVER_DEFINES = \
+   @TARGET_SYSTEM_ROOT_DEFINE@ \
+   $(VALGRIND_DRIVER_DEFINES) \
+   `test "X$${SHLIB}" = "X" || test "@enable_shared@" != "yes" || echo "-DENABLE_SHARED_LIBGCC"` \
+-  -DCONFIGURE_SPECS="\"@CONFIGURE_SPECS@\""
++  -DCONFIGURE_SPECS="\"@CONFIGURE_SPECS@\"" \
++  -DCONFIGURE_EXTRA_SPECS="@CONFIGURE_EXTRA_SPECS@"
+ 
+ gcc.o: gcc.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) intl.h multilib.h \
+     Makefile $(lang_specs_files) specs.h prefix.h $(GCC_H) $(FLAGS_H) \
+diff --git a/gcc/configure b/gcc/configure
+index 1e9be8e..8cab7d3 100755
+--- a/gcc/configure
++++ b/gcc/configure
+@@ -757,6 +757,7 @@ SET_MAKE
+ REPORT_BUGS_TEXI
+ REPORT_BUGS_TO
+ PKGVERSION
++CONFIGURE_EXTRA_SPECS
+ CONFIGURE_SPECS
+ CROSS_SYSTEM_HEADER_DIR
+ TARGET_SYSTEM_ROOT_DEFINE
+@@ -891,6 +892,7 @@ with_native_system_header_dir
+ with_build_sysroot
+ with_sysroot
+ with_specs
++with_extra_specs
+ with_pkgversion
+ with_bugurl
+ enable_languages
+@@ -1662,6 +1664,11 @@ Optional Packages:
+                           use sysroot as the system root during the build
+   --with-sysroot[=DIR]    search for usr/lib, usr/include, et al, within DIR
+   --with-specs=SPECS      add SPECS to driver command-line processing
++  --with-extra-specs=LIST A list of specs used to override the default. It
++                          should be a suitable initializer for an array of
++                          structures, each containing two strings, without the
++                          outermost pair of surrounding braces. Do not use it
++                          if you do not know what it is.
+   --with-pkgversion=PKG   Use PKG in the version string in place of "GCC"
+   --with-bugurl=URL       Direct users to URL to report a bug
+   --with-multilib-list    select multilibs (AArch64, SH and x86-64 only)
+@@ -7324,6 +7331,17 @@ fi
+ 
+ 
+ 
++# Check whether --with-extra-specs was given.
++if test "${with_extra_specs+set}" = set; then :
++  withval=$with_extra_specs; CONFIGURE_EXTRA_SPECS=$withval
++else
++  CONFIGURE_EXTRA_SPECS=
++
++fi
++
++
++
++
+ 
+ # Check whether --with-pkgversion was given.
+ if test "${with_pkgversion+set}" = set; then :
+@@ -17894,7 +17912,7 @@ else
+   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+   lt_status=$lt_dlunknown
+   cat > conftest.$ac_ext <<_LT_EOF
+-#line 17897 "configure"
++#line 17915 "configure"
+ #include "confdefs.h"
+ 
+ #if HAVE_DLFCN_H
+@@ -18000,7 +18018,7 @@ else
+   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+   lt_status=$lt_dlunknown
+   cat > conftest.$ac_ext <<_LT_EOF
+-#line 18003 "configure"
++#line 18021 "configure"
+ #include "confdefs.h"
+ 
+ #if HAVE_DLFCN_H
+diff --git a/gcc/configure.ac b/gcc/configure.ac
+index 116ba13..590ca64 100644
+--- a/gcc/configure.ac
++++ b/gcc/configure.ac
+@@ -813,6 +813,17 @@ AC_ARG_WITH(specs,
+ )
+ AC_SUBST(CONFIGURE_SPECS)
+ 
++AC_ARG_WITH(extra-specs,
++  [AS_HELP_STRING([--with-extra-specs=LIST],
++                  [A list of specs used to override the default. It should be a suitable \
++                   initializer for an array of structures, each containing two strings, \
++                   without the outermost pair of surrounding braces. Do not use it if you \
++                   do not know what it is.])],
++  [CONFIGURE_EXTRA_SPECS=$withval],
++  [CONFIGURE_EXTRA_SPECS=]
++)
++AC_SUBST(CONFIGURE_EXTRA_SPECS)
++
+ ACX_PKGVERSION([GCC])
+ ACX_BUGURL([http://gcc.gnu.org/bugs.html])
+ 
+diff --git a/gcc/gcc.c b/gcc/gcc.c
+index 7c15cf3..778ae7d 100644
+--- a/gcc/gcc.c
++++ b/gcc/gcc.c
+@@ -1318,7 +1318,7 @@ struct spec_list_1
+   const char *const ptr;
+ };
+ 
+-static const struct spec_list_1 extra_specs_1[] = { EXTRA_SPECS };
++static const struct spec_list_1 extra_specs_1[] = { EXTRA_SPECS, CONFIGURE_EXTRA_SPECS };
+ static struct spec_list *extra_specs = (struct spec_list *) 0;
+ #endif
+ 

@@ -173,6 +173,8 @@ for x in setup {pre,post}inst ; do
 done
 
 eblit-src_unpack-post() {
+	epatch "${FILESDIR}"/2.15/glibc-2.15-localstatedir-backport.patch
+
 	if use hardened ; then
 		cd "${S}"
 		einfo "Patching to get working PIE binaries on PIE (hardened) platforms"
