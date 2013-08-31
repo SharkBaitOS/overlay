@@ -1,0 +1,28 @@
+Index: gcc-4.2.4/gcc/config/i386/linux64.h
+===================================================================
+--- gcc-4.2.4.orig/gcc/config/i386/linux64.h
++++ gcc-4.2.4/gcc/config/i386/linux64.h
+@@ -48,8 +48,8 @@ along with GCC; see the file COPYING3.
+    When the -shared link option is used a final link is not being
+    done.  */
+ 
+-#define GLIBC_DYNAMIC_LINKER32 "/lib/ld-linux.so.2"
+-#define GLIBC_DYNAMIC_LINKER64 "/lib64/ld-linux-x86-64.so.2"
++#define GLIBC_DYNAMIC_LINKER32 "@GENTOO_PORTAGE_EPREFIX@/lib/ld-linux.so.2"
++#define GLIBC_DYNAMIC_LINKER64 "@GENTOO_PORTAGE_EPREFIX@/lib64/ld-linux-x86-64.so.2"
+ 
+ #undef	LINK_SPEC
+ #define LINK_SPEC "%{!m32:-m elf_x86_64} %{m32:-m elf_i386} \
+Index: gcc-4.2.4/gcc/config/i386/linux.h
+===================================================================
+--- gcc-4.2.4.orig/gcc/config/i386/linux.h
++++ gcc-4.2.4/gcc/config/i386/linux.h
+@@ -100,7 +100,7 @@ along with GCC; see the file COPYING3.
+ 
+ /* These macros may be overridden in k*bsd-gnu.h and i386/k*bsd-gnu.h. */
+ #define LINK_EMULATION "elf_i386"
+-#define GLIBC_DYNAMIC_LINKER "/lib/ld-linux.so.2"
++#define GLIBC_DYNAMIC_LINKER "@GENTOO_PORTAGE_EPREFIX@/lib/ld-linux.so.2"
+ 
+ #undef  SUBTARGET_EXTRA_SPECS
+ #define SUBTARGET_EXTRA_SPECS \

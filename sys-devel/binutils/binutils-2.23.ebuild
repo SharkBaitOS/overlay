@@ -17,8 +17,7 @@ src_unpack() {
 	epatch "${FILESDIR}"/${PN}-2.19.50.0.1-mint.patch
 	epatch "${FILESDIR}"/${PN}-2.23-mbstate_t.patch
 	epatch "${FILESDIR}"/${PN}-2.23-ar-ranlib-truncate.patch
-	is_cross || epatch "${FILESDIR}"/${PN}-2.23-no-ld-script-sysroot.patch
-	is_cross || epatch "${FILESDIR}"/${PN}-2.23-no-rpath-sysroot.patch
+	epatch "${FILESDIR}"/${PN}-2.23-runtime-sysroot.patch
 }
 
 src_compile() {
@@ -32,6 +31,8 @@ src_compile() {
 	case "${CTARGET}" in
 	*-interix*) EXTRA_ECONF="${EXTRA_ECONF} --without-gnu-ld --without-gnu-as" ;;
 	esac
+
+	use rap && EXTRA_ECONF+=" --disable-runtime-sysroot"
 
 	toolchain-binutils_src_compile
 }

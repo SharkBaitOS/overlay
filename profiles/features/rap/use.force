@@ -1,0 +1,5 @@
+# force Prefix
+prefix
+
+# force rap (Prefix with libc)
+rap
