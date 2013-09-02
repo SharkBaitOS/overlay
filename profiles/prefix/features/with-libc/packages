@@ -1,3 +1,0 @@
-# use OpenRC from gentoo-x86
--*sys-apps/baselayout-prefix
-*sys-apps/baselayout
