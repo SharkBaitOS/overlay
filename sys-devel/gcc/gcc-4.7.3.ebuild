@@ -49,14 +49,10 @@ src_unpack() {
 
 	toolchain_src_unpack
 
-        epatch "${FILESDIR}"/gcc-4.7-rap.patch
-	local dlf
-	case $(tc-arch) in
-	amd64) dlf=i386/linux64.h ;;
-	arm) dlf=arm/linux-eabi.h ;;
-	x86) dlf=i386/linux.h ;;
-        esac
-	eprefixify gcc/config/${dlf}
+        if use rap; then
+		epatch "${FILESDIR}"/gcc-4.7-rap.patch
+		prefix_gcc_dynamic_loader
+	fi
 
 	use vanilla && return 0
 
