@@ -1,0 +1,11 @@
+# kmod has not been prefixified
+-*virtual/modutils
+
+# shadow has not been prefixified
+-*virtual/shadow
+
+# don't need in rap
+-*virtual/dev-manager
+
+# permission is not handled by portage for normal users
+-*net-misc/iputils

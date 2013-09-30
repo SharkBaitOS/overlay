@@ -1,0 +1,15 @@
+# The default profiles (and IUSE defaults) introduce circular deps. By
+# shoving this USE line here, we can ensure that the
+# end-user always avoids circular deps while bootstrapping.
+
+berkdb 
+fortran
+gdbm
+git
+nls
+pcre
+ssl
+python
+readline
+acl
+

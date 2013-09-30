@@ -1,0 +1,8 @@
+# unmask prefix
+-prefix
+
+# sys-libs/gpm has not been prefixified
+gpm
+
+# sys-libs/pam has not been prefixified
+pam
