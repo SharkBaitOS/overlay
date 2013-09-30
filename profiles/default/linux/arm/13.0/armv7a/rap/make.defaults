@@ -1,3 +1,0 @@
-# accept unstable keyword before RAP matures
-# accept Prefix keyword to use Prefix overlay for transition
-ACCEPT_KEYWORDS="~arm ~arm-linux"

@@ -1,0 +1,28 @@
+Index: pax-utils-0.7/lddtree.py
+===================================================================
+--- pax-utils-0.7.orig/lddtree.py
++++ pax-utils-0.7/lddtree.py
+@@ -207,7 +207,7 @@ def LoadLdpaths(root='/'):
+       ldpaths['env'] = ParseLdPaths(env_ldpath, path='')
+ 
+   # Load up /etc/ld.so.conf.
+-  ldpaths['conf'] = ParseLdSoConf(root + 'etc/ld.so.conf', root=root)
++  ldpaths['conf'] = ParseLdSoConf(root + '@GENTOO_PORTAGE_EPREFIX@/etc/ld.so.conf', root=root)
+ 
+   return ldpaths
+ 
+@@ -311,9 +311,12 @@ def ParseELF(path, root='/', ldpaths={'c
+           'needed': [],
+         }
+         # XXX: Should read it and scan for /lib paths.
++
++        slibdir=os.path.dirname(interp)
++        libdir=os.path.dirname(slibdir) + '/usr/' + os.path.basename(slibdir)
+         ldpaths['interp'] = [
+-          normpath(root + os.path.dirname(interp)),
+-          normpath(root + '/usr' + os.path.dirname(interp)),
++          normpath(root + slibdir),
++          normpath(root + libdir),
+         ]
+         break
+ 

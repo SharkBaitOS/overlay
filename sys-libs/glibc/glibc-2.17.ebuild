@@ -195,11 +195,18 @@ eblit-src_unpack-post() {
 	# we disable vdso loading in ELF handler, as suggest by Mike Frysinger
 	#     http://article.gmane.org/gmane.comp.lib.glibc.user/1904
 	# Benda Xu <heroxbd@gentoo.org> (3 Jul, 2013)
+	elog "Your kernel is known to have vdso bug, disabling this feature"
+	epatch "${FILESDIR}"/2.17/vdso-disable.patch
+
 	epatch "${FILESDIR}"/2.17/locale-gen_prefix.patch
 	eprefixify "${WORKDIR}"/extra/locale/locale-gen
 
-	elog "Your kernel is known to have vdso bug, disabling this feature"
-	epatch "${FILESDIR}"/2.17/vdso-disable.patch
+	cd "${S}"
+	epatch "${FILESDIR}"/2.17/glibc-2.17-runtime-prefix.patch
+	eprefixify glibc-compat/nss_{compat/compat-{grp,{,s}pwd},files/files-netgrp}.c \
+		nis/nss_compat/compat-{grp,initgroups,{,s}pwd}.c \
+		nss/{db-Makefile,nss_files/files-init{,groups}.c} \
+		resolv/netdb.h sysdeps/{generic,unix/sysv/linux}/paths.h
 }
 
 eblit-pkg_preinst-post() {

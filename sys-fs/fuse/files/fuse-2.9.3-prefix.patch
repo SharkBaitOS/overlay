@@ -1,0 +1,32 @@
+Index: fuse-2.9.3/lib/mount_util.c
+===================================================================
+--- fuse-2.9.3.orig/lib/mount_util.c
++++ fuse-2.9.3/lib/mount_util.c
+@@ -97,9 +97,9 @@ static int add_mount(const char *prognam
+ 	if (res == 0) {
+ 		sigprocmask(SIG_SETMASK, &oldmask, NULL);
+ 		setuid(geteuid());
+-		execl("/bin/mount", "/bin/mount", "--no-canonicalize", "-i",
++		execl("@GENTOO_PORTAGE_EPREFIX@/usr/bin/mount", "@GENTOO_PORTAGE_EPREFIX@/usr/bin/mount", "--no-canonicalize", "-i",
+ 		      "-f", "-t", type, "-o", opts, fsname, mnt, NULL);
+-		fprintf(stderr, "%s: failed to execute /bin/mount: %s\n",
++		fprintf(stderr, "%s: failed to execute @GENTOO_PORTAGE_EPREFIX@/usr/bin/mount: %s\n",
+ 			progname, strerror(errno));
+ 		exit(1);
+ 	}
+Index: fuse-2.9.3/util/mount_util.c
+===================================================================
+--- fuse-2.9.3.orig/util/mount_util.c
++++ fuse-2.9.3/util/mount_util.c
+@@ -97,9 +97,9 @@ static int add_mount(const char *prognam
+ 	if (res == 0) {
+ 		sigprocmask(SIG_SETMASK, &oldmask, NULL);
+ 		setuid(geteuid());
+-		execl("/bin/mount", "/bin/mount", "--no-canonicalize", "-i",
++		execl("@GENTOO_PORTAGE_EPREFIX@/usr/bin/mount", "@GENTOO_PORTAGE_EPREFIX@/usr/bin/mount", "--no-canonicalize", "-i",
+ 		      "-f", "-t", type, "-o", opts, fsname, mnt, NULL);
+-		fprintf(stderr, "%s: failed to execute /bin/mount: %s\n",
++		fprintf(stderr, "%s: failed to execute @GENTOO_PORTAGE_EPREFIX@/usr/bin/mount: %s\n",
+ 			progname, strerror(errno));
+ 		exit(1);
+ 	}

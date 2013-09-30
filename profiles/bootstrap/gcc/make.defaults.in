@@ -1,3 +1,0 @@
-# libraries built in stage1 needs explicitly specified path
-LDFLAGS="-L@GENTOO_PORTAGE_EPREFIX@/tmp/usr/lib -Wl,-rpath=@GENTOO_PORTAGE_EPREFIX@/tmp/usr/lib"
-CPPFLAGS="-I@GENTOO_PORTAGE_EPREFIX@/tmp/usr/include"

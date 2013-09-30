@@ -1228,6 +1228,10 @@ gcc_do_configure() {
 			# use sysroot of toolchain to get currect include and library at
 			# compile time
 			confgcc+=( --with-sysroot="${EPREFIX}" )
+
+			# when doing cross compiling native for target, the build sysroot
+			# should be pointed to SYSROOT of the cross compiler.
+			tc-is-cross-compiler && confgcc+=( --with-build-sysroot="${ROOT}" )
 		fi
 	fi
 	# __cxa_atexit is "essential for fully standards-compliant handling of

@@ -1,0 +1,124 @@
+debug_init(): 30: return 0
+build_path(): 130: from: unionfs_post_opts():280 path: /home/benda/tmp/Build/posixovl/
+build_path(): 131: return 0
+build_path(): 130: from: unionfs_post_opts():280 path: /home/benda/gnto.recover/
+build_path(): 131: return 0
+unionfs_getattr(): 193: /
+find_rorw_branch(): 104: /
+find_branch(): 58: /
+build_path(): 130: from: find_branch():63 path: /home/benda/tmp/Build/posixovl/
+build_path(): 131: return 0
+find_branch(): 68: /home/benda/tmp/Build/posixovl/: res = 0
+find_branch(): 74: return 0
+find_rorw_branch(): 106: return 0
+build_path(): 130: from: unionfs_getattr():207 path: /home/benda/tmp/Build/posixovl/
+build_path(): 131: return 0
+unionfs_getattr(): 221: return 0
+unionfs_getattr(): 193: /
+find_rorw_branch(): 104: /
+find_branch(): 58: /
+build_path(): 130: from: find_branch():63 path: /home/benda/tmp/Build/posixovl/
+build_path(): 131: return 0
+find_branch(): 68: /home/benda/tmp/Build/posixovl/: res = 0
+find_branch(): 74: return 0
+find_rorw_branch(): 106: return 0
+build_path(): 130: from: unionfs_getattr():207 path: /home/benda/tmp/Build/posixovl/
+build_path(): 131: return 0
+unionfs_getattr(): 221: return 0
+unionfs_getattr(): 193: /.Trash
+find_rorw_branch(): 104: /.Trash
+find_branch(): 58: /.Trash
+build_path(): 130: from: find_branch():63 path: /home/benda/tmp/Build/posixovl/.Trash
+build_path(): 131: return 0
+find_branch(): 68: /home/benda/tmp/Build/posixovl/.Trash: res = -1
+path_hidden(): 58: /.Trash
+build_path(): 130: from: path_hidden():63 path: /home/benda/tmp/Build/posixovl/.unionfs/.Trash
+build_path(): 131: return 0
+filedir_hidden(): 45: /home/benda/tmp/Build/posixovl/.unionfs/.Trash_HIDDEN~
+filedir_hidden(): 51: return 0
+path_hidden(): 86: return 0
+build_path(): 130: from: find_branch():63 path: /home/benda/gnto.recover/.Trash
+build_path(): 131: return 0
+find_branch(): 68: /home/benda/gnto.recover/.Trash: res = -1
+path_hidden(): 58: /.Trash
+build_path(): 130: from: path_hidden():63 path: /home/benda/gnto.recover/.unionfs/.Trash
+build_path(): 131: return 0
+filedir_hidden(): 45: /home/benda/gnto.recover/.unionfs/.Trash_HIDDEN~
+filedir_hidden(): 51: return 0
+path_hidden(): 86: return 0
+find_branch(): 97: return -1
+find_rorw_branch(): 106: return -1
+unionfs_getattr(): 204: return -2
+unionfs_getattr(): 193: /.Trash-500
+find_rorw_branch(): 104: /.Trash-500
+find_branch(): 58: /.Trash-500
+build_path(): 130: from: find_branch():63 path: /home/benda/tmp/Build/posixovl/.Trash-500
+build_path(): 131: return 0
+find_branch(): 68: /home/benda/tmp/Build/posixovl/.Trash-500: res = -1
+path_hidden(): 58: /.Trash-500
+build_path(): 130: from: path_hidden():63 path: /home/benda/tmp/Build/posixovl/.unionfs/.Trash-500
+build_path(): 131: return 0
+filedir_hidden(): 45: /home/benda/tmp/Build/posixovl/.unionfs/.Trash-500_HIDDEN~
+filedir_hidden(): 51: return 0
+path_hidden(): 86: return 0
+build_path(): 130: from: find_branch():63 path: /home/benda/gnto.recover/.Trash-500
+build_path(): 131: return 0
+find_branch(): 68: /home/benda/gnto.recover/.Trash-500: res = -1
+path_hidden(): 58: /.Trash-500
+build_path(): 130: from: path_hidden():63 path: /home/benda/gnto.recover/.unionfs/.Trash-500
+build_path(): 131: return 0
+filedir_hidden(): 45: /home/benda/gnto.recover/.unionfs/.Trash-500_HIDDEN~
+filedir_hidden(): 51: return 0
+path_hidden(): 86: return 0
+find_branch(): 97: return -1
+find_rorw_branch(): 106: return -1
+unionfs_getattr(): 204: return -2
+unionfs_getattr(): 193: /.Trash
+find_rorw_branch(): 104: /.Trash
+find_branch(): 58: /.Trash
+build_path(): 130: from: find_branch():63 path: /home/benda/tmp/Build/posixovl/.Trash
+build_path(): 131: return 0
+find_branch(): 68: /home/benda/tmp/Build/posixovl/.Trash: res = -1
+path_hidden(): 58: /.Trash
+build_path(): 130: from: path_hidden():63 path: /home/benda/tmp/Build/posixovl/.unionfs/.Trash
+build_path(): 131: return 0
+filedir_hidden(): 45: /home/benda/tmp/Build/posixovl/.unionfs/.Trash_HIDDEN~
+filedir_hidden(): 51: return 0
+path_hidden(): 86: return 0
+build_path(): 130: from: find_branch():63 path: /home/benda/gnto.recover/.Trash
+build_path(): 131: return 0
+find_branch(): 68: /home/benda/gnto.recover/.Trash: res = -1
+path_hidden(): 58: /.Trash
+build_path(): 130: from: path_hidden():63 path: /home/benda/gnto.recover/.unionfs/.Trash
+build_path(): 131: return 0
+filedir_hidden(): 45: /home/benda/gnto.recover/.unionfs/.Trash_HIDDEN~
+filedir_hidden(): 51: return 0
+path_hidden(): 86: return 0
+find_branch(): 97: return -1
+find_rorw_branch(): 106: return -1
+unionfs_getattr(): 204: return -2
+unionfs_getattr(): 193: /.Trash-500
+find_rorw_branch(): 104: /.Trash-500
+find_branch(): 58: /.Trash-500
+build_path(): 130: from: find_branch():63 path: /home/benda/tmp/Build/posixovl/.Trash-500
+build_path(): 131: return 0
+find_branch(): 68: /home/benda/tmp/Build/posixovl/.Trash-500: res = -1
+path_hidden(): 58: /.Trash-500
+build_path(): 130: from: path_hidden():63 path: /home/benda/tmp/Build/posixovl/.unionfs/.Trash-500
+build_path(): 131: return 0
+filedir_hidden(): 45: /home/benda/tmp/Build/posixovl/.unionfs/.Trash-500_HIDDEN~
+filedir_hidden(): 51: return 0
+path_hidden(): 86: return 0
+build_path(): 130: from: find_branch():63 path: /home/benda/gnto.recover/.Trash-500
+build_path(): 131: return 0
+find_branch(): 68: /home/benda/gnto.recover/.Trash-500: res = -1
+path_hidden(): 58: /.Trash-500
+build_path(): 130: from: path_hidden():63 path: /home/benda/gnto.recover/.unionfs/.Trash-500
+build_path(): 131: return 0
+filedir_hidden(): 45: /home/benda/gnto.recover/.unionfs/.Trash-500_HIDDEN~
+filedir_hidden(): 51: return 0
+path_hidden(): 86: return 0
+find_branch(): 97: return -1
+find_rorw_branch(): 106: return -1
+unionfs_getattr(): 204: return -2
+main(): 839: return 0

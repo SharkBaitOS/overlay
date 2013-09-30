@@ -74,7 +74,7 @@ glibc_do_configure() {
 		--host=${CTARGET_OPT:-${CTARGET}}
 		$(use_enable profile)
 		$(use_with gd)
-		--with-headers="${EPREFIX}$(alt_build_headers)"
+		--with-headers="$(alt_build_headers)"
 		--prefix="${TPREFIX}/usr"
 		--libdir="${TPREFIX}/usr/$(get_libdir)"
 		--mandir="${TPREFIX}/usr/share/man"
@@ -201,7 +201,7 @@ toolchain-glibc_headers_compile() {
 		--enable-bind-now
 		--build=${CBUILD_OPT:-${CBUILD}}
 		--host=${CTARGET_OPT:-${CTARGET}}
-		--with-headers="${EPREFIX}$(alt_build_headers)"
+		--with-headers="$(alt_build_headers)"
 		--prefix="${TPREFIX}/usr"
 		${EXTRA_ECONF}
 	)
