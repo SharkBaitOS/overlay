@@ -398,3 +398,29 @@ Index: work/glibc-2.17/sysdeps/unix/sysv/linux/paths.h
  #define	_PATH_VARTMP	"/var/tmp/"
  
  #endif /* !_PATHS_H_ */
+Index: work/glibc-2.17/nss/bug-erange.c
+===================================================================
+--- work.orig/glibc-2.17/nss/bug-erange.c
++++ work/glibc-2.17/nss/bug-erange.c
+@@ -37,7 +37,7 @@ main (void)
+     {
+       printf ("gethostbyname_r failed: %s (errno: %m)\n", strerror (res));
+ 
+-      if (access ("/etc/resolv.conf", R_OK))
++      if (access ("@GENTOO_PORTAGE_EPREFIX@/etc/resolv.conf", R_OK))
+ 	{
+ 	  puts ("DNS probably not set up");
+ 	  return 0;
+Index: work/glibc-2.17/resolv/resolv.h
+===================================================================
+--- work.orig/glibc-2.17/resolv/resolv.h
++++ work/glibc-2.17/resolv/resolv.h
+@@ -170,7 +170,7 @@ typedef struct __res_state *res_state;
+  */
+ 
+ #ifndef _PATH_RESCONF
+-#define _PATH_RESCONF        "/etc/resolv.conf"
++#define _PATH_RESCONF        "@GENTOO_PORTAGE_EPREFIX@/etc/resolv.conf"
+ #endif
+ 
+ struct res_sym {

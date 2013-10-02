@@ -205,8 +205,8 @@ eblit-src_unpack-post() {
 	epatch "${FILESDIR}"/2.17/glibc-2.17-runtime-prefix.patch
 	eprefixify glibc-compat/nss_{compat/compat-{grp,{,s}pwd},files/files-netgrp}.c \
 		nis/nss_compat/compat-{grp,initgroups,{,s}pwd}.c \
-		nss/{db-Makefile,nss_files/files-init{,groups}.c} \
-		resolv/netdb.h sysdeps/{generic,unix/sysv/linux}/paths.h
+		nss/{db-Makefile,{bug-erange,nss_files/files-init{,groups}}.c} \
+		resolv/{netdb,resolv}.h sysdeps/{generic,unix/sysv/linux}/paths.h
 }
 
 eblit-pkg_preinst-post() {
