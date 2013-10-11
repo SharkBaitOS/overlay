@@ -424,3 +424,29 @@ Index: work/glibc-2.17/resolv/resolv.h
  #endif
  
  struct res_sym {
+Index: work/glibc-2.17/sysdeps/posix/system.c
+===================================================================
+--- work.orig/glibc-2.17/sysdeps/posix/system.c
++++ work/glibc-2.17/sysdeps/posix/system.c
+@@ -26,7 +26,7 @@
+ #include <sysdep-cancel.h>
+ 
+ 
+-#define	SHELL_PATH	"/bin/sh"	/* Path of the shell.  */
++#define	SHELL_PATH	"@GENTOO_PORTAGE_EPREFIX@/bin/sh"	/* Path of the shell.  */
+ #define	SHELL_NAME	"sh"		/* Name to give it.  */
+ 
+ 
+Index: work/glibc-2.17/libio/iopopen.c
+===================================================================
+--- work.orig/glibc-2.17/libio/iopopen.c
++++ work/glibc-2.17/libio/iopopen.c
+@@ -222,7 +222,7 @@ _IO_new_proc_open (fp, command, mode)
+ 	    _IO_close (fd);
+ 	}
+ 
+-      _IO_execl ("/bin/sh", "sh", "-c", command, (char *) 0);
++      _IO_execl ("@GENTOO_PORTAGE_EPREFIX@/bin/sh", "sh", "-c", command, (char *) 0);
+       _IO__exit (127);
+     }
+   _IO_close (child_end);
