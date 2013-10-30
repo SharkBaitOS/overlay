@@ -367,6 +367,11 @@ bootstrap_tree() {
 	# this is ugly, we have to put the temperory rap overlay somewhere
 	PORTDIR="${PORTDIR_RAP}" \
 		do_tree http://dev.gentoo.org/~heroxbd rap-overlay.tar.bz2
+		
+	# Add corrected ebuilds to rap-overlay: perl, portage, openrc
+	bzip2 -dc "${ROOT}/../rap-overlay-perl.tar.bz2" | $TAR -xf - -C ${PORTDIR_RAP%portage}
+	bzip2 -dc "${ROOT}/../rap-overlay-openrc.tar.bz2" | $TAR -xf - -C ${PORTDIR_RAP%portage}
+	bzip2 -dc "${ROOT}/../rap-overlay-portage.tar.bz2" | $TAR -xf - -C ${PORTDIR_RAP%portage}
 }
 
 bootstrap_latest_tree() {
@@ -586,8 +591,12 @@ bootstrap_gnu() {
 	[[ ${PN} == "coreutils" ]] && \
 		myconf="${myconf} --disable-acl --without-gmp"
 
-	[[ ${PN} == "gcc" ]] && myconf="${myconf} --disable-bootstrap --enable-languages=c\
-		--disable-multilib"
+	if [[ ${PN} == "gcc" ]] ; then 
+	        myconf="${myconf} --disable-bootstrap --enable-languages=c\
+		--disable-multilib --with-sysroot=/usr/local/x86_64-linux-gnu/x86_64-linux-gnu/sys-root\
+		--disable-libssp --disable-libgomp --disable-libquadmath --disable-decimal-float  --disable-threads\
+		--without-ppl --without-cloog "
+        fi
 
 	if [[ ${PN} == "coreutils" && ${CHOST} == *-interix* ]] ; then
 		# Interix doesn't have filesystem listing stuff, but that means all
@@ -614,7 +623,11 @@ bootstrap_gnu() {
 	if [[ ${PN} == "make" && $(type -t $MAKE) != "file" ]]; then
 		./build.sh || return 1
 	else
+	    if [[ ${PN} == "gcc" ]] ; then
+	        $MAKE ${MAKEOPTS} gcc_cv_libc_provides_ssp=yes || return 1
+	    else
 		$MAKE ${MAKEOPTS} || return 1
+	    fi
 	fi
 
 	einfo "Installing ${PN}"
@@ -932,7 +945,11 @@ bootstrap_stage1() {
 	[[ $(uniq --version 2>&1) == *"(GNU coreutils) "[6789]* ]] \
 		|| (bootstrap_coreutils) || return 1
 	[[ $(find --version 2>&1) == *GNU* ]] || (bootstrap_findutils) || return 1
-	[[ $(tar --version 2>&1) == *GNU* ]] || (bootstrap_tar) || return 1
+# Synology gives a tar from busybox which does not handle all required options
+#       [[ $(tar --version 2>&1) == *GNU* ]] ||
+        (bootstrap_tar) || return 1
+# Synology also gives gzip through busybox which does not handle all required options
+        (bootstrap_gzip) || return 1
 	[[ $(patch --version 2>&1) == *"GNU patch 2."7* ]] || (bootstrap_patch) || return 1
 	[[ $(grep --version 2>&1) == *GNU* ]] || (bootstrap_grep) || return 1
 	[[ $(awk --version < /dev/null 2>&1) == *GNU* ]] || bootstrap_gawk || return 1
@@ -1052,9 +1069,13 @@ bootstrap_stage3() {
 
 	set_profile 1
 	# --oneshot --nodeps
+        # synology toolchain is still using only sys-root, hence add some to the make.defaults
+        echo "CFLAGS=-I${ROOT}/usr/include"  >> "${PORTDIR_RAP}"/profiles/bootstrap/glibc/make.defaults
+        echo "LDFLAGS=\"-L${ROOT}/usr/lib64 -Wl,-rpath=${ROOT}/usr/lib64\""  >> "${PORTDIR_RAP}"/profiles/bootstrap/glibc/make.defaults
+	# export LD_LIBRARY_PATH=${ROOT}/usr/lib64
 	local pkgs=(
 		sys-apps/sed
-		"<app-shells/bash-4.2_p20"  # higher versions require readline
+		"<app-shells/bash-4.2_p20"  # higher versions requires readline
 		app-arch/xz-utils
 		sys-apps/baselayout-prefix
 		sys-devel/m4
@@ -1071,6 +1092,11 @@ bootstrap_stage3() {
 	)
 
 	emerge_pkgs --nodeps "${pkgs[@]}" || return 1
+
+	gcc-config -l
+	
+	# undo make.defaults change made above
+	set_profile 1
 
 	echo 'int main() {}' > test-rpath.c
 	gcc -o test-rpath test-rpath.c
@@ -1094,8 +1120,15 @@ EOF
 		fi
 	fi
 
+	# inject a link to gcc to /usr/bin/cc
+	if [[ ! -x "${ROOT}"/usr/bin/cc ]]; then
+	  ln -s $(which gcc) "${ROOT}"/usr/bin/cc
+	fi
+	
 	pkgs=( sys-libs/glibc )
 	emerge_pkgs --nodeps "${pkgs[@]}" || return 1
+
+#	unset LD_LIBRARY_PATH
 
 	# in gcc bootstrap stage 1, xgcc/cc1 and friends may be linked against libgcc_s.so of
 	# the old gcc, which cannot be found on new RAP. Append that directory to ld.so.conf
@@ -1135,9 +1168,21 @@ EOF
 	)
 	emerge_pkgs --nodeps "${pkgs[@]}" || return 1
 
-	# --oneshot
+	# Synology does not have /usr/include
+	# Python will not be able to build if /usr/include/[sys,netinet] are not found, make a temporary link
+	if [ ! -d /usr/include ]; then
+	  cat << EOF
+Python will not be able to build if /usr/include/[sys,netinet,and others] are not found as well
+Make a link from ${ROOT}/usr/include to /usr/include and renew the bootstrap-rap.sh command
+to continue from here on.
+
+EOF
+	  return 1
+	fi
+	       
+       	# --oneshot
 	local pkgs=(
-		net-misc/wget
+		"<net-misc/wget-1.14" # otherwise pulls in util-linux which links to perl using gdbm and berkdb that are missing
 		sys-apps/acl
 	)
 	emerge_pkgs "" "${pkgs[@]}" || return 1
@@ -1152,6 +1197,11 @@ EOF
 	# the -I directions set by the profile
 	export CPPFLAGS="${CPPFLAGS} -DNO_LARGEFILE_SOURCE"
 
+	# Synology or not ? : you may however encounter error due to missing fetched file python-gentoo-patches-3.2.3-0.tar.bz2
+	# in such case manually download at http://mirror.meleeweb.net/pub/linux/gentoo/distfiles/python-gentoo-patches-3.2.3-0.tar.bz2
+	# the same happened for python-gentoo-patches-3.3.2-1.tar.xz, hence we do not ask for it
+	echo ">=dev-lang/python-3.3" >> "${ROOT}/etc/portage/package.mask"
+	sed -i -e "1i PYTHON_TARGETS=\"python2_7 python3_2\"" "${ROOT}/etc/portage/make.conf"
 	# disable collision-protect to overwrite the bootstrapped portage
 	FEATURES="-collision-protect" emerge_pkgs "" "sys-apps/portage" || return 1
 
@@ -1163,25 +1213,143 @@ EOF
 	fi
 
 	set_profile 2
-
 	# Portage should figure out itself what it needs to do, if anything
+	
+	##########################################################################################
+	# Problem here as the lib directory is not always a symlink.                             #
+	# You need to manually move files and create a symlink lib to the correct lib64 or lib32 #
+	##########################################################################################
+	
+	# Taking off some packages that may either not build correctly or have nothing to do in prefix, even if rap.
+	cat << __END__ >> "${ROOT}/usr/local/portage/profiles/features/rap/packages"
+
+# Here we remove packages that default/linux/packages pulls in and have no
+# business being in Gentoo Prefix
+-*sys-apps/busybox
+# we keep that one as wget may use it.  TS
+#-*sys-apps/util-linux
+
+# This file removes everything from the base profile which is not
+# necessary/desired in a prefix environment.
+-*>=sys-apps/baselayout-2
+-*net-misc/iputils
+-*sys-apps/kbd
+-*sys-process/procps
+-*sys-process/psmisc
+-*sys-fs/e2fsprogs
+-*virtual/dev-manager
+-*virtual/modutils
+-*virtual/shadow
+
+# add back prefix baselayout
+*sys-apps/baselayout-prefix
+
+__END__
+
+	
+	# For some obscure reason gettext is required but not installed (msgfmt missing)
+	USE=-git emerge -u gettext || return 1
+	
+        einfo "Emerging system..."
+        sed -i -e "1i USE=-ssl" "${EPREFIX}"/etc/portage/make.conf 
 	USE=-git emerge -u system || return 1
 
-	if [[ ! -f ${EPREFIX}/etc/portage/make.conf ]] ; then
+	# remove anything that we don't need (compilers most likely)
+	emerge --depclean
+	
+	#
+	#if [[ ! -f ${EPREFIX}/etc/portage/make.conf ]] ; then
 		{
-			echo 'USE="unicode nls"'
+			echo 'USE="unicode nls -ssl"'
 			echo 'CFLAGS="${CFLAGS} -O2 -pipe"'
 			echo 'CXXFLAGS="${CFLAGS}"'
 			echo "MAKEOPTS=\"${MAKEOPTS}\""
+			echo "PYTHON_TARGETS=\"python2_7 python3_2\""
 			echo "# be careful with this one, don't just remove it!"
 			echo "PREFIX_DISABLE_GEN_USR_LDSCRIPT=yes"
 		} > "${EPREFIX}"/etc/portage/make.conf
-	fi
+	#
 
 	einfo "stage3 successfully finished"
 }
 
 bootstrap_interactive() {
+	# immediately die on platforms that we know are impossible due to
+	# brain-deadness (Debian/Ubuntu) or extremely hard dependency chains
+	# (TODO NetBSD/OpenBSD)
+	case ${CHOST} in
+		*-linux-gnu)
+			local toolchain_impossible=
+			# Figure out if this is Ubuntu...
+			if [[ $(lsb_release -is 2>/dev/null) == "Ubuntu" ]] ; then
+				case "$(lsb_release -sr)" in
+					[456789].*|10.*)
+						: # good versions
+						;;
+					*)
+						# Debian/Ubuntu have seriously fscked up their
+						# toolchain to support their multi-arch crap
+						# since Natty (11.04) that noone really wants,
+						# and certainly not upstream.  Some details:
+						# https://bugs.launchpad.net/ubuntu/+source/binutils/+bug/738098
+						toolchain_impossible="Ubuntu >= 11.04 (Natty)"
+						;;
+				esac
+			fi
+			# Figure out if this is Debian
+			if [[ -e /etc/debian_release ]] ; then
+				case "$(< /etc/debian_release)" in
+					hamm/*|slink/*|potato/*|woody/*|sarge/*|etch/*|lenny/*|squeeze/*)
+						: # good versions
+						;;
+					*)
+						# Debian introduced their big crap since Wheezy
+						# (7.0), like for Ubuntu, see above
+						toolchain_impossible="Debian >= 7.0 (Wheezy)"
+						;;
+				esac
+			fi
+			if [[ -n ${toolchain_impossible} ]] ; then
+				# In short, it's impossible for us to compile a
+				# compiler, since 1) gcc picks up our ld, which doesn't
+				# support sysroot (can work around with a wrapper
+				# script), 2) headers and libs aren't found (symlink
+				# them to Prefix), 3) stuff like crtX.i isn't found
+				# during bootstrap, since the bootstrap compiler doesn't
+				# get any of our flags and doesn't know where to find
+				# them (even if we copied them).  So we cannot do this,
+				# unless we use the Ubuntu patches in our ebuilds, which
+				# is a NO-GO area.
+				cat << EOF
+Oh My!  ${toolchain_impossible}!  AAAAAAAAAAAAAAAAAAAAARGH!  HELL comes over me!
+
+EOF
+				echo -n "..."
+				sleep 1
+				echo -n "."
+				sleep 1
+				echo -n "."
+				sleep 1
+				echo -n "."
+				sleep 1
+				echo
+				echo
+				cat << EOF
+and over you.  You're on the worst Linux distribution from a developer's
+(and so Gentoo Prefix) perspective since http://wiki.debian.org/Multiarch/.
+Due to this multi-arch idea, it is IMPOSSIBLE for Gentoo Prefix to
+bootstrap a compiler without using Debuntu patches, which is an absolute
+NO-GO area!  GCC and binutils upstreams didn't just reject those patches
+for fun.
+
+I really can't help you, and won't waste any of your time either.  The
+story simply ends here.  Sorry.
+EOF
+				exit 1
+			fi
+			;;
+	esac
+
 	cat <<"EOF"
 
 
@@ -1697,7 +1865,7 @@ EOF
 
 	# Don't confuse Portage with a possibly slightly differing CHOST
 	unset CHOST
-
+	
 	if ! emerge -e system ; then
 		# emerge -e system fail
 		cat << EOF
