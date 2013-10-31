@@ -208,6 +208,7 @@ eblit-src_unpack-post() {
 		nss/{db-Makefile,{bug-erange,nss_files/files-init{,groups}}.c} \
 		resolv/{netdb,resolv}.h sysdeps/{{generic,unix/sysv/linux}/paths.h,posix/system.c} \
 		libio/iopopen.c
+	epatch "${FILESDIR}"/${PV}/${P}-shadow-prefix.patch
 }
 
 eblit-pkg_preinst-post() {
