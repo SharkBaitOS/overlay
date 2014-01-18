@@ -1,0 +1,113 @@
+use pkg-config to configure libxml2
+
+Index: squid-3.3.9/src/Makefile.am
+===================================================================
+--- squid-3.3.9.orig/src/Makefile.am
++++ squid-3.3.9/src/Makefile.am
+@@ -82,7 +82,7 @@ ESI_LOCAL_LIBS = \
+ 	esi/libesi.la \
+ 	$(top_builddir)/lib/libTrie/src/libTrie.a
+ ESI_LIBS = $(ESI_LOCAL_LIBS) \
+-	$(XMLLIB) \
++	${libxml2_LIBS} \
+ 	$(EXPATLIB)
+ else
+ ESI_LIBS = 
+Index: squid-3.3.9/configure.ac
+===================================================================
+--- squid-3.3.9.orig/configure.ac
++++ squid-3.3.9/configure.ac
+@@ -941,44 +941,20 @@ if test "x$squid_opt_use_esi" = "xyes" -
+   fi
+ fi
+ 
++dnl Necessary if the first PKG_CHECK_MODULES call is conditional
++PKG_PROG_PKG_CONFIG
++
+ AC_ARG_WITH(libxml2, AS_HELP_STRING([--without-libxml2],[Do not use libxml2 for ESI. Default: auto-detect]))
+ if test "x$squid_opt_use_esi" = "xyes" -a "x$with_libxml2" != "xno" ; then
+-  AC_CHECK_LIB([xml2], [main], [XMLLIB="-lxml2"; HAVE_LIBXML2=1])
+-  dnl Find the main header and include path...
+-  AC_CACHE_CHECK([location of libxml2 include files], [ac_cv_libxml2_include], [
+-    AC_CHECK_HEADERS([libxml/parser.h], [], [
+-      AC_MSG_NOTICE([Testing in /usr/include/libxml2])
+-      SAVED_CPPFLAGS="$CPPFLAGS"
+-      CPPFLAGS="-I/usr/include/libxml2 $CPPFLAGS"
+-      unset ac_cv_header_libxml_parser_h
+-      AC_CHECK_HEADERS([libxml/parser.h], [ac_cv_libxml2_include="-I/usr/include/libxml2"], [
+-        AC_MSG_NOTICE([Testing in /usr/local/include/libxml2])
+-        CPPFLAGS="-I/usr/local/include/libxml2 $SAVED_CPPFLAGS"
+-        unset ac_cv_header_libxml_parser_h
+-        AC_CHECK_HEADERS([libxml/parser.h], [ac_cv_libxml2_include="-I/usr/local/include/libxml2"], [
+-          AC_MSG_NOTICE([Failed to find libxml2 header file libxml/parser.h])
+-        ])
+-      ])
+-      CPPFLAGS="$SAVED_CPPFLAGS"
+-    ])
+-  ])
+-  if test "x$ac_cv_libxml2_include" != "x"; then
+-      SQUID_CXXFLAGS="$ac_cv_libxml2_include $SQUID_CXXFLAGS"
+-      CPPFLAGS="$ac_cv_libxml2_include $CPPFLAGS"
+-  fi
+-  dnl Now that we know where to look find the headers...
+-  AC_CHECK_HEADERS(libxml/parser.h libxml/HTMLparser.h libxml/HTMLtree.h)
+-  AC_DEFINE_UNQUOTED(HAVE_LIBXML2, $HAVE_LIBXML2, [Define to 1 if you have the libxml2 library])
+-  if test "x$with_libxml2" = "xyes" -a "$HAVE_LIBXML2" != "1" ; then
+-    AC_MSG_ERROR([Required library libxml2 is not able to be found.])
+-  fi
++  PKG_CHECK_MODULES([libxml2], [libxml-2.0], \
++    [AC_DEFINE_UNQUOTED(HAVE_LIBXML2, 1, [Define to 1 if you have the libxml2 library]) \
++      AM_CONDITIONAL(HAVE_LIBXML2, true)], \
++    AC_MSG_ERROR([Required library libxml2 is not able to be found.]))
+ fi
+ 
+ AM_CONDITIONAL(USE_ESI, test "x$squid_opt_use_esi" = "xyes")
+ AM_CONDITIONAL(HAVE_LIBEXPAT, test "$HAVE_LIBEXPAT" = 1)
+ AC_SUBST(EXPATLIB)
+-AM_CONDITIONAL(HAVE_LIBXML2, test "$HAVE_LIBXML2" = 1)
+-AC_SUBST(XMLLIB)
+ 
+ # icap argument handling
+ AC_ARG_ENABLE(icap-client,
+@@ -1011,9 +987,6 @@ AC_MSG_RESULT([$squid_opt_use_ecap, expl
+     ]
+ )
+ 
+-dnl Necessary if the first PKG_CHECK_MODULES call is conditional
+-PKG_PROG_PKG_CONFIG
+-
+ dnl Perform configuration consistency checks for eCAP
+ if test "x$squid_opt_use_ecap" != "xno";
+ then
+Index: squid-3.3.9/src/esi/Libxml2Parser.h
+===================================================================
+--- squid-3.3.9.orig/src/esi/Libxml2Parser.h
++++ squid-3.3.9/src/esi/Libxml2Parser.h
+@@ -47,15 +47,9 @@
+ #define OLD_FREE free
+ #undef free
+ #endif
+-#if HAVE_LIBXML_PARSER_H
+ #include <libxml/parser.h>
+-#endif
+-#if HAVE_LIBXML_HTMLPARSER_H
+ #include <libxml/HTMLparser.h>
+-#endif
+-#if HAVE_LIBXML_HTMLTREE_H
+ #include <libxml/HTMLtree.h>
+-#endif
+ 
+ #ifdef OLD_FREE
+ #define free OLD_FREE
+Index: squid-3.3.9/src/esi/Makefile.am
+===================================================================
+--- squid-3.3.9.orig/src/esi/Makefile.am
++++ squid-3.3.9/src/esi/Makefile.am
+@@ -17,6 +17,7 @@ if HAVE_LIBXML2
+ ESI_PARSER_SOURCES += \
+ 	Libxml2Parser.cc \
+ 	Libxml2Parser.h
++libesi_la_CPPFLAGS = ${libxml2_CFLAGS}
+ endif
+ 
+ libesi_la_SOURCES = \

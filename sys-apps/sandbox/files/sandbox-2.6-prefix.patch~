@@ -1,0 +1,737 @@
+Index: sandbox-2.6/configure.ac
+===================================================================
+--- sandbox-2.6.orig/configure.ac
++++ sandbox-2.6/configure.ac
+@@ -32,6 +32,7 @@ AC_PROG_MAKE_SET
+ AC_PROG_AWK
+ AC_PROG_EGREP
+ AC_CHECK_PROGS([READELF], [readelf eu-readelf], [false])
++AC_PATH_PROG([BASH_PATH], [bash])
+ AM_MISSING_PROG([AUTOM4TE], [autom4te])
+ 
+ LT_INIT([disable-static])
+@@ -356,7 +357,9 @@ SB_CHECK_PATH([/proc/$$/cmdline])
+ dnl We add to CPPFLAGS rather than doing AC_DEFINE_UNQUOTED
+ dnl so we dont have to worry about fully expanding all of
+ dnl the variables ($sysconfdir defaults to "$prefix/etc")
+-SANDBOX_DEFINES='-DETCDIR="\"$(sysconfdir)\"" -DLIBSANDBOX_PATH="\"$(libdir)\"" -DSANDBOX_BASHRC_PATH="\"$(pkgdatadir)\""'
++SANDBOX_DEFINES='-DETCDIR="\"$(sysconfdir)\"" -DLIBSANDBOX_PATH="\"$(libdir)\""\
++	-DBASH="\"$(BASH_PATH)\"" -DSANDBOX_BASHRC_PATH="\"$(pkgdatadir)\""\
++	-DVARDIR="\"$(localstatedir)\""'
+ AC_SUBST([SANDBOX_DEFINES])
+ 
+ dnl Check for toolchain features
+Index: sandbox-2.6/libsbutil/sbutil.h
+===================================================================
+--- sandbox-2.6.orig/libsbutil/sbutil.h
++++ sandbox-2.6/libsbutil/sbutil.h
+@@ -23,8 +23,8 @@
+ #define LIB_NAME               "libsandbox.so"
+ #define BASHRC_NAME            "sandbox.bashrc"
+ #define TMPDIR                 "/tmp"
+-#define PORTAGE_TMPDIR         "/var/tmp/portage"
+-#define SANDBOX_LOG_LOCATION   "/var/log/sandbox"
++#define PORTAGE_TMPDIR         VARDIR "/tmp/portage"
++#define SANDBOX_LOG_LOCATION   VARDIR "/log/sandbox"
+ #define LOG_FILE_PREFIX        "/sandbox-"
+ #define DEBUG_LOG_FILE_PREFIX  "/sandbox-debug-"
+ #define LOG_FILE_EXT           ".log"
+Index: sandbox-2.6/src/sandbox.c
+===================================================================
+--- sandbox-2.6.orig/src/sandbox.c
++++ sandbox-2.6/src/sandbox.c
+@@ -269,7 +269,7 @@ int main(int argc, char **argv)
+ 		goto oom_error;
+ 
+ 	/* Setup bash argv */
+-	str_list_add_item_copy(argv_bash, "/bin/bash", oom_error);
++	str_list_add_item_copy(argv_bash, BASH, oom_error);
+ 	str_list_add_item_copy(argv_bash, "-rcfile", oom_error);
+ 	str_list_add_item_copy(argv_bash, sandbox_info.sandbox_rc, oom_error);
+ 	if (argc >= 2) {
+Index: sandbox-2.6/data/sandbox.bashrc.in
+===================================================================
+--- /dev/null
++++ sandbox-2.6/data/sandbox.bashrc.in
+@@ -0,0 +1,111 @@
++# Copyright (C) 2001 Geert Bevin, Uwyn, http://www.uwyn.com
++# Distributed under the terms of the GNU General Public License, v2 or later
++
++if [[ -n ${LD_PRELOAD} && ${LD_PRELOAD} != *$SANDBOX_LIB* ]] ; then
++	export LD_PRELOAD="${SANDBOX_LIB} ${LD_PRELOAD}"
++elif [[ -z ${LD_PRELOAD} ]] ; then
++	export LD_PRELOAD="${SANDBOX_LIB}"
++fi
++
++export BASH_ENV="${SANDBOX_BASHRC}"
++
++alias make="make LD_PRELOAD=${LD_PRELOAD}"
++alias su="su -c '@BASH@ -rcfile ${SANDBOX_BASHRC}'"
++
++declare -r SANDBOX_ACTIVE
++
++# Only do Mike's sandboxshell mojo if we are interactive, and if
++# we are connected to a terminal (ie, not piped, etc)
++if [[ ${SANDBOX_INTRACTV} == "1" && -t 1 ]] || [[ ${__SANDBOX_TESTING} == "yes" ]] ; then
++	trap ":" INT QUIT TSTP
++
++	# Make sure this do not get recusively called
++	unset SANDBOX_INTRACTV
++
++	# Do not set this, as user might want to override path, etc ... #139591
++	#source /etc/profile
++
++	if [[ ${__SANDBOX_TESTING} != "yes" ]] ; then
++		(
++		[[ ${NOCOLOR} == "true" || ${NOCOLOR} == "yes" || ${NOCOLOR} == "1" ]] && \
++			export RC_NOCOLOR="yes"
++		source @sysconfdir@/init.d/functions.sh
++		if [ $? -ne 0 ] ; then
++			einfo() { echo " INFO: $*"; }
++			ewarn() { echo " WARN: $*"; }
++			eerror() { echo " ERR: $*"; }
++		fi
++		echo
++		einfo "Loading sandboxed shell"
++		einfo " Log File:           ${SANDBOX_LOG}"
++		if [[ -n ${SANDBOX_DEBUG_LOG} ]] ; then
++			einfo " Debug Log File:     ${SANDBOX_DEBUG_LOG}"
++		fi
++		einfo " sandboxon:          turn sandbox on"
++		einfo " sandboxoff:         turn sandbox off"
++		einfo " addread <path>:     allow <path> to be read"
++		einfo " addwrite <path>:    allow <path> to be written"
++		einfo " adddeny <path>:     deny access to <path>"
++		einfo " addpredict <path>:  allow fake access to <path>"
++		echo
++		)
++
++		# do ebuild environment loading ... detect if we're in portage
++		# build area or not ... uNF uNF uNF
++		#sbs_pdir=$(portageq envvar PORTAGE_TMPDIR)/portage/ #portageq takes too long imo
++		if [[ -z ${PORTAGE_TMPDIR} ]] ; then
++			sbs_pdir=$(
++				for f in @sysconfdir@/{,portage/}make.globals @sysconfdir@/{,portage/}make.conf ; do
++					[[ -e ${f} ]] && source ${f}
++				done
++				echo $PORTAGE_TMPDIR
++			)
++		else
++			sbs_pdir=${PORTAGE_TMPDIR}
++		fi
++		: ${sbs_pdir:=@localstatedir@/tmp}
++		sbs_pdir=${sbs_pdir}/portage/
++
++		if [[ ${PWD:0:${#sbs_pdir}} == "${sbs_pdir}" ]] ; then
++			sbs_bdir=$(echo ${PWD:${#sbs_pdir}} | cut -d/ -f1,2)
++			sbs_tmpenvfile=${sbs_pdir}${sbs_bdir}/temp/environment
++			if [[ -e ${sbs_tmpenvfile} ]] ; then
++				echo "Found environment at ${sbs_tmpenvfile}"
++				printf " * Would you like to enter the portage environment ? "
++				read env
++				sbs_PREPWD=${PWD}
++				if [[ ${env} == "y" ]] ; then
++					# First try to source variables and export them ...
++					eval $(sed -e '/^[[:alnum:]_-]*=/s:^:export :' \
++					           -e '/^[[:alnum:]_-]* ()/Q' "${sbs_tmpenvfile}") 2>/dev/null
++					# Then grab everything (including functions)
++					source "${sbs_tmpenvfile}" 2> /dev/null
++					export SANDBOX_WRITE=${SANDBOX_WRITE}:${sbs_pdir}${sbs_bdir}:${sbs_pdir}/homedir
++				fi
++				PWD=${sbs_PREPWD}
++			fi
++		fi
++
++		unset sbs_pdir sbs_bdir sbs_tmpenvfile sbs_PREPWD env
++	fi
++
++	cd "${PWD}"
++	if [[ ${NOCOLOR} != "true" && ${NOCOLOR} != "yes" && ${NOCOLOR} != "1" ]] ; then
++		export PS1="\[\e[31;01m\][s]\[\e[0m\] ${PS1}"
++	else
++		export PS1="[s] ${PS1}"
++	fi
++
++	adddeny()    { export SANDBOX_DENY=${SANDBOX_DENY}:$1 ; }
++	addpredict() { export SANDBOX_PREDICT=${SANDBOX_PREDICT}:$1 ; }
++	addread()    { export SANDBOX_READ=${SANDBOX_READ}:$1 ; }
++	addwrite()   { export SANDBOX_WRITE=${SANDBOX_WRITE}:$1 ; }
++	sandboxon()  { export SANDBOX_ON="1" ; }
++	sandboxoff() { export SANDBOX_ON="0" ; }
++
++	[[ -z ${CCACHE_DIR} ]] && [[ -w /root/.ccache ]] && export CCACHE_DIR=/root/.ccache
++	for var in CCACHE_DIR DISTCC_DIR ; do
++		[[ ${!var+set} == "set" ]] && addwrite ${!var}
++	done
++	unset var
++fi
+Index: sandbox-2.6/data/Makefile.am
+===================================================================
+--- sandbox-2.6.orig/data/Makefile.am
++++ sandbox-2.6/data/Makefile.am
+@@ -1,4 +1,9 @@
+ dist_pkgdata_DATA  = sandbox.bashrc
++sandbox.bashrc: sandbox.bashrc.in
++	$(SED) -e "s,[@]sysconfdir[@],$(sysconfdir),"\
++		-e "s,[@]BASH_PATH[@],$(BASH),"\
++		-e "s,[@]localstatedir[@],$(localstatedir),"\
++		$< >$@
+ 
+ pixmapdir = $(datadir)/pixmaps
+ dist_pixmap_DATA = sandbox.svg
+Index: sandbox-2.6/configure
+===================================================================
+--- sandbox-2.6.orig/configure
++++ sandbox-2.6/configure
+@@ -674,6 +674,7 @@ build_cpu
+ build
+ LIBTOOL
+ AUTOM4TE
++BASH_PATH
+ READELF
+ ac_ct_AR
+ AR
+@@ -1403,10 +1404,12 @@ Optional Features:
+   --disable-option-checking  ignore unrecognized --enable/--with options
+   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+-  --enable-silent-rules          less verbose build output (undo: `make V=1')
+-  --disable-silent-rules         verbose build output (undo: `make V=0')
+-  --disable-dependency-tracking  speeds up one-time build
+-  --enable-dependency-tracking   do not reject slow dependency extractors
++  --enable-silent-rules   less verbose build output (undo: "make V=1")
++  --disable-silent-rules  verbose build output (undo: "make V=0")
++  --enable-dependency-tracking
++                          do not reject slow dependency extractors
++  --disable-dependency-tracking
++                          speeds up one-time build
+   --enable-static[=PKGS]  build static libraries [default=no]
+   --enable-shared[=PKGS]  build shared libraries [default=yes]
+   --enable-fast-install[=PKGS]
+@@ -2592,7 +2595,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLA
+ ac_compiler_gnu=$ac_cv_c_compiler_gnu
+ 
+ 
+-am__api_version='1.11'
++am__api_version='1.12'
+ 
+ ac_aux_dir=
+ for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
+@@ -2718,9 +2721,6 @@ test -z "$INSTALL_DATA" && INSTALL_DATA=
+ 
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether build environment is sane" >&5
+ $as_echo_n "checking whether build environment is sane... " >&6; }
+-# Just in case
+-sleep 1
+-echo timestamp > conftest.file
+ # Reject unsafe characters in $srcdir or the absolute working directory
+ # name.  Accept space and tab only in the latter.
+ am_lf='
+@@ -2731,32 +2731,40 @@ case `pwd` in
+ esac
+ case $srcdir in
+   *[\\\"\#\$\&\'\`$am_lf\ \	]*)
+-    as_fn_error $? "unsafe srcdir value: \`$srcdir'" "$LINENO" 5;;
++    as_fn_error $? "unsafe srcdir value: '$srcdir'" "$LINENO" 5;;
+ esac
+ 
+-# Do `set' in a subshell so we don't clobber the current shell's
++# Do 'set' in a subshell so we don't clobber the current shell's
+ # arguments.  Must try -L first in case configure is actually a
+ # symlink; some systems play weird games with the mod time of symlinks
+ # (eg FreeBSD returns the mod time of the symlink's containing
+ # directory).
+ if (
+-   set X `ls -Lt "$srcdir/configure" conftest.file 2> /dev/null`
+-   if test "$*" = "X"; then
+-      # -L didn't work.
+-      set X `ls -t "$srcdir/configure" conftest.file`
+-   fi
+-   rm -f conftest.file
+-   if test "$*" != "X $srcdir/configure conftest.file" \
+-      && test "$*" != "X conftest.file $srcdir/configure"; then
+-
+-      # If neither matched, then we have a broken ls.  This can happen
+-      # if, for instance, CONFIG_SHELL is bash and it inherits a
+-      # broken ls alias from the environment.  This has actually
+-      # happened.  Such a system could not be considered "sane".
+-      as_fn_error $? "ls -t appears to fail.  Make sure there is not a broken
+-alias in your environment" "$LINENO" 5
+-   fi
++   am_has_slept=no
++   for am_try in 1 2; do
++     echo "timestamp, slept: $am_has_slept" > conftest.file
++     set X `ls -Lt "$srcdir/configure" conftest.file 2> /dev/null`
++     if test "$*" = "X"; then
++	# -L didn't work.
++	set X `ls -t "$srcdir/configure" conftest.file`
++     fi
++     if test "$*" != "X $srcdir/configure conftest.file" \
++	&& test "$*" != "X conftest.file $srcdir/configure"; then
+ 
++	# If neither matched, then we have a broken ls.  This can happen
++	# if, for instance, CONFIG_SHELL is bash and it inherits a
++	# broken ls alias from the environment.  This has actually
++	# happened.  Such a system could not be considered "sane".
++	as_fn_error $? "ls -t appears to fail.  Make sure there is not a broken
++  alias in your environment" "$LINENO" 5
++     fi
++     if test "$2" = conftest.file || test $am_try -eq 2; then
++       break
++     fi
++     # Just in case.
++     sleep 1
++     am_has_slept=yes
++   done
+    test "$2" = conftest.file
+    )
+ then
+@@ -2768,6 +2776,16 @@ Check your system clock" "$LINENO" 5
+ fi
+ { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+ $as_echo "yes" >&6; }
++# If we didn't sleep, we still need to ensure time stamps of config.status and
++# generated files are strictly newer.
++am_sleep_pid=
++if grep 'slept: no' conftest.file >/dev/null 2>&1; then
++  ( sleep 1 ) &
++  am_sleep_pid=$!
++fi
++
++rm -f conftest.file
++
+ test "$program_prefix" != NONE &&
+   program_transform_name="s&^&$program_prefix&;$program_transform_name"
+ # Use a double $ so make ignores it.
+@@ -2794,8 +2812,8 @@ if eval "$MISSING --run true"; then
+   am_missing_run="$MISSING --run "
+ else
+   am_missing_run=
+-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: \`missing' script is too old or missing" >&5
+-$as_echo "$as_me: WARNING: \`missing' script is too old or missing" >&2;}
++  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: 'missing' script is too old or missing" >&5
++$as_echo "$as_me: WARNING: 'missing' script is too old or missing" >&2;}
+ fi
+ 
+ if test x"${install_sh}" != xset; then
+@@ -2807,10 +2825,10 @@ if test x"${install_sh}" != xset; then
+   esac
+ fi
+ 
+-# Installed binaries are usually stripped using `strip' when the user
+-# run `make install-strip'.  However `strip' might not be the right
++# Installed binaries are usually stripped using 'strip' when the user
++# run "make install-strip".  However 'strip' might not be the right
+ # tool to use in cross-compilation environments, therefore Automake
+-# will honor the `STRIP' environment variable to overrule this program.
++# will honor the 'STRIP' environment variable to overrule this program.
+ if test "$cross_compiling" != no; then
+   if test -n "$ac_tool_prefix"; then
+   # Extract the first word of "${ac_tool_prefix}strip", so it can be a program name with args.
+@@ -2949,12 +2967,6 @@ fi
+ { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MKDIR_P" >&5
+ $as_echo "$MKDIR_P" >&6; }
+ 
+-mkdir_p="$MKDIR_P"
+-case $mkdir_p in
+-  [\\/$]* | ?:[\\/]*) ;;
+-  */*) mkdir_p="\$(top_builddir)/$mkdir_p" ;;
+-esac
+-
+ for ac_prog in gawk mawk nawk awk
+ do
+   # Extract the first word of "$ac_prog", so it can be a program name with args.
+@@ -3042,10 +3054,10 @@ if test "${enable_silent_rules+set}" = s
+   enableval=$enable_silent_rules;
+ fi
+ 
+-case $enable_silent_rules in
+-yes) AM_DEFAULT_VERBOSITY=0;;
+-no)  AM_DEFAULT_VERBOSITY=1;;
+-*)   AM_DEFAULT_VERBOSITY=1;;
++case $enable_silent_rules in # (((
++  yes) AM_DEFAULT_VERBOSITY=0;;
++   no) AM_DEFAULT_VERBOSITY=1;;
++    *) AM_DEFAULT_VERBOSITY=1;;
+ esac
+ am_make=${MAKE-make}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $am_make supports nested variables" >&5
+@@ -3126,6 +3138,12 @@ AUTOHEADER=${AUTOHEADER-"${am_missing_ru
+ 
+ MAKEINFO=${MAKEINFO-"${am_missing_run}makeinfo"}
+ 
++# For better backward compatibility.  To be removed once Automake 1.9.x
++# dies out for good.  For more background, see:
++# <http://lists.gnu.org/archive/html/automake/2012-07/msg00001.html>
++# <http://lists.gnu.org/archive/html/automake/2012-07/msg00014.html>
++mkdir_p='$(MKDIR_P)'
++
+ # We need awk for the "check" target.  The system "awk" is bad on
+ # some platforms.
+ # Always define AMTAR for backward compatibility.  Yes, it's still used
+@@ -3143,10 +3161,10 @@ if test "${enable_silent_rules+set}" = s
+   enableval=$enable_silent_rules;
+ fi
+ 
+-case $enable_silent_rules in
+-yes) AM_DEFAULT_VERBOSITY=0;;
+-no)  AM_DEFAULT_VERBOSITY=1;;
+-*)   AM_DEFAULT_VERBOSITY=0;;
++case $enable_silent_rules in # (((
++  yes) AM_DEFAULT_VERBOSITY=0;;
++   no) AM_DEFAULT_VERBOSITY=1;;
++    *) AM_DEFAULT_VERBOSITY=0;;
+ esac
+ am_make=${MAKE-make}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $am_make supports nested variables" >&5
+@@ -4007,7 +4025,7 @@ am__quote=
+ _am_result=none
+ # First try GNU make style include.
+ echo "include confinc" > confmf
+-# Ignore all kinds of additional output from `make'.
++# Ignore all kinds of additional output from 'make'.
+ case `$am_make -s -f confmf 2> /dev/null` in #(
+ *the\ am__doit\ target*)
+   am__include=include
+@@ -4063,8 +4081,8 @@ else
+   # We make a subdir and do the tests there.  Otherwise we can end up
+   # making bogus files that we don't know about and never remove.  For
+   # instance it was reported that on HP-UX the gcc test will end up
+-  # making a dummy file named `D' -- because `-MD' means `put the output
+-  # in D'.
++  # making a dummy file named 'D' -- because '-MD' means "put the output
++  # in D".
+   rm -rf conftest.dir
+   mkdir conftest.dir
+   # Copy depcomp to subdir because otherwise we won't find it if we're
+@@ -4099,16 +4117,16 @@ else
+     : > sub/conftest.c
+     for i in 1 2 3 4 5 6; do
+       echo '#include "conftst'$i'.h"' >> sub/conftest.c
+-      # Using `: > sub/conftst$i.h' creates only sub/conftst1.h with
+-      # Solaris 8's {/usr,}/bin/sh.
+-      touch sub/conftst$i.h
++      # Using ": > sub/conftst$i.h" creates only sub/conftst1.h with
++      # Solaris 10 /bin/sh.
++      echo '/* dummy */' > sub/conftst$i.h
+     done
+     echo "${am__include} ${am__quote}sub/conftest.Po${am__quote}" > confmf
+ 
+-    # We check with `-c' and `-o' for the sake of the "dashmstdout"
++    # We check with '-c' and '-o' for the sake of the "dashmstdout"
+     # mode.  It turns out that the SunPro C++ compiler does not properly
+-    # handle `-M -o', and we need to detect this.  Also, some Intel
+-    # versions had trouble with output in subdirs
++    # handle '-M -o', and we need to detect this.  Also, some Intel
++    # versions had trouble with output in subdirs.
+     am__obj=sub/conftest.${OBJEXT-o}
+     am__minus_obj="-o $am__obj"
+     case $depmode in
+@@ -4117,8 +4135,8 @@ else
+       test "$am__universal" = false || continue
+       ;;
+     nosideeffect)
+-      # after this tag, mechanisms are not by side-effect, so they'll
+-      # only be used when explicitly requested
++      # After this tag, mechanisms are not by side-effect, so they'll
++      # only be used when explicitly requested.
+       if test "x$enable_dependency_tracking" = xyes; then
+ 	continue
+       else
+@@ -4126,7 +4144,7 @@ else
+       fi
+       ;;
+     msvc7 | msvc7msys | msvisualcpp | msvcmsys)
+-      # This compiler won't grok `-c -o', but also, the minuso test has
++      # This compiler won't grok '-c -o', but also, the minuso test has
+       # not run yet.  These depmodes are late enough in the game, and
+       # so weak that their functioning should not be impacted.
+       am__obj=conftest.${OBJEXT-o}
+@@ -5166,6 +5184,46 @@ fi
+ done
+ test -n "$READELF" || READELF="false"
+ 
++# Extract the first word of "bash", so it can be a program name with args.
++set dummy bash; ac_word=$2
++{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
++$as_echo_n "checking for $ac_word... " >&6; }
++if ${ac_cv_path_BASH_PATH+:} false; then :
++  $as_echo_n "(cached) " >&6
++else
++  case $BASH_PATH in
++  [\\/]* | ?:[\\/]*)
++  ac_cv_path_BASH_PATH="$BASH_PATH" # Let the user override the test with a path.
++  ;;
++  *)
++  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
++for as_dir in $PATH
++do
++  IFS=$as_save_IFS
++  test -z "$as_dir" && as_dir=.
++    for ac_exec_ext in '' $ac_executable_extensions; do
++  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
++    ac_cv_path_BASH_PATH="$as_dir/$ac_word$ac_exec_ext"
++    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
++    break 2
++  fi
++done
++  done
++IFS=$as_save_IFS
++
++  ;;
++esac
++fi
++BASH_PATH=$ac_cv_path_BASH_PATH
++if test -n "$BASH_PATH"; then
++  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $BASH_PATH" >&5
++$as_echo "$BASH_PATH" >&6; }
++else
++  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
++$as_echo "no" >&6; }
++fi
++
++
+ 
+ AUTOM4TE=${AUTOM4TE-"${am_missing_run}autom4te"}
+ 
+@@ -14356,7 +14414,9 @@ $as_echo "no" >&6; }
+ 	fi
+ 
+ 
+-SANDBOX_DEFINES='-DETCDIR="\"$(sysconfdir)\"" -DLIBSANDBOX_PATH="\"$(libdir)\"" -DSANDBOX_BASHRC_PATH="\"$(pkgdatadir)\""'
++SANDBOX_DEFINES='-DETCDIR="\"$(sysconfdir)\"" -DLIBSANDBOX_PATH="\"$(libdir)\""\
++	-DBASH="\"$(BASH_PATH)\"" -DSANDBOX_BASHRC_PATH="\"$(pkgdatadir)\""\
++	-DVARDIR="\"$(localstatedir)\""'
+ 
+ 
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking how to enable exception handling" >&5
+@@ -14880,6 +14940,14 @@ LIBOBJS=$ac_libobjs
+ LTLIBOBJS=$ac_ltlibobjs
+ 
+ 
++{ $as_echo "$as_me:${as_lineno-$LINENO}: checking that generated files are newer than configure" >&5
++$as_echo_n "checking that generated files are newer than configure... " >&6; }
++   if test -n "$am_sleep_pid"; then
++     # Hide warnings about reused PIDs.
++     wait $am_sleep_pid 2>/dev/null
++   fi
++   { $as_echo "$as_me:${as_lineno-$LINENO}: result: done" >&5
++$as_echo "done" >&6; }
+  if test -n "$EXEEXT"; then
+   am__EXEEXT_TRUE=
+   am__EXEEXT_FALSE='#'
+@@ -16400,7 +16468,7 @@ $as_echo "$as_me: executing $ac_file com
+     # Strip MF so we end up with the name of the file.
+     mf=`echo "$mf" | sed -e 's/:.*$//'`
+     # Check whether this is an Automake generated Makefile or not.
+-    # We used to match only the files named `Makefile.in', but
++    # We used to match only the files named 'Makefile.in', but
+     # some people rename them; so instead we look at the file content.
+     # Grep'ing the first line is not enough: some people post-process
+     # each Makefile.in and add a new line on top of each file to say so.
+@@ -16434,21 +16502,19 @@ $as_echo X"$mf" |
+       continue
+     fi
+     # Extract the definition of DEPDIR, am__include, and am__quote
+-    # from the Makefile without running `make'.
++    # from the Makefile without running 'make'.
+     DEPDIR=`sed -n 's/^DEPDIR = //p' < "$mf"`
+     test -z "$DEPDIR" && continue
+     am__include=`sed -n 's/^am__include = //p' < "$mf"`
+     test -z "am__include" && continue
+     am__quote=`sed -n 's/^am__quote = //p' < "$mf"`
+-    # When using ansi2knr, U may be empty or an underscore; expand it
+-    U=`sed -n 's/^U = //p' < "$mf"`
+     # Find all dependency output files, they are included files with
+     # $(DEPDIR) in their names.  We invoke sed twice because it is the
+     # simplest approach to changing $(DEPDIR) to its actual value in the
+     # expansion.
+     for file in `sed -n "
+       s/^$am__include $am__quote\(.*(DEPDIR).*\)$am__quote"'$/\1/p' <"$mf" | \
+-	 sed -e 's/\$(DEPDIR)/'"$DEPDIR"'/g' -e 's/\$U/'"$U"'/g'`; do
++	 sed -e 's/\$(DEPDIR)/'"$DEPDIR"'/g'`; do
+       # Make sure the directory exists.
+       test -f "$dirpart/$file" && continue
+       fdir=`$as_dirname -- "$file" ||
+Index: sandbox-2.6/data/Makefile.in
+===================================================================
+--- sandbox-2.6.orig/data/Makefile.in
++++ sandbox-2.6/data/Makefile.in
+@@ -1,9 +1,8 @@
+-# Makefile.in generated by automake 1.11.5 from Makefile.am.
++# Makefile.in generated by automake 1.12.4 from Makefile.am.
+ # @configure_input@
+ 
+-# Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
+-# 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software
+-# Foundation, Inc.
++# Copyright (C) 1994-2012 Free Software Foundation, Inc.
++
+ # This Makefile.in is free software; the Free Software Foundation
+ # gives unlimited permission to copy and/or distribute it,
+ # with or without modifications, as long as this notice is preserved.
+@@ -69,12 +68,18 @@ mkinstalldirs = $(install_sh) -d
+ CONFIG_HEADER = $(top_builddir)/config.h
+ CONFIG_CLEAN_FILES =
+ CONFIG_CLEAN_VPATH_FILES =
++AM_V_P = $(am__v_P_@AM_V@)
++am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
++am__v_P_0 = false
++am__v_P_1 = :
+ AM_V_GEN = $(am__v_GEN_@AM_V@)
+ am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+-am__v_GEN_0 = @echo "  GEN   " $@;
++am__v_GEN_0 = @echo "  GEN     " $@;
++am__v_GEN_1 = 
+ AM_V_at = $(am__v_at_@AM_V@)
+ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
+ am__v_at_0 = @
++am__v_at_1 = 
+ SOURCES =
+ DIST_SOURCES =
+ am__can_run_installinfo = \
+@@ -123,6 +128,7 @@ AUTOHEADER = @AUTOHEADER@
+ AUTOM4TE = @AUTOM4TE@
+ AUTOMAKE = @AUTOMAKE@
+ AWK = @AWK@
++BASH_PATH = @BASH_PATH@
+ CC = @CC@
+ CCDEPMODE = @CCDEPMODE@
+ CFLAGS = @CFLAGS@
+@@ -348,6 +354,8 @@ TAGS:
+ ctags: CTAGS
+ CTAGS:
+ 
++cscope cscopelist:
++
+ 
+ distdir: $(DISTFILES)
+ 	@srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
+@@ -500,6 +508,11 @@ uninstall-am: uninstall-dist_desktopDATA
+ 	uninstall uninstall-am uninstall-dist_desktopDATA \
+ 	uninstall-dist_pixmapDATA uninstall-dist_pkgdataDATA
+ 
++sandbox.bashrc: sandbox.bashrc.in
++	$(SED) -e "s,[@]sysconfdir[@],$(sysconfdir),"\
++		-e "s,[@]BASH_PATH[@],$(BASH),"\
++		-e "s,[@]localstatedir[@],$(localstatedir),"\
++		$< >$@
+ 
+ # Tell versions [3.59,3.63) of GNU make to not export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.
+Index: sandbox-2.6/data/sandbox.bashrc
+===================================================================
+--- sandbox-2.6.orig/data/sandbox.bashrc
++++ /dev/null
+@@ -1,111 +0,0 @@
+-# Copyright (C) 2001 Geert Bevin, Uwyn, http://www.uwyn.com
+-# Distributed under the terms of the GNU General Public License, v2 or later 
+-
+-if [[ -n ${LD_PRELOAD} && ${LD_PRELOAD} != *$SANDBOX_LIB* ]] ; then
+-	export LD_PRELOAD="${SANDBOX_LIB} ${LD_PRELOAD}"
+-elif [[ -z ${LD_PRELOAD} ]] ; then
+-	export LD_PRELOAD="${SANDBOX_LIB}"
+-fi
+-
+-export BASH_ENV="${SANDBOX_BASHRC}"
+-
+-alias make="make LD_PRELOAD=${LD_PRELOAD}"
+-alias su="su -c '/bin/bash -rcfile ${SANDBOX_BASHRC}'"
+-
+-declare -r SANDBOX_ACTIVE
+-
+-# Only do Mike's sandboxshell mojo if we are interactive, and if
+-# we are connected to a terminal (ie, not piped, etc)
+-if [[ ${SANDBOX_INTRACTV} == "1" && -t 1 ]] || [[ ${__SANDBOX_TESTING} == "yes" ]] ; then
+-	trap ":" INT QUIT TSTP
+-
+-	# Make sure this do not get recusively called
+-	unset SANDBOX_INTRACTV
+-
+-	# Do not set this, as user might want to override path, etc ... #139591
+-	#source /etc/profile
+-
+-	if [[ ${__SANDBOX_TESTING} != "yes" ]] ; then
+-		(
+-		[[ ${NOCOLOR} == "true" || ${NOCOLOR} == "yes" || ${NOCOLOR} == "1" ]] && \
+-			export RC_NOCOLOR="yes"
+-		source /etc/init.d/functions.sh
+-		if [ $? -ne 0 ] ; then
+-			einfo() { echo " INFO: $*"; }
+-			ewarn() { echo " WARN: $*"; }
+-			eerror() { echo " ERR: $*"; }
+-		fi
+-		echo
+-		einfo "Loading sandboxed shell"
+-		einfo " Log File:           ${SANDBOX_LOG}"
+-		if [[ -n ${SANDBOX_DEBUG_LOG} ]] ; then
+-			einfo " Debug Log File:     ${SANDBOX_DEBUG_LOG}"
+-		fi
+-		einfo " sandboxon:          turn sandbox on"
+-		einfo " sandboxoff:         turn sandbox off"
+-		einfo " addread <path>:     allow <path> to be read"
+-		einfo " addwrite <path>:    allow <path> to be written"
+-		einfo " adddeny <path>:     deny access to <path>"
+-		einfo " addpredict <path>:  allow fake access to <path>"
+-		echo
+-		)
+-
+-		# do ebuild environment loading ... detect if we're in portage
+-		# build area or not ... uNF uNF uNF
+-		#sbs_pdir=$(portageq envvar PORTAGE_TMPDIR)/portage/ #portageq takes too long imo
+-		if [[ -z ${PORTAGE_TMPDIR} ]] ; then
+-			sbs_pdir=$(
+-				for f in /etc/{,portage/}make.globals /etc/{,portage/}make.conf ; do
+-					[[ -e ${f} ]] && source ${f}
+-				done
+-				echo $PORTAGE_TMPDIR
+-			)
+-		else
+-			sbs_pdir=${PORTAGE_TMPDIR}
+-		fi
+-		: ${sbs_pdir:=/var/tmp}
+-		sbs_pdir=${sbs_pdir}/portage/
+-
+-		if [[ ${PWD:0:${#sbs_pdir}} == "${sbs_pdir}" ]] ; then
+-			sbs_bdir=$(echo ${PWD:${#sbs_pdir}} | cut -d/ -f1,2)
+-			sbs_tmpenvfile=${sbs_pdir}${sbs_bdir}/temp/environment
+-			if [[ -e ${sbs_tmpenvfile} ]] ; then
+-				echo "Found environment at ${sbs_tmpenvfile}"
+-				printf " * Would you like to enter the portage environment ? "
+-				read env
+-				sbs_PREPWD=${PWD}
+-				if [[ ${env} == "y" ]] ; then
+-					# First try to source variables and export them ...
+-					eval $(sed -e '/^[[:alnum:]_-]*=/s:^:export :' \
+-					           -e '/^[[:alnum:]_-]* ()/Q' "${sbs_tmpenvfile}") 2>/dev/null
+-					# Then grab everything (including functions)
+-					source "${sbs_tmpenvfile}" 2> /dev/null
+-					export SANDBOX_WRITE=${SANDBOX_WRITE}:${sbs_pdir}${sbs_bdir}:${sbs_pdir}/homedir
+-				fi
+-				PWD=${sbs_PREPWD}
+-			fi
+-		fi
+-
+-		unset sbs_pdir sbs_bdir sbs_tmpenvfile sbs_PREPWD env
+-	fi
+-
+-	cd "${PWD}"
+-	if [[ ${NOCOLOR} != "true" && ${NOCOLOR} != "yes" && ${NOCOLOR} != "1" ]] ; then
+-		export PS1="\[\e[31;01m\][s]\[\e[0m\] ${PS1}"
+-	else
+-		export PS1="[s] ${PS1}"
+-	fi
+-
+-	adddeny()    { export SANDBOX_DENY=${SANDBOX_DENY}:$1 ; }
+-	addpredict() { export SANDBOX_PREDICT=${SANDBOX_PREDICT}:$1 ; }
+-	addread()    { export SANDBOX_READ=${SANDBOX_READ}:$1 ; }
+-	addwrite()   { export SANDBOX_WRITE=${SANDBOX_WRITE}:$1 ; }
+-	sandboxon()  { export SANDBOX_ON="1" ; }
+-	sandboxoff() { export SANDBOX_ON="0" ; }
+-
+-	[[ -z ${CCACHE_DIR} ]] && [[ -w /root/.ccache ]] && export CCACHE_DIR=/root/.ccache
+-	for var in CCACHE_DIR DISTCC_DIR ; do
+-		[[ ${!var+set} == "set" ]] && addwrite ${!var}
+-	done
+-	unset var
+-fi

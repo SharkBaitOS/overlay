@@ -114,3 +114,98 @@ Index: binutils-2.23/ld/ld.texinfo
  
  If you use @samp{INPUT (-l@var{file})}, @command{ld} will transform the
  name to @code{lib@var{file}.a}, as with the command line argument
+Index: binutils-2.23/ld/configure
+===================================================================
+--- binutils-2.23.orig/ld/configure
++++ binutils-2.23/ld/configure
+@@ -773,6 +773,7 @@ with_lib_path
+ enable_targets
+ enable_64_bit_bfd
+ with_sysroot
++enable_runtime_sysroot
+ enable_gold
+ enable_got
+ enable_werror
+@@ -1428,6 +1429,10 @@ Optional Features:
+ 			  (and sometimes confusing) to the casual installer
+   --enable-targets        alternative target configurations
+   --enable-64-bit-bfd     64-bit support (on hosts with narrower word sizes)
++  --enable-runtime-sysroot
++                          prepend sysroot to libpath in ld script and rpath,
++                          only used in addition to --with-sysroot (default is
++                          yes)
+   --enable-gold[=ARG]     build gold [ARG={default,yes,no}]
+   --enable-got=<type>     GOT handling scheme (target, single, negative,
+                           multigot)
+@@ -4317,6 +4322,21 @@ fi
+ 
+ 
+ 
++# Check whether --enable-runtime-sysroot was given.
++if test "${enable_runtime_sysroot+set}" = set; then :
++  enableval=$enable_runtime_sysroot; case "${enableval}" in
++  no) ;;
++  *)
++$as_echo "#define ENABLE_RUNTIME_SYSROOT /**/" >>confdefs.h
++ ;;
++esac
++else
++
++$as_echo "#define ENABLE_RUNTIME_SYSROOT /**/" >>confdefs.h
++
++fi
++
++
+ # Check whether --enable-gold was given.
+ if test "${enable_gold+set}" = set; then :
+   enableval=$enable_gold; case "${enableval}" in
+@@ -6744,7 +6764,7 @@ else
+     lt_cv_sys_max_cmd_len=8192;
+     ;;
+ 
+-  mint* | amigaos*)
++  amigaos*)
+     # On AmigaOS with pdksh, this test takes hours, literally.
+     # So we just punt and use a minimum line length of 8192.
+     lt_cv_sys_max_cmd_len=8192;
+@@ -12177,7 +12197,7 @@ else
+   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+   lt_status=$lt_dlunknown
+   cat > conftest.$ac_ext <<_LT_EOF
+-#line 12180 "configure"
++#line 12200 "configure"
+ #include "confdefs.h"
+ 
+ #if HAVE_DLFCN_H
+@@ -12283,7 +12303,7 @@ else
+   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+   lt_status=$lt_dlunknown
+   cat > conftest.$ac_ext <<_LT_EOF
+-#line 12286 "configure"
++#line 12306 "configure"
+ #include "confdefs.h"
+ 
+ #if HAVE_DLFCN_H
+Index: binutils-2.23/ld/config.in
+===================================================================
+--- binutils-2.23.orig/ld/config.in
++++ binutils-2.23/ld/config.in
+@@ -2,7 +2,7 @@
+ 
+ /* Check that config.h is #included before system headers
+    (this works only for glibc, but that should be enough).  */
+-#if defined(__GLIBC__) && !defined(__FreeBSD_kernel__) && !defined(__CONFIG_H__)
++#if defined(__GLIBC__) && !defined(__CONFIG_H__)
+ #  error config.h must be #included before system headers
+ #endif
+ #define __CONFIG_H__ 1
+@@ -11,6 +11,9 @@
+    language is requested. */
+ #undef ENABLE_NLS
+ 
++/* prepend sysroot to libpath in ld script and rpath */
++#undef ENABLE_RUNTIME_SYSROOT
++
+ /* Additional extension a shared object might have. */
+ #undef EXTRA_SHLIB_EXTENSION
+ 

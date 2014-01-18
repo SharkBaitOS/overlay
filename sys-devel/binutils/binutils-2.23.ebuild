@@ -32,7 +32,7 @@ src_compile() {
 	*-interix*) EXTRA_ECONF="${EXTRA_ECONF} --without-gnu-ld --without-gnu-as" ;;
 	esac
 
-	use rap && EXTRA_ECONF+=" --disable-runtime-sysroot"
+	is_cross || EXTRA_ECONF+=" $(use_enable !rap runtime-sysroot)"
 
 	toolchain-binutils_src_compile
 }

@@ -1,6 +1,189 @@
 # ChangeLog for net-libs/rb_libtorrent
-# Copyright 1999-2012 Gentoo Foundation; Distributed under the GPL v2
-# $Header: /var/cvsroot/gentoo-x86/net-libs/rb_libtorrent/ChangeLog,v 1.124 2012/04/19 14:40:00 ranger Exp $
+# Copyright 1999-2013 Gentoo Foundation; Distributed under the GPL v2
+# $Header: /var/cvsroot/gentoo-x86/net-libs/rb_libtorrent/ChangeLog,v 1.167 2013/09/08 10:25:08 hwoarang Exp $
+
+*rb_libtorrent-0.16.11 (08 Sep 2013)
+
+  08 Sep 2013; Markos Chandras <hwoarang@gentoo.org>
+  +rb_libtorrent-0.16.11.ebuild:
+  Version bump
+
+  07 Sep 2013; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.16.10.ebuild:
+  Stable for sparc, wrt bug #481440
+
+  05 Sep 2013; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.16.10.ebuild:
+  Stable for ppc64, wrt bug #481440
+
+  28 Aug 2013; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.16.10.ebuild:
+  Stable for x86, wrt bug #481440
+
+  26 Aug 2013; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.16.10.ebuild:
+  Stable for ppc, wrt bug #481440
+
+  24 Aug 2013; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.16.10.ebuild:
+  Stable for arm, wrt bug #481440
+
+  17 Aug 2013; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.16.10.ebuild:
+  Stable for amd64, wrt bug #481440
+
+*rb_libtorrent-0.16.10 (15 May 2013)
+
+  15 May 2013; Markos Chandras <hwoarang@gentoo.org>
+  +rb_libtorrent-0.16.10.ebuild:
+  Version bump
+
+*rb_libtorrent-0.16.9 (13 Mar 2013)
+
+  13 Mar 2013; Markos Chandras <hwoarang@gentoo.org>
+  +rb_libtorrent-0.16.9.ebuild:
+  Version bump
+
+  09 Mar 2013; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.16.8.ebuild:
+  Stable for sparc, wrt bug #460188
+
+  09 Mar 2013; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.16.8.ebuild:
+  Stable for x86, wrt bug #460188
+
+  09 Mar 2013; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.16.8.ebuild:
+  Stable for ppc, wrt bug #460188
+
+  09 Mar 2013; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.16.8.ebuild:
+  Stable for ppc64, wrt bug #460188
+
+  08 Mar 2013; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.16.8.ebuild:
+  Stable for arm, wrt bug #460188
+
+  05 Mar 2013; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.16.8.ebuild:
+  Stable for amd64, wrt bug #460188
+
+  03 Mar 2013; Markos Chandras <hwoarang@gentoo.org>
+  -rb_libtorrent-0.16.3.ebuild, -rb_libtorrent-0.16.6.ebuild,
+  -rb_libtorrent-0.16.7.ebuild:
+  remove old
+
+*rb_libtorrent-0.16.8 (10 Feb 2013)
+
+  10 Feb 2013; Markos Chandras <hwoarang@gentoo.org>
+  +rb_libtorrent-0.16.8.ebuild:
+  Version bump
+
+*rb_libtorrent-0.16.7 (22 Jan 2013)
+
+  22 Jan 2013; Markos Chandras <hwoarang@gentoo.org>
+  +rb_libtorrent-0.16.7.ebuild:
+  Version bump
+
+  01 Jan 2013; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.16.5.ebuild:
+  Stable for arm, wrt bug #442314
+
+  29 Dec 2012; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.16.5.ebuild:
+  Stable for sparc, wrt bug #442314
+
+  26 Dec 2012; Jeff Horelick <jdhore@gentoo.org> rb_libtorrent-0.16.5.ebuild:
+  marked x86 per bug 442314
+
+  22 Dec 2012; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.16.5.ebuild:
+  Stable for ppc, wrt bug #442314
+
+  18 Dec 2012; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.16.5.ebuild:
+  Stable for amd64, wrt bug #442314
+
+*rb_libtorrent-0.16.6 (17 Dec 2012)
+
+  17 Dec 2012; Markos Chandras <hwoarang@gentoo.org>
+  +rb_libtorrent-0.16.6.ebuild:
+  Version bump
+
+  10 Dec 2012; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.16.5.ebuild:
+  Stable for ppc64, wrt bug #442314
+
+  22 Nov 2012; Diego E. Pettenò <flameeyes@gentoo.org>
+  -files/rb_libtorrent-0.14.12_boost-1.45.patch,
+  -files/rb_libtorrent-0.14.8-boost-detect.patch,
+  -files/rb_libtorrent-0.14.9-as-needed-fix.patch,
+  -files/rb_libtorrent-0.15.1-ax_pthread_asneeded.patch,
+  -rb_libtorrent-0.15.5.ebuild, -rb_libtorrent-0.15.9.ebuild:
+  Remove old versions requiring boost that is no longer in tree. Cleanup old
+  files.
+
+  21 Nov 2012; Markos Chandras <hwoarang@gentoo.org>
+  rb_libtorrent-0.16.5.ebuild:
+  Enable verbose build. Bug #441842
+
+  08 Nov 2012; Diego E. Pettenò <flameeyes@gentoo.org>
+  rb_libtorrent-0.15.10.ebuild, rb_libtorrent-0.15.5.ebuild,
+  rb_libtorrent-0.15.9.ebuild, rb_libtorrent-0.16.3.ebuild,
+  rb_libtorrent-0.16.5.ebuild:
+  Handle USE=threads for boost 1.52.0-r1 and later. Remove keywords from ebuilds
+  that depends on older boost versions.
+
+  03 Nov 2012; Markos Chandras <hwoarang@gentoo.org>
+  rb_libtorrent-0.15.10.ebuild, rb_libtorrent-0.15.5.ebuild,
+  rb_libtorrent-0.15.9.ebuild, rb_libtorrent-0.16.3.ebuild:
+  Backport boost fix to 0.15.X releases. Bug #441582
+
+  02 Nov 2012; Markos Chandras <hwoarang@gentoo.org>
+  -rb_libtorrent-0.16.4.ebuild, rb_libtorrent-0.16.3.ebuild:
+  Backport fix from 0.16.5. Bug #440976
+
+  31 Oct 2012; Diego E. Pettenò <flameeyes@gentoo.org>
+  rb_libtorrent-0.16.5.ebuild:
+  Simplify finding boost library so that it works with all versions, now that
+  it's unslotted.
+
+*rb_libtorrent-0.16.5 (23 Oct 2012)
+
+  23 Oct 2012; Markos Chandras <hwoarang@gentoo.org>
+  +rb_libtorrent-0.16.5.ebuild:
+  Version bump
+
+*rb_libtorrent-0.16.4 (02 Oct 2012)
+
+  02 Oct 2012; Markos Chandras <hwoarang@gentoo.org>
+  +rb_libtorrent-0.16.4.ebuild:
+  Version bump
+
+  23 Sep 2012; Markos Chandras <hwoarang@gentoo.org> metadata.xml:
+  Remove qt herd from metadata
+
+  31 Aug 2012; Markos Chandras <hwoarang@gentoo.org>
+  -rb_libtorrent-0.16.1.ebuild, -rb_libtorrent-0.16.2.ebuild:
+  Remove old
+
+*rb_libtorrent-0.16.3 (24 Aug 2012)
+
+  24 Aug 2012; Markos Chandras <hwoarang@gentoo.org>
+  +rb_libtorrent-0.16.3.ebuild:
+  Version bump
+
+*rb_libtorrent-0.16.2 (14 Jul 2012)
+
+  14 Jul 2012; Ben de Groot <yngwin@gentoo.org> +rb_libtorrent-0.16.2.ebuild:
+  Version bump
+
+  16 Jun 2012; Markos Chandras <hwoarang@gentoo.org>
+  -rb_libtorrent-0.15.6.ebuild, -rb_libtorrent-0.15.8.ebuild,
+  -rb_libtorrent-0.15.9-r1.ebuild, -rb_libtorrent-0.16.0.ebuild:
+  Remove old
+
+*rb_libtorrent-0.16.1 (15 Jun 2012)
+
+  15 Jun 2012; Markos Chandras <hwoarang@gentoo.org>
+  +rb_libtorrent-0.16.1.ebuild:
+  Version bump
+
+  14 Jun 2012; Jeff Horelick <jdhore@gentoo.org> rb_libtorrent-0.15.10.ebuild:
+  marked x86 per bug 413815
+
+  08 Jun 2012; Michael Weber <xmw@gentoo.org> rb_libtorrent-0.15.10.ebuild:
+  ppc stable (bug 413815)
+
+  23 May 2012; Agostino Sarubbo <ago@gentoo.org> rb_libtorrent-0.15.10.ebuild:
+  Stable for amd64, wrt bug #413815
+
+  28 Apr 2012;  <heroxbd@gentoo.org> rb_libtorrent-0.15.10.ebuild,
+  rb_libtorrent-0.16.0.ebuild:
+  fix boost dirs with EPREFIX for Prefix
 
   19 Apr 2012; Brent Baude <ranger@gentoo.org> rb_libtorrent-0.15.9.ebuild:
   Marking rb_libtorrent-0.15.9 ppc64 for bug 411871
@@ -646,4 +829,3 @@
 
   08 Jan 2007; <armin@gentoo.org> +metadata.xml, +rb_libtorrent-0.11.ebuild:
   New ebuild, from bug 148667
-

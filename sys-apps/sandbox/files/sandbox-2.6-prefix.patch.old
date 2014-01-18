@@ -1,0 +1,70 @@
+Index: sandbox-2.6/data/sandbox.bashrc
+===================================================================
+--- sandbox-2.6.orig/data/sandbox.bashrc
++++ sandbox-2.6/data/sandbox.bashrc
+@@ -10,7 +10,7 @@ fi
+ export BASH_ENV="${SANDBOX_BASHRC}"
+ 
+ alias make="make LD_PRELOAD=${LD_PRELOAD}"
+-alias su="su -c '/bin/bash -rcfile ${SANDBOX_BASHRC}'"
++alias su="su -c '@GENTOO_PORTAGE_EPREFIX@/bin/bash -rcfile ${SANDBOX_BASHRC}'"
+ 
+ declare -r SANDBOX_ACTIVE
+ 
+@@ -29,7 +29,7 @@ if [[ ${SANDBOX_INTRACTV} == "1" && -t 1
+ 		(
+ 		[[ ${NOCOLOR} == "true" || ${NOCOLOR} == "yes" || ${NOCOLOR} == "1" ]] && \
+ 			export RC_NOCOLOR="yes"
+-		source /etc/init.d/functions.sh
++		source @GENTOO_PORTAGE_EPREFIX@/etc/init.d/functions.sh
+ 		if [ $? -ne 0 ] ; then
+ 			einfo() { echo " INFO: $*"; }
+ 			ewarn() { echo " WARN: $*"; }
+@@ -55,7 +55,7 @@ if [[ ${SANDBOX_INTRACTV} == "1" && -t 1
+ 		#sbs_pdir=$(portageq envvar PORTAGE_TMPDIR)/portage/ #portageq takes too long imo
+ 		if [[ -z ${PORTAGE_TMPDIR} ]] ; then
+ 			sbs_pdir=$(
+-				for f in /etc/{,portage/}make.globals /etc/{,portage/}make.conf ; do
++				for f in @GENTOO_PORTAGE_EPREFIX@/etc/{,portage/}make.globals @GENTOO_PORTAGE_EPREFIX@/etc/{,portage/}make.conf ; do
+ 					[[ -e ${f} ]] && source ${f}
+ 				done
+ 				echo $PORTAGE_TMPDIR
+@@ -63,7 +63,7 @@ if [[ ${SANDBOX_INTRACTV} == "1" && -t 1
+ 		else
+ 			sbs_pdir=${PORTAGE_TMPDIR}
+ 		fi
+-		: ${sbs_pdir:=/var/tmp}
++		: ${sbs_pdir:=@GENTOO_PORTAGE_EPREFIX@/var/tmp}
+ 		sbs_pdir=${sbs_pdir}/portage/
+ 
+ 		if [[ ${PWD:0:${#sbs_pdir}} == "${sbs_pdir}" ]] ; then
+Index: sandbox-2.6/src/sandbox.c
+===================================================================
+--- sandbox-2.6.orig/src/sandbox.c
++++ sandbox-2.6/src/sandbox.c
+@@ -269,7 +269,7 @@ int main(int argc, char **argv)
+ 		goto oom_error;
+ 
+ 	/* Setup bash argv */
+-	str_list_add_item_copy(argv_bash, "/bin/bash", oom_error);
++	str_list_add_item_copy(argv_bash, "@GENTOO_PORTAGE_EPREFIX@/bin/bash", oom_error);
+ 	str_list_add_item_copy(argv_bash, "-rcfile", oom_error);
+ 	str_list_add_item_copy(argv_bash, sandbox_info.sandbox_rc, oom_error);
+ 	if (argc >= 2) {
+Index: sandbox-2.6/libsbutil/sbutil.h
+===================================================================
+--- sandbox-2.6.orig/libsbutil/sbutil.h
++++ sandbox-2.6/libsbutil/sbutil.h
+@@ -22,9 +22,9 @@
+ #define LD_PRELOAD_EQ          "LD_PRELOAD="
+ #define LIB_NAME               "libsandbox.so"
+ #define BASHRC_NAME            "sandbox.bashrc"
+-#define TMPDIR                 "/tmp"
+-#define PORTAGE_TMPDIR         "/var/tmp/portage"
+-#define SANDBOX_LOG_LOCATION   "/var/log/sandbox"
++#define TMPDIR                 "@GENTOO_PORTAGE_EPREFIX@/tmp"
++#define PORTAGE_TMPDIR         "@GENTOO_PORTAGE_EPREFIX@/var/tmp/portage"
++#define SANDBOX_LOG_LOCATION   "@GENTOO_PORTAGE_EPREFIX@/var/log/sandbox"
+ #define LOG_FILE_PREFIX        "/sandbox-"
+ #define DEBUG_LOG_FILE_PREFIX  "/sandbox-debug-"
+ #define LOG_FILE_EXT           ".log"

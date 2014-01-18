@@ -1,6 +1,6 @@
 # Copyright 1999-2012 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/net-libs/rb_libtorrent/rb_libtorrent-0.15.10.ebuild,v 1.1 2012/02/25 16:18:06 hwoarang Exp $
+# $Header: /var/cvsroot/gentoo-x86/net-libs/rb_libtorrent/rb_libtorrent-0.15.10.ebuild,v 1.7 2012/11/08 06:24:13 flameeyes Exp $
 
 EAPI="4"
 PYTHON_DEPEND="python? 2:2.6"
@@ -19,11 +19,11 @@ SRC_URI="http://libtorrent.googlecode.com/files/${MY_P}.tar.gz"
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="~amd64 ~arm ~ppc ~ppc64 ~sparc ~x86 ~x86-fbsd"
+KEYWORDS="amd64 ~arm ppc ~ppc64 ~sparc x86 ~x86-fbsd"
 IUSE="debug doc examples python ssl static-libs"
 RESTRICT="test"
 
-DEPEND=">=dev-libs/boost-1.48[python?]
+DEPEND=">=dev-libs/boost-1.48[python?,threads(+)]
 	>=sys-devel/libtool-2.2
 	sys-libs/zlib
 	examples? ( !net-p2p/mldonkey )
@@ -48,12 +48,6 @@ src_configure() {
 		--with-boost-filesystem=boost_filesystem-mt \
 		--with-boost-thread=boost_thread-mt \
 		--with-boost-python=boost_python-${PYTHON_ABI}-mt"
-	# detect boost version and location, bug 295474
-	BOOST_PKG="$(best_version ">=dev-libs/boost-1.34.1")"
-	BOOST_VER="$(get_version_component_range 1-2 "${BOOST_PKG/*boost-/}")"
-	BOOST_VER="$(replace_all_version_separators _ "${BOOST_VER}")"
-	BOOST_INC="${EPREFIX}/usr/include/boost-${BOOST_VER}"
-	BOOST_LIB="${EPREFIX}/usr/$(get_libdir)/boost-${BOOST_VER}"
 
 	local LOGGING
 	use debug && LOGGING="--enable-logging=verbose"
@@ -66,8 +60,6 @@ src_configure() {
 		$(use_enable static-libs static) \
 		--with-zlib=system \
 		${LOGGING} \
-		--with-boost=${BOOST_INC} \
-		--with-boost-libdir=${BOOST_LIB} \
 		${BOOST_LIBS}
 }
 

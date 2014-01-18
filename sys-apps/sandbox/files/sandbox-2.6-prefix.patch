@@ -1,0 +1,363 @@
+Index: sandbox-2.6/configure.ac
+===================================================================
+--- sandbox-2.6.orig/configure.ac
++++ sandbox-2.6/configure.ac
+@@ -32,6 +32,7 @@ AC_PROG_MAKE_SET
+ AC_PROG_AWK
+ AC_PROG_EGREP
+ AC_CHECK_PROGS([READELF], [readelf eu-readelf], [false])
++AC_PATH_PROG([BASH_PATH], [bash])
+ AM_MISSING_PROG([AUTOM4TE], [autom4te])
+ 
+ LT_INIT([disable-static])
+@@ -356,7 +357,9 @@ SB_CHECK_PATH([/proc/$$/cmdline])
+ dnl We add to CPPFLAGS rather than doing AC_DEFINE_UNQUOTED
+ dnl so we dont have to worry about fully expanding all of
+ dnl the variables ($sysconfdir defaults to "$prefix/etc")
+-SANDBOX_DEFINES='-DETCDIR="\"$(sysconfdir)\"" -DLIBSANDBOX_PATH="\"$(libdir)\"" -DSANDBOX_BASHRC_PATH="\"$(pkgdatadir)\""'
++SANDBOX_DEFINES='-DETCDIR="\"$(sysconfdir)\"" -DLIBSANDBOX_PATH="\"$(libdir)\""\
++	-DBASH="\"$(BASH_PATH)\"" -DSANDBOX_BASHRC_PATH="\"$(pkgdatadir)\""\
++	-DVARDIR="\"$(localstatedir)\""'
+ AC_SUBST([SANDBOX_DEFINES])
+ 
+ dnl Check for toolchain features
+Index: sandbox-2.6/libsbutil/sbutil.h
+===================================================================
+--- sandbox-2.6.orig/libsbutil/sbutil.h
++++ sandbox-2.6/libsbutil/sbutil.h
+@@ -23,8 +23,8 @@
+ #define LIB_NAME               "libsandbox.so"
+ #define BASHRC_NAME            "sandbox.bashrc"
+ #define TMPDIR                 "/tmp"
+-#define PORTAGE_TMPDIR         "/var/tmp/portage"
+-#define SANDBOX_LOG_LOCATION   "/var/log/sandbox"
++#define PORTAGE_TMPDIR         VARDIR "/tmp/portage"
++#define SANDBOX_LOG_LOCATION   VARDIR "/log/sandbox"
+ #define LOG_FILE_PREFIX        "/sandbox-"
+ #define DEBUG_LOG_FILE_PREFIX  "/sandbox-debug-"
+ #define LOG_FILE_EXT           ".log"
+Index: sandbox-2.6/src/sandbox.c
+===================================================================
+--- sandbox-2.6.orig/src/sandbox.c
++++ sandbox-2.6/src/sandbox.c
+@@ -269,7 +269,7 @@ int main(int argc, char **argv)
+ 		goto oom_error;
+ 
+ 	/* Setup bash argv */
+-	str_list_add_item_copy(argv_bash, "/bin/bash", oom_error);
++	str_list_add_item_copy(argv_bash, BASH, oom_error);
+ 	str_list_add_item_copy(argv_bash, "-rcfile", oom_error);
+ 	str_list_add_item_copy(argv_bash, sandbox_info.sandbox_rc, oom_error);
+ 	if (argc >= 2) {
+Index: sandbox-2.6/data/sandbox.bashrc.in
+===================================================================
+--- /dev/null
++++ sandbox-2.6/data/sandbox.bashrc.in
+@@ -0,0 +1,111 @@
++# Copyright (C) 2001 Geert Bevin, Uwyn, http://www.uwyn.com
++# Distributed under the terms of the GNU General Public License, v2 or later
++
++if [[ -n ${LD_PRELOAD} && ${LD_PRELOAD} != *$SANDBOX_LIB* ]] ; then
++	export LD_PRELOAD="${SANDBOX_LIB} ${LD_PRELOAD}"
++elif [[ -z ${LD_PRELOAD} ]] ; then
++	export LD_PRELOAD="${SANDBOX_LIB}"
++fi
++
++export BASH_ENV="${SANDBOX_BASHRC}"
++
++alias make="make LD_PRELOAD=${LD_PRELOAD}"
++alias su="su -c '@BASH@ -rcfile ${SANDBOX_BASHRC}'"
++
++declare -r SANDBOX_ACTIVE
++
++# Only do Mike's sandboxshell mojo if we are interactive, and if
++# we are connected to a terminal (ie, not piped, etc)
++if [[ ${SANDBOX_INTRACTV} == "1" && -t 1 ]] || [[ ${__SANDBOX_TESTING} == "yes" ]] ; then
++	trap ":" INT QUIT TSTP
++
++	# Make sure this do not get recusively called
++	unset SANDBOX_INTRACTV
++
++	# Do not set this, as user might want to override path, etc ... #139591
++	#source /etc/profile
++
++	if [[ ${__SANDBOX_TESTING} != "yes" ]] ; then
++		(
++		[[ ${NOCOLOR} == "true" || ${NOCOLOR} == "yes" || ${NOCOLOR} == "1" ]] && \
++			export RC_NOCOLOR="yes"
++		source @sysconfdir@/init.d/functions.sh
++		if [ $? -ne 0 ] ; then
++			einfo() { echo " INFO: $*"; }
++			ewarn() { echo " WARN: $*"; }
++			eerror() { echo " ERR: $*"; }
++		fi
++		echo
++		einfo "Loading sandboxed shell"
++		einfo " Log File:           ${SANDBOX_LOG}"
++		if [[ -n ${SANDBOX_DEBUG_LOG} ]] ; then
++			einfo " Debug Log File:     ${SANDBOX_DEBUG_LOG}"
++		fi
++		einfo " sandboxon:          turn sandbox on"
++		einfo " sandboxoff:         turn sandbox off"
++		einfo " addread <path>:     allow <path> to be read"
++		einfo " addwrite <path>:    allow <path> to be written"
++		einfo " adddeny <path>:     deny access to <path>"
++		einfo " addpredict <path>:  allow fake access to <path>"
++		echo
++		)
++
++		# do ebuild environment loading ... detect if we're in portage
++		# build area or not ... uNF uNF uNF
++		#sbs_pdir=$(portageq envvar PORTAGE_TMPDIR)/portage/ #portageq takes too long imo
++		if [[ -z ${PORTAGE_TMPDIR} ]] ; then
++			sbs_pdir=$(
++				for f in @sysconfdir@/{,portage/}make.globals @sysconfdir@/{,portage/}make.conf ; do
++					[[ -e ${f} ]] && source ${f}
++				done
++				echo $PORTAGE_TMPDIR
++			)
++		else
++			sbs_pdir=${PORTAGE_TMPDIR}
++		fi
++		: ${sbs_pdir:=@localstatedir@/tmp}
++		sbs_pdir=${sbs_pdir}/portage/
++
++		if [[ ${PWD:0:${#sbs_pdir}} == "${sbs_pdir}" ]] ; then
++			sbs_bdir=$(echo ${PWD:${#sbs_pdir}} | cut -d/ -f1,2)
++			sbs_tmpenvfile=${sbs_pdir}${sbs_bdir}/temp/environment
++			if [[ -e ${sbs_tmpenvfile} ]] ; then
++				echo "Found environment at ${sbs_tmpenvfile}"
++				printf " * Would you like to enter the portage environment ? "
++				read env
++				sbs_PREPWD=${PWD}
++				if [[ ${env} == "y" ]] ; then
++					# First try to source variables and export them ...
++					eval $(sed -e '/^[[:alnum:]_-]*=/s:^:export :' \
++					           -e '/^[[:alnum:]_-]* ()/Q' "${sbs_tmpenvfile}") 2>/dev/null
++					# Then grab everything (including functions)
++					source "${sbs_tmpenvfile}" 2> /dev/null
++					export SANDBOX_WRITE=${SANDBOX_WRITE}:${sbs_pdir}${sbs_bdir}:${sbs_pdir}/homedir
++				fi
++				PWD=${sbs_PREPWD}
++			fi
++		fi
++
++		unset sbs_pdir sbs_bdir sbs_tmpenvfile sbs_PREPWD env
++	fi
++
++	cd "${PWD}"
++	if [[ ${NOCOLOR} != "true" && ${NOCOLOR} != "yes" && ${NOCOLOR} != "1" ]] ; then
++		export PS1="\[\e[31;01m\][s]\[\e[0m\] ${PS1}"
++	else
++		export PS1="[s] ${PS1}"
++	fi
++
++	adddeny()    { export SANDBOX_DENY=${SANDBOX_DENY}:$1 ; }
++	addpredict() { export SANDBOX_PREDICT=${SANDBOX_PREDICT}:$1 ; }
++	addread()    { export SANDBOX_READ=${SANDBOX_READ}:$1 ; }
++	addwrite()   { export SANDBOX_WRITE=${SANDBOX_WRITE}:$1 ; }
++	sandboxon()  { export SANDBOX_ON="1" ; }
++	sandboxoff() { export SANDBOX_ON="0" ; }
++
++	[[ -z ${CCACHE_DIR} ]] && [[ -w /root/.ccache ]] && export CCACHE_DIR=/root/.ccache
++	for var in CCACHE_DIR DISTCC_DIR ; do
++		[[ ${!var+set} == "set" ]] && addwrite ${!var}
++	done
++	unset var
++fi
+Index: sandbox-2.6/data/Makefile.am
+===================================================================
+--- sandbox-2.6.orig/data/Makefile.am
++++ sandbox-2.6/data/Makefile.am
+@@ -1,4 +1,9 @@
+ dist_pkgdata_DATA  = sandbox.bashrc
++sandbox.bashrc: sandbox.bashrc.in
++	$(SED) -e "s,[@]sysconfdir[@],$(sysconfdir),"\
++		-e "s,[@]BASH_PATH[@],$(BASH),"\
++		-e "s,[@]localstatedir[@],$(localstatedir),"\
++		$< >$@
+ 
+ pixmapdir = $(datadir)/pixmaps
+ dist_pixmap_DATA = sandbox.svg
+Index: sandbox-2.6/data/Makefile.in
+===================================================================
+--- sandbox-2.6.orig/data/Makefile.in
++++ sandbox-2.6/data/Makefile.in
+@@ -1,9 +1,8 @@
+-# Makefile.in generated by automake 1.11.5 from Makefile.am.
++# Makefile.in generated by automake 1.12.4 from Makefile.am.
+ # @configure_input@
+ 
+-# Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
+-# 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software
+-# Foundation, Inc.
++# Copyright (C) 1994-2012 Free Software Foundation, Inc.
++
+ # This Makefile.in is free software; the Free Software Foundation
+ # gives unlimited permission to copy and/or distribute it,
+ # with or without modifications, as long as this notice is preserved.
+@@ -69,12 +68,18 @@ mkinstalldirs = $(install_sh) -d
+ CONFIG_HEADER = $(top_builddir)/config.h
+ CONFIG_CLEAN_FILES =
+ CONFIG_CLEAN_VPATH_FILES =
++AM_V_P = $(am__v_P_@AM_V@)
++am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
++am__v_P_0 = false
++am__v_P_1 = :
+ AM_V_GEN = $(am__v_GEN_@AM_V@)
+ am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+-am__v_GEN_0 = @echo "  GEN   " $@;
++am__v_GEN_0 = @echo "  GEN     " $@;
++am__v_GEN_1 = 
+ AM_V_at = $(am__v_at_@AM_V@)
+ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
+ am__v_at_0 = @
++am__v_at_1 = 
+ SOURCES =
+ DIST_SOURCES =
+ am__can_run_installinfo = \
+@@ -123,6 +128,7 @@ AUTOHEADER = @AUTOHEADER@
+ AUTOM4TE = @AUTOM4TE@
+ AUTOMAKE = @AUTOMAKE@
+ AWK = @AWK@
++BASH_PATH = @BASH_PATH@
+ CC = @CC@
+ CCDEPMODE = @CCDEPMODE@
+ CFLAGS = @CFLAGS@
+@@ -348,6 +354,8 @@ TAGS:
+ ctags: CTAGS
+ CTAGS:
+ 
++cscope cscopelist:
++
+ 
+ distdir: $(DISTFILES)
+ 	@srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
+@@ -500,6 +508,11 @@ uninstall-am: uninstall-dist_desktopDATA
+ 	uninstall uninstall-am uninstall-dist_desktopDATA \
+ 	uninstall-dist_pixmapDATA uninstall-dist_pkgdataDATA
+ 
++sandbox.bashrc: sandbox.bashrc.in
++	$(SED) -e "s,[@]sysconfdir[@],$(sysconfdir),"\
++		-e "s,[@]BASH_PATH[@],$(BASH),"\
++		-e "s,[@]localstatedir[@],$(localstatedir),"\
++		$< >$@
+ 
+ # Tell versions [3.59,3.63) of GNU make to not export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.
+Index: sandbox-2.6/data/sandbox.bashrc
+===================================================================
+--- sandbox-2.6.orig/data/sandbox.bashrc
++++ /dev/null
+@@ -1,111 +0,0 @@
+-# Copyright (C) 2001 Geert Bevin, Uwyn, http://www.uwyn.com
+-# Distributed under the terms of the GNU General Public License, v2 or later 
+-
+-if [[ -n ${LD_PRELOAD} && ${LD_PRELOAD} != *$SANDBOX_LIB* ]] ; then
+-	export LD_PRELOAD="${SANDBOX_LIB} ${LD_PRELOAD}"
+-elif [[ -z ${LD_PRELOAD} ]] ; then
+-	export LD_PRELOAD="${SANDBOX_LIB}"
+-fi
+-
+-export BASH_ENV="${SANDBOX_BASHRC}"
+-
+-alias make="make LD_PRELOAD=${LD_PRELOAD}"
+-alias su="su -c '/bin/bash -rcfile ${SANDBOX_BASHRC}'"
+-
+-declare -r SANDBOX_ACTIVE
+-
+-# Only do Mike's sandboxshell mojo if we are interactive, and if
+-# we are connected to a terminal (ie, not piped, etc)
+-if [[ ${SANDBOX_INTRACTV} == "1" && -t 1 ]] || [[ ${__SANDBOX_TESTING} == "yes" ]] ; then
+-	trap ":" INT QUIT TSTP
+-
+-	# Make sure this do not get recusively called
+-	unset SANDBOX_INTRACTV
+-
+-	# Do not set this, as user might want to override path, etc ... #139591
+-	#source /etc/profile
+-
+-	if [[ ${__SANDBOX_TESTING} != "yes" ]] ; then
+-		(
+-		[[ ${NOCOLOR} == "true" || ${NOCOLOR} == "yes" || ${NOCOLOR} == "1" ]] && \
+-			export RC_NOCOLOR="yes"
+-		source /etc/init.d/functions.sh
+-		if [ $? -ne 0 ] ; then
+-			einfo() { echo " INFO: $*"; }
+-			ewarn() { echo " WARN: $*"; }
+-			eerror() { echo " ERR: $*"; }
+-		fi
+-		echo
+-		einfo "Loading sandboxed shell"
+-		einfo " Log File:           ${SANDBOX_LOG}"
+-		if [[ -n ${SANDBOX_DEBUG_LOG} ]] ; then
+-			einfo " Debug Log File:     ${SANDBOX_DEBUG_LOG}"
+-		fi
+-		einfo " sandboxon:          turn sandbox on"
+-		einfo " sandboxoff:         turn sandbox off"
+-		einfo " addread <path>:     allow <path> to be read"
+-		einfo " addwrite <path>:    allow <path> to be written"
+-		einfo " adddeny <path>:     deny access to <path>"
+-		einfo " addpredict <path>:  allow fake access to <path>"
+-		echo
+-		)
+-
+-		# do ebuild environment loading ... detect if we're in portage
+-		# build area or not ... uNF uNF uNF
+-		#sbs_pdir=$(portageq envvar PORTAGE_TMPDIR)/portage/ #portageq takes too long imo
+-		if [[ -z ${PORTAGE_TMPDIR} ]] ; then
+-			sbs_pdir=$(
+-				for f in /etc/{,portage/}make.globals /etc/{,portage/}make.conf ; do
+-					[[ -e ${f} ]] && source ${f}
+-				done
+-				echo $PORTAGE_TMPDIR
+-			)
+-		else
+-			sbs_pdir=${PORTAGE_TMPDIR}
+-		fi
+-		: ${sbs_pdir:=/var/tmp}
+-		sbs_pdir=${sbs_pdir}/portage/
+-
+-		if [[ ${PWD:0:${#sbs_pdir}} == "${sbs_pdir}" ]] ; then
+-			sbs_bdir=$(echo ${PWD:${#sbs_pdir}} | cut -d/ -f1,2)
+-			sbs_tmpenvfile=${sbs_pdir}${sbs_bdir}/temp/environment
+-			if [[ -e ${sbs_tmpenvfile} ]] ; then
+-				echo "Found environment at ${sbs_tmpenvfile}"
+-				printf " * Would you like to enter the portage environment ? "
+-				read env
+-				sbs_PREPWD=${PWD}
+-				if [[ ${env} == "y" ]] ; then
+-					# First try to source variables and export them ...
+-					eval $(sed -e '/^[[:alnum:]_-]*=/s:^:export :' \
+-					           -e '/^[[:alnum:]_-]* ()/Q' "${sbs_tmpenvfile}") 2>/dev/null
+-					# Then grab everything (including functions)
+-					source "${sbs_tmpenvfile}" 2> /dev/null
+-					export SANDBOX_WRITE=${SANDBOX_WRITE}:${sbs_pdir}${sbs_bdir}:${sbs_pdir}/homedir
+-				fi
+-				PWD=${sbs_PREPWD}
+-			fi
+-		fi
+-
+-		unset sbs_pdir sbs_bdir sbs_tmpenvfile sbs_PREPWD env
+-	fi
+-
+-	cd "${PWD}"
+-	if [[ ${NOCOLOR} != "true" && ${NOCOLOR} != "yes" && ${NOCOLOR} != "1" ]] ; then
+-		export PS1="\[\e[31;01m\][s]\[\e[0m\] ${PS1}"
+-	else
+-		export PS1="[s] ${PS1}"
+-	fi
+-
+-	adddeny()    { export SANDBOX_DENY=${SANDBOX_DENY}:$1 ; }
+-	addpredict() { export SANDBOX_PREDICT=${SANDBOX_PREDICT}:$1 ; }
+-	addread()    { export SANDBOX_READ=${SANDBOX_READ}:$1 ; }
+-	addwrite()   { export SANDBOX_WRITE=${SANDBOX_WRITE}:$1 ; }
+-	sandboxon()  { export SANDBOX_ON="1" ; }
+-	sandboxoff() { export SANDBOX_ON="0" ; }
+-
+-	[[ -z ${CCACHE_DIR} ]] && [[ -w /root/.ccache ]] && export CCACHE_DIR=/root/.ccache
+-	for var in CCACHE_DIR DISTCC_DIR ; do
+-		[[ ${!var+set} == "set" ]] && addwrite ${!var}
+-	done
+-	unset var
+-fi
