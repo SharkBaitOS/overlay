@@ -106,12 +106,12 @@ glibc_do_configure() {
 		--host=${CTARGET_OPT:-${CTARGET}}
 		$(use_enable profile)
 		$(use_with gd)
-		--with-headers=$(alt_build_headers)
-		--prefix=/usr
-		--libdir=/usr/$(get_libdir)
-		--mandir=/usr/share/man
-		--infodir=/usr/share/info
-		--libexecdir=/usr/$(get_libdir)/misc/glibc
+		--with-headers="$(alt_build_headers)"
+		--prefix="${TPREFIX}"/usr
+		--libdir="${TPREFIX}"/usr/$(get_libdir)
+		--mandir="${TPREFIX}"/usr/share/man
+		--infodir="${TPREFIX}"/usr/share/info
+		--libexecdir="${TPREFIX}"/usr/$(get_libdir)/misc/glibc
 		--with-bugurl=http://bugs.gentoo.org/
 		--with-pkgversion="$(glibc_banner)"
 		$(use_multiarch || echo --disable-multi-arch)
@@ -123,7 +123,7 @@ glibc_do_configure() {
 
 	# There is no configure option for this and we need to export it
 	# since the glibc build will re-run configure on itself
-	export libc_cv_slibdir=/$(get_libdir)
+	export libc_cv_slibdir=${TPREFIX}/$(get_libdir)
 
 	# We take care of patching our binutils to use both hash styles,
 	# and many people like to force gnu hash style only, so disable
@@ -219,8 +219,8 @@ toolchain-glibc_headers_configure() {
 		--enable-bind-now
 		--build=${CBUILD_OPT:-${CBUILD}}
 		--host=${CTARGET_OPT:-${CTARGET}}
-		--with-headers=$(alt_build_headers)
-		--prefix=/usr
+		--with-headers="$(alt_build_headers)"
+		--prefix="${TPREFIX}"/usr
 		${EXTRA_ECONF}
 	)
 

@@ -18,7 +18,7 @@ glibc_sanity_check() {
 	# lead to unsafe code execution if the generated prefix is
 	# within a world-writable directory.
 	# (e.g. /var/tmp/portage:${HOSTNAME})
-	pushd "${ED}"/$(get_libdir) >/dev/null
+	pushd "${D}"/$(get_libdir) >/dev/null
 
 	local x striptest
 	for x in cal date env free ls true uname uptime ; do

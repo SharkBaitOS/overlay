@@ -2,8 +2,35 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/sys-libs/glibc/files/eblits/common.eblit,v 1.45 2014/10/18 23:09:51 vapier Exp $
 
+# There are many directory offsets here that can lead to confusion. We summarize the senarios in this table
+# P:=Prefix X:=Cross-Triplet
+# example of configure host: --with-headers
+# example of configure target: --libdir
+#
+# variation   phase               PX                      X               P         solution
+# -----------+-------------------+-----------------------+---------------+---------+----------------------------------------
+# host        configure      EPREFIX/usr/CTARGET/TPREFIX  /usr/CTARGET    TPREFIX   $(alt_prefix)
+# target      configure           TPREFIX                 NULL            TPREFIX   $TPREFIX
+# -----------+-------------------+-----------------------+---------------+---------+----------------------------------------
+# host        install_root        D/EPREFIX/usr/CTARGET   D/usr/CTARGET   D         ${D}/$(alt_prefix no-tp)
+# -----------+-------------------+-----------------------+---------------+---------+----------------------------------------
+# host        ebuild helper ED/   /usr/CTARGET/TPREFIX    /usr/CTARGET    NULL      $(alt_prefix no-ep)
+# host        file          D/EPREFIX/usr/CTARGET/TPREFIX D/usr/CTARGET   D/TPREFIX $(alt_prefix)
+#
+# alt_prefix and TPREFIX in the table are defined as followed
+
+: ${TPREFIX:=${EPREFIX}}
+
 alt_prefix() {
-	is_crosscompile && echo /usr/${CTARGET}
+	# EPREFIX needs to be stripped before passing to portage helpers
+	local prefix tprefix
+	if is_crosscompile; then
+		prefix=$([[ $1 == no-ep ]] || echo ${EPREFIX})/usr/${CTARGET}
+		[[ $1 == no-tp ]] || tprefix=${TPREFIX}
+	else
+		[[ $1 == no-tp ]] || [[ $1 == no-ep ]] || tprefix=${TPREFIX}
+	fi
+	echo ${prefix}${tprefix}
 }
 
 if [[ ${EAPI:-0} == [012] ]] ; then
@@ -23,7 +50,7 @@ fi
 # the whole system.
 # note: intentionally undocumented.
 alt_headers() {
-	echo ${ALT_HEADERS:=$(alt_prefix)/usr/include}
+	echo ${ALT_HEADERS:=$(alt_prefix $@)/usr/include}
 }
 alt_build_headers() {
 	if [[ -z ${ALT_BUILD_HEADERS} ]] ; then
@@ -40,10 +67,10 @@ alt_build_headers() {
 }
 
 alt_libdir() {
-	echo $(alt_prefix)/$(get_libdir)
+	echo $(alt_prefix $@)/$(get_libdir)
 }
 alt_usrlibdir() {
-	echo $(alt_prefix)/usr/$(get_libdir)
+	echo $(alt_prefix $@)/usr/$(get_libdir)
 }
 
 builddir() {
@@ -281,8 +308,8 @@ setup_env() {
 	unset LD_RUN_PATH
 	unset LD_ASSUME_KERNEL
 
-	multilib_env ${CTARGET_OPT:-${CTARGET}}
 	if is_crosscompile || tc-is-cross-compiler ; then
+		multilib_env ${CTARGET_OPT:-${CTARGET}}
 		if ! use multilib ; then
 			MULTILIB_ABIS=${DEFAULT_ABI}
 		else

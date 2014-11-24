@@ -1,0 +1,24 @@
+Index: shadow/Makefile
+===================================================================
+--- shadow/Makefile.orig
++++ shadow/Makefile
+@@ -36,5 +36,6 @@ CFLAGS-fgetspent_r.c = -fexceptions $(li
+ CFLAGS-putspent.c = -fexceptions $(libio-mtsafe)
+ CFLAGS-getspnam.c = -fexceptions
+ CFLAGS-getspnam_r.c = -fexceptions
++CPPFLAGS-lckpwdf.c = -DSYSCONFDIR='"$(sysconfdir)"'
+ 
+ include ../Rules
+Index: shadow/lckpwdf.c
+===================================================================
+--- shadow/lckpwdf.c.orig
++++ shadow/lckpwdf.c
+@@ -29,7 +29,7 @@
+ 
+ 
+ /* Name of the lock file.  */
+-#define PWD_LOCKFILE "/etc/.pwd.lock"
++#define PWD_LOCKFILE SYSCONFDIR "/.pwd.lock"
+ 
+ /* How long to wait for getting the lock before returning with an
+    error.  */
