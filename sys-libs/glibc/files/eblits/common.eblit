@@ -1,31 +1,21 @@
-# Copyright 1999-2012 Gentoo Foundation
+# Copyright 1999-2014 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/sys-libs/glibc/files/eblits/common.eblit,v 1.29 2012/12/28 19:00:51 vapier Exp $
-
-# There are many directory offsets here that can lead to confusion. We summarize the senarios in this table
-# P:=Prefix X:=Cross-Triplet
-# example of configure host: --with-headers
-# example of configure target: --libdir
-#
-# variation   phase               PX                      X               P         solution
-# -----------+-------------------+-----------------------+---------------+---------+----------------------------------------
-# host        configure           EPREFIX/usr/CTARGET     /usr/CTARGET    EPREFIX   $EPREFIX/$(alt_prefix)
-# target      configure           NULL                    NULL            EPREFIX   $TPREFIX
-# -----------+-------------------+-----------------------+---------------+---------+----------------------------------------
-# host        install_root        D/EPREFIX/usr/CTARGET   D/usr/CTARGET   D         ${D}/${EPREFIX%$TPREFIX}/$(alt_prefix)
-# -----------+-------------------+-----------------------+---------------+---------+----------------------------------------
-# host        ebuild helper ED/   /usr/CTARGET            /usr/CTARGET    NULL      $(alt_prefix)
-#
-# alt_prefix and TPREFIX in the table are defined as followed
+# $Header: /var/cvsroot/gentoo-x86/sys-libs/glibc/files/eblits/common.eblit,v 1.45 2014/10/18 23:09:51 vapier Exp $
 
 alt_prefix() {
 	is_crosscompile && echo /usr/${CTARGET}
 }
 
-TPREFIX=$(is_crosscompile || echo "${EPREFIX}")
-
-: ${ED:=${D}}
-: ${EROOT:=${ROOT}}
+if [[ ${EAPI:-0} == [012] ]] ; then
+	: ${ED:=${D}}
+	: ${EROOT:=${ROOT}}
+fi
+# This indirection is for binpkgs. #523332
+_nonfatal() { nonfatal "$@" ; }
+if [[ ${EAPI:-0} == [0123] ]] ; then
+	nonfatal() { "$@" ; }
+	_nonfatal() { "$@" ; }
+fi
 
 # We need to be able to set alternative headers for
 # compiling for non-native platform
@@ -37,9 +27,9 @@ alt_headers() {
 }
 alt_build_headers() {
 	if [[ -z ${ALT_BUILD_HEADERS} ]] ; then
-		ALT_BUILD_HEADERS=${EPREFIX}$(alt_headers)
+		ALT_BUILD_HEADERS=$(alt_headers)
 		if tc-is-cross-compiler ; then
-			ALT_BUILD_HEADERS=${EROOT}$(alt_headers)
+			ALT_BUILD_HEADERS=${SYSROOT}$(alt_headers)
 			if [[ ! -e ${ALT_BUILD_HEADERS}/linux/version.h ]] ; then
 				local header_path=$(echo '#include <linux/version.h>' | $(tc-getCPP ${CTARGET}) ${CFLAGS} 2>&1 | grep -o '[^"]*linux/version.h')
 				ALT_BUILD_HEADERS=${header_path%/linux/version.h}
@@ -54,6 +44,10 @@ alt_libdir() {
 }
 alt_usrlibdir() {
 	echo $(alt_prefix)/usr/$(get_libdir)
+}
+
+builddir() {
+	echo "${WORKDIR}/build-${ABI}-${CTARGET}-$1"
 }
 
 setup_target_flags() {
@@ -174,8 +168,11 @@ setup_flags() {
 	strip-unsupported-flags
 	filter-flags -m32 -m64 -mabi=*
 
+	# Bug 492892.
+	filter-flags -frecord-gcc-switches
+
 	unset CBUILD_OPT CTARGET_OPT
-	if has_multilib_profile ; then
+	if use multilib ; then
 		CTARGET_OPT=$(get_abi_CTARGET)
 		[[ -z ${CTARGET_OPT} ]] && CTARGET_OPT=$(get_abi_CHOST)
 	fi
@@ -198,7 +195,12 @@ setup_flags() {
 	# building glibc with SSP is fraught with difficulty, especially
 	# due to __stack_chk_fail_local which would mean significant changes
 	# to the glibc build process. See bug #94325 #293721
-	use hardened && gcc-specs-ssp && append-cflags $(test-flags-CC -fno-stack-protector)
+	# Note we have to handle both user-given CFLAGS and gcc defaults via
+	# spec rules here.  We can't simply add -fno-stack-protector as it gets
+	# added before user flags, and we can't just filter-flags because
+	# _filter_hardened doesn't support globs.
+	filter-flags -fstack-protector*
+	gcc-specs-ssp && append-flags $(test-flags -fno-stack-protector)
 
 	if use hardened && gcc-specs-pie ; then
 		# Force PIC macro definition for all compilations since they're all
@@ -216,15 +218,8 @@ want_nptl() {
 	want_tls || return 1
 	use nptl || return 1
 
-	# Only list the arches that cannot do NPTL
-	case $(tc-arch) in
-		m68k) return 1;;
-		sparc)
-			# >= v9 is needed for nptl.
-			[[ ${PROFILE_ARCH} == "sparc" ]] && return 1
-		;;
-	esac
-
+	# Older versions of glibc had incomplete arch support for nptl.
+	# But if you're building those now, you can handle USE=nptl yourself.
 	return 0
 }
 
@@ -267,9 +262,14 @@ use_multiarch() {
 	local bver nver
 	bver=$($(tc-getLD ${CTARGET}) -v | sed -n -r '1{s:[^0-9]*::;s:^([0-9.]*).*:\1:;p}')
 	case $(tc-arch ${CTARGET}) in
-		amd64|x86) nver="2.20" ;;
-		sparc)     nver="2.21" ;;
-		*)         return 1 ;;
+	amd64|x86) nver="2.20" ;;
+	arm)       nver="2.22" ;;
+	hppa)      nver="2.23" ;;
+	ppc|ppc64) nver="2.20" ;;
+	# ifunc was added in 2.23, but glibc also needs machinemode which is in 2.24.
+	s390)      nver="2.24" ;;
+	sparc)     nver="2.21" ;;
+	*)         return 1 ;;
 	esac
 	version_is_at_least ${nver} ${bver}
 }
@@ -279,9 +279,10 @@ use_multiarch() {
 setup_env() {
 	# silly users
 	unset LD_RUN_PATH
+	unset LD_ASSUME_KERNEL
 
+	multilib_env ${CTARGET_OPT:-${CTARGET}}
 	if is_crosscompile || tc-is-cross-compiler ; then
-		multilib_env ${CTARGET_OPT:-${CTARGET}}
 		if ! use multilib ; then
 			MULTILIB_ABIS=${DEFAULT_ABI}
 		else
@@ -305,6 +306,28 @@ setup_env() {
 	# top of each other.
 	: ${__GLIBC_CC:=$(tc-getCC ${CTARGET_OPT:-${CTARGET}})}
 	export __GLIBC_CC CC="${__GLIBC_CC} ${!VAR}"
+}
+
+foreach_abi() {
+	setup_env
+
+	local ret=0
+	local abilist=""
+	if use multilib ; then
+		abilist=$(get_install_abis)
+	else
+		abilist=${DEFAULT_ABI}
+	fi
+	evar_push ABI
+	export ABI
+	for ABI in ${abilist:-default} ; do
+		setup_env
+		einfo "Running $1 for ABI ${ABI}"
+		$1
+		: $(( ret |= $? ))
+	done
+	evar_pop
+	return ${ret}
 }
 
 just_headers() {
