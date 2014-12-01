@@ -108,6 +108,8 @@ glibc_do_configure() {
 		$(use_with gd)
 		--with-headers="$(alt_build_headers)"
 		--prefix="${TPREFIX}"/usr
+		--sysconfdir="${TPREFIX}"/etc
+		--localstatedir="${TPREFIX}"/var
 		--libdir="${TPREFIX}"/usr/$(get_libdir)
 		--mandir="${TPREFIX}"/usr/share/man
 		--infodir="${TPREFIX}"/usr/share/info

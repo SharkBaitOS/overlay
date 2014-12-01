@@ -2,35 +2,23 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/sys-libs/glibc/files/eblits/common.eblit,v 1.45 2014/10/18 23:09:51 vapier Exp $
 
-# There are many directory offsets here that can lead to confusion. We summarize the senarios in this table
-# P:=Prefix X:=Cross-Triplet
-# example of configure host: --with-headers
-# example of configure target: --libdir
-#
-# variation   phase               PX                      X               P         solution
-# -----------+-------------------+-----------------------+---------------+---------+----------------------------------------
-# host        configure      EPREFIX/usr/CTARGET/TPREFIX  /usr/CTARGET    TPREFIX   $(alt_prefix)
-# target      configure           TPREFIX                 NULL            TPREFIX   $TPREFIX
-# -----------+-------------------+-----------------------+---------------+---------+----------------------------------------
-# host        install_root        D/EPREFIX/usr/CTARGET   D/usr/CTARGET   D         ${D}/$(alt_prefix no-tp)
-# -----------+-------------------+-----------------------+---------------+---------+----------------------------------------
-# host        ebuild helper ED/   /usr/CTARGET/TPREFIX    /usr/CTARGET    NULL      $(alt_prefix no-ep)
-# host        file          D/EPREFIX/usr/CTARGET/TPREFIX D/usr/CTARGET   D/TPREFIX $(alt_prefix)
-#
-# alt_prefix and TPREFIX in the table are defined as followed
-
 : ${TPREFIX:=${EPREFIX}}
 
+# ROOT variable is not used in src_*; emulate that with $(alt_prefix root).
+# P:=Prefix X:=Cross-Triplet PX: Cross-Triplet-Prefix
+#  phase               PX                            X              P         solution              
+# -------------------+-----------------------------+--------------+---------+-----------------------
+#  configure_headers   EPREFIX/usr/CTARGET/TPREFIX   /usr/CTARGET   EPREFIX   $EPREFIX$(alt_prefix) 
+#  configure_target    TPREFIX                       NULL           TPREFIX   $TPREFIX              
+# -------------------+-----------------------------+--------------+---------+-----------------------
+#  install_root D/     EPREFIX/usr/CTARGET           /usr/CTARGET   NULL      $(alt_prefix root)    
+# -------------------+-----------------------------+--------------+---------+-----------------------
+#  ebuild helper ED/   /usr/CTARGET/TPREFIX          /usr/CTARGET   NULL      $(alt_prefix)         
 alt_prefix() {
-	# EPREFIX needs to be stripped before passing to portage helpers
-	local prefix tprefix
 	if is_crosscompile; then
-		prefix=$([[ $1 == no-ep ]] || echo ${EPREFIX})/usr/${CTARGET}
-		[[ $1 == no-tp ]] || tprefix=${TPREFIX}
-	else
-		[[ $1 == no-tp ]] || [[ $1 == no-ep ]] || tprefix=${TPREFIX}
+		echo -n "${EPREFIX}"/usr/${CTARGET}
+		[[ $1 == root ]] || echo ${TPREFIX}
 	fi
-	echo ${prefix}${tprefix}
 }
 
 if [[ ${EAPI:-0} == [012] ]] ; then
@@ -50,13 +38,13 @@ fi
 # the whole system.
 # note: intentionally undocumented.
 alt_headers() {
-	echo ${ALT_HEADERS:=$(alt_prefix $@)/usr/include}
+	echo ${ALT_HEADERS:=$(alt_prefix)/usr/include}
 }
 alt_build_headers() {
 	if [[ -z ${ALT_BUILD_HEADERS} ]] ; then
-		ALT_BUILD_HEADERS=$(alt_headers)
+		ALT_BUILD_HEADERS="${EPREFIX}"$(alt_headers)
 		if tc-is-cross-compiler ; then
-			ALT_BUILD_HEADERS=${SYSROOT}$(alt_headers)
+			ALT_BUILD_HEADERS=${SYSROOT}"${EPREFIX}"$(alt_headers)
 			if [[ ! -e ${ALT_BUILD_HEADERS}/linux/version.h ]] ; then
 				local header_path=$(echo '#include <linux/version.h>' | $(tc-getCPP ${CTARGET}) ${CFLAGS} 2>&1 | grep -o '[^"]*linux/version.h')
 				ALT_BUILD_HEADERS=${header_path%/linux/version.h}
@@ -67,10 +55,10 @@ alt_build_headers() {
 }
 
 alt_libdir() {
-	echo $(alt_prefix $@)/$(get_libdir)
+	echo $(alt_prefix)/$(get_libdir)
 }
 alt_usrlibdir() {
-	echo $(alt_prefix $@)/usr/$(get_libdir)
+	echo $(alt_prefix)/usr/$(get_libdir)
 }
 
 builddir() {
