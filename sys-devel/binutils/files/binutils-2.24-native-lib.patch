@@ -1,0 +1,13 @@
+Index: ld/configure.tgt
+===================================================================
+--- ld.orig/configure.tgt
++++ ld/configure.tgt
+@@ -769,7 +769,7 @@ z8k-*-coff) 		targ_emul=z8002; targ_extr
+ 
+ esac
+ 
+-NATIVE_LIB_DIRS='/usr/local/lib /lib /usr/lib'
++NATIVE_LIB_DIRS='@GENTOO_PORTAGE_EPREFIX@/usr/local/lib @GENTOO_PORTAGE_EPREFIX@/lib @GENTOO_PORTAGE_EPREFIX@/usr/lib'
+ case "${target}" in
+ 
+ *-*-dragonfly*)
