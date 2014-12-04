@@ -157,6 +157,8 @@ eblit-src_unpack-pre() {
 }
 
 eblit-src_prepare-post() {
+	eprefixify extra/locale/locale-gen
+
 	cd "${S}"
 
 	if use hardened ; then
@@ -187,23 +189,21 @@ eblit-src_prepare-post() {
 
 	if use rap; then
 		if type -p lsb_release > lsb-loc; then
-			local lsb-id=$(lsb_release -i)
-			local lsb-rel=$(lsb_release -r)
+			local lsb_id=$(lsb_release -i)
+			local lsb_rel=$(lsb_release -r)
 		fi
 
-		if [[ ${lsb-id} == *CentOS ]] || [[ ${lsb-id} == *RedHat* ]]; then
-			if [[ ${lsb-rel} == 5.6 ]]; then
+		if [[ ${lsb_id} == *CentOS ]] || [[ ${lsb_id} == *RedHat* ]]; then
+			if [[ ${lsb_rel} == 5.6 ]]; then
 				elog "Your kernel is known to have vdso bug, disabling this feature"
+				elog "https://bugzilla.redhat.com/show_bug.cgi?id=678613"
 				epatch "${FILESDIR}"/${PV}/${P}-vdso-disable.patch
 			fi
 		fi
 
 		epatch "${FILESDIR}"/2.17/${PN}-2.17-runtime-prefix.patch
-	        eprefixify glibc-compat/nss_{compat/compat-{grp,{,s}pwd},files/files-netgrp}.c \
-			nis/nss_compat/compat-{grp,initgroups,{,s}pwd}.c \
-			nss/{db-Makefile,{bug-erange,nss_files/files-init{,groups}}.c} \
-			resolv/{netdb,resolv}.h sysdeps/{{generic,unix/sysv/linux}/paths.h,posix/system.c} \
+	        eprefixify sysdeps/{{generic,unix/sysv/linux}/paths.h,posix/system.c} \
 			libio/iopopen.c
-		epatch "${FILESDIR}"/${PV}/${P}-shadow-prefix.patch
+		epatch "${FILESDIR}"/${PV}/${P}-configurable-paths.patch
 	fi
 }
