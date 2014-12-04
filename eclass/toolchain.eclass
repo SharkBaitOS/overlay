@@ -49,6 +49,11 @@ is_crosscompile() {
 	[[ ${CHOST} != ${CTARGET} ]]
 }
 
+if [[ ${EAPI:-0} == [012] ]] ; then
+        : ${ED:=${D}}
+        : ${EROOT:=${ROOT}}
+fi
+
 # General purpose version check.  Without a second arg matches up to minor version (x.x.x)
 tc_version_is_at_least() {
 	version_is_at_least "$1" "${2:-${GCC_RELEASE_VER}}"
