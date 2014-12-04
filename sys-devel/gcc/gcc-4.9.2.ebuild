@@ -41,9 +41,10 @@ src_prepare() {
 	fi
 
 	if use rap; then
-		epatch "${FILESDIR}"/gcc-4.7-rap.patch
+		epatch "${FILESDIR}"/${P}-rap.patch
 		prefix_gcc_dynamic_loader
 	fi
+	EXTRA_ECONF="${EXTRA_ECONF} $(use_with rap dynamic-linker-prefix ${EPREFIX})"
 
 	toolchain_src_prepare
 
