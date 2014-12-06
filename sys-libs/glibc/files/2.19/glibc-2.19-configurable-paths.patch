@@ -1,0 +1,2115 @@
+Index: glibc-2.19/nis/Makefile
+===================================================================
+--- glibc-2.19.orig/nis/Makefile
++++ glibc-2.19/nis/Makefile
+@@ -58,6 +58,11 @@ libnsl-routines = yp_xdr ypclnt ypupdate
+ 		  nis_clone_res nss-default
+ 
+ libnss_compat-routines	:= $(addprefix compat-,grp pwd spwd initgroups)
++SYSCONF-FLAGS := -D'SYSCONFDIR="$(sysconfdir)"'
++CPPFLAGS-compat-grp.c = $(SYSCONF-FLAGS)
++CPPFLAGS-compat-pwd.c = $(SYSCONF-FLAGS)
++CPPFLAGS-compat-spwd.c = $(SYSCONF-FLAGS)
++CPPFLAGS-compat-initgroups.c = $(SYSCONF-FLAGS)
+ libnss_compat-inhibit-o	= $(filter-out .os,$(object-suffixes))
+ 
+ libnss_nis-routines	:= $(addprefix nis-,$(databases)) nis-initgroups \
+Index: glibc-2.19/nis/nss_compat/compat-grp.c
+===================================================================
+--- glibc-2.19.orig/nis/nss_compat/compat-grp.c
++++ glibc-2.19/nis/nss_compat/compat-grp.c
+@@ -120,7 +120,7 @@ internal_setgrent (ent_t *ent, int stayo
+ 
+   if (ent->stream == NULL)
+     {
+-      ent->stream = fopen ("/etc/group", "rme");
++      ent->stream = fopen (SYSCONFDIR "/group", "rme");
+ 
+       if (ent->stream == NULL)
+ 	status = errno == EAGAIN ? NSS_STATUS_TRYAGAIN : NSS_STATUS_UNAVAIL;
+Index: glibc-2.19/nis/nss_compat/compat-initgroups.c
+===================================================================
+--- glibc-2.19.orig/nis/nss_compat/compat-initgroups.c
++++ glibc-2.19/nis/nss_compat/compat-initgroups.c
+@@ -136,7 +136,7 @@ internal_setgrent (ent_t *ent)
+   else
+     ent->blacklist.current = 0;
+ 
+-  ent->stream = fopen ("/etc/group", "rme");
++  ent->stream = fopen (SYSCONFDIR "/group", "rme");
+ 
+   if (ent->stream == NULL)
+     status = errno == EAGAIN ? NSS_STATUS_TRYAGAIN : NSS_STATUS_UNAVAIL;
+Index: glibc-2.19/nis/nss_compat/compat-pwd.c
+===================================================================
+--- glibc-2.19.orig/nis/nss_compat/compat-pwd.c
++++ glibc-2.19/nis/nss_compat/compat-pwd.c
+@@ -235,7 +235,7 @@ internal_setpwent (ent_t *ent, int stayo
+ 
+   if (ent->stream == NULL)
+     {
+-      ent->stream = fopen ("/etc/passwd", "rme");
++      ent->stream = fopen (SYSCONFDIR "/passwd", "rme");
+ 
+       if (ent->stream == NULL)
+ 	status = errno == EAGAIN ? NSS_STATUS_TRYAGAIN : NSS_STATUS_UNAVAIL;
+Index: glibc-2.19/nis/nss_compat/compat-spwd.c
+===================================================================
+--- glibc-2.19.orig/nis/nss_compat/compat-spwd.c
++++ glibc-2.19/nis/nss_compat/compat-spwd.c
+@@ -191,7 +191,7 @@ internal_setspent (ent_t *ent, int stayo
+ 
+   if (ent->stream == NULL)
+     {
+-      ent->stream = fopen ("/etc/shadow", "rme");
++      ent->stream = fopen (SYSCONFDIR "/shadow", "rme");
+ 
+       if (ent->stream == NULL)
+ 	status = errno == EAGAIN ? NSS_STATUS_TRYAGAIN : NSS_STATUS_UNAVAIL;
+Index: glibc-2.19/nss/Makefile
+===================================================================
+--- glibc-2.19.orig/nss/Makefile
++++ glibc-2.19/nss/Makefile
+@@ -39,6 +39,8 @@ extra-objs		+= $(makedb-modules:=.o)
+ 
+ tests			= test-netdb tst-nss-test1 test-digits-dots
+ xtests			= bug-erange
++SYSCONF-FLAGS := -D'SYSCONFDIR="$(sysconfdir)"'
++CPPFLAGS-bug-erange.c = $(SYSCONF-FLAGS)
+ 
+ include ../Makeconfig
+ 
+@@ -57,6 +59,8 @@ vpath %.c $(subdir-dirs) ../locale/progr
+ 
+ libnss_files-routines	:= $(addprefix files-,$(databases)) \
+ 			   files-initgroups files-have_o_cloexec files-init
++CPPFLAGS-files-init.c = $(SYSCONF-FLAGS)
++CPPFLAGS-files-initgroups.c = $(SYSCONF-FLAGS)
+ 
+ libnss_db-dbs		:= $(addprefix db-,\
+ 				       $(filter-out hosts network key alias,\
+@@ -102,7 +106,7 @@ $(libnss_db-dbs:%=$(objpfx)%.c): $(objpf
+ 
+ $(objpfx)makedb: $(makedb-modules:%=$(objpfx)%.o)
+ 
+-$(inst_vardbdir)/Makefile: db-Makefile $(+force)
++$(inst_vardbdir)/Makefile: $(objpfx)db-Makefile $(+force)
+ 	$(do-install)
+ 
+ CFLAGS-nss_test1.c = -DNOT_IN_libc=1
+Index: glibc-2.19/nss/bug-erange.c
+===================================================================
+--- glibc-2.19.orig/nss/bug-erange.c
++++ glibc-2.19/nss/bug-erange.c
+@@ -37,7 +37,7 @@ main (void)
+     {
+       printf ("gethostbyname_r failed: %s (errno: %m)\n", strerror (res));
+ 
+-      if (access ("/etc/resolv.conf", R_OK))
++      if (access (SYSCONFDIR "/resolv.conf", R_OK))
+ 	{
+ 	  puts ("DNS probably not set up");
+ 	  return 0;
+Index: glibc-2.19/nss/nss_files/files-init.c
+===================================================================
+--- glibc-2.19.orig/nss/nss_files/files-init.c
++++ glibc-2.19/nss/nss_files/files-init.c
+@@ -35,33 +35,33 @@ static union							\
+     }								\
+   }
+ 
+-TF (pwd, "/etc/passwd");
+-TF (grp, "/etc/group");
+-TF (hst, "/etc/hosts");
+-TF (resolv, "/etc/resolv.conf", .call_res_init = 1);
+-TF (serv, "/etc/services");
+-TF (netgr, "/etc/netgroup");
++TF (pwd, SYSCONFDIR "/passwd");
++TF (grp, SYSCONFDIR "/group");
++TF (hst, SYSCONFDIR "/hosts");
++TF (resolv, SYSCONFDIR "/resolv.conf", .call_res_init = 1);
++TF (serv, SYSCONFDIR "/services");
++TF (netgr, SYSCONFDIR "/netgroup");
+ 
+ 
+ void
+ _nss_files_init (void (*cb) (size_t, struct traced_file *))
+ {
+-  strcpy (pwd_traced_file.file.fname, "/etc/passwd");
++  strcpy (pwd_traced_file.file.fname, SYSCONFDIR "/passwd");
+   cb (pwddb, &pwd_traced_file.file);
+ 
+-  strcpy (grp_traced_file.file.fname, "/etc/group");
++  strcpy (grp_traced_file.file.fname, SYSCONFDIR "/group");
+   cb (grpdb, &grp_traced_file.file);
+ 
+-  strcpy (hst_traced_file.file.fname, "/etc/hosts");
++  strcpy (hst_traced_file.file.fname, SYSCONFDIR "/hosts");
+   cb (hstdb, &hst_traced_file.file);
+ 
+-  strcpy (resolv_traced_file.file.fname, "/etc/resolv.conf");
++  strcpy (resolv_traced_file.file.fname, SYSCONFDIR "/resolv.conf");
+   cb (hstdb, &resolv_traced_file.file);
+ 
+-  strcpy (serv_traced_file.file.fname, "/etc/services");
++  strcpy (serv_traced_file.file.fname, SYSCONFDIR "/services");
+   cb (servdb, &serv_traced_file.file);
+ 
+-  strcpy (netgr_traced_file.file.fname, "/etc/netgroup");
++  strcpy (netgr_traced_file.file.fname, SYSCONFDIR "/netgroup");
+   cb (netgrdb, &netgr_traced_file.file);
+ }
+ 
+Index: glibc-2.19/nss/nss_files/files-initgroups.c
+===================================================================
+--- glibc-2.19.orig/nss/nss_files/files-initgroups.c
++++ glibc-2.19/nss/nss_files/files-initgroups.c
+@@ -31,7 +31,7 @@ _nss_files_initgroups_dyn (const char *u
+ 			   long int *size, gid_t **groupsp, long int limit,
+ 			   int *errnop)
+ {
+-  FILE *stream = fopen ("/etc/group", "rce");
++  FILE *stream = fopen (SYSCONFDIR "/group", "rce");
+   if (stream == NULL)
+     {
+       *errnop = errno;
+Index: glibc-2.19/nss/db-Makefile
+===================================================================
+--- glibc-2.19.orig/nss/db-Makefile
++++ /dev/null
+@@ -1,166 +0,0 @@
+-# Makefile to (re-)generate db versions of system database files.
+-# Copyright (C) 1996-2014 Free Software Foundation, Inc.
+-# This file is part of the GNU C Library.
+-# Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
+-#
+-
+-# The GNU C Library is free software; you can redistribute it and/or
+-# modify it under the terms of the GNU Lesser General Public
+-# License as published by the Free Software Foundation; either
+-# version 2.1 of the License, or (at your option) any later version.
+-
+-# The GNU C Library is distributed in the hope that it will be useful,
+-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-# Lesser General Public License for more details.
+-
+-# You should have received a copy of the GNU Lesser General Public
+-# License along with the GNU C Library; if not, see
+-# <http://www.gnu.org/licenses/>.
+-
+-DATABASES = $(wildcard /etc/passwd /etc/group /etc/ethers /etc/protocols \
+-		       /etc/rpc /etc/services /etc/shadow /etc/gshadow \
+-		       /etc/netgroup)
+-
+-VAR_DB = /var/db
+-
+-AWK = awk
+-MAKEDB = makedb --quiet
+-
+-all: $(patsubst %,$(VAR_DB)/%.db,$(notdir $(DATABASES)))
+-
+-
+-$(VAR_DB)/passwd.db: /etc/passwd
+-	@echo -n "$(patsubst %.db,%,$(@F))... "
+-	@$(AWK) 'BEGIN { FS=":"; OFS=":" } \
+-		 /^[ \t]*$$/ { next } \
+-		 /^[ \t]*#/ { next } \
+-		 /^[^#]/ { printf ".%s ", $$1; print; \
+-			   printf "=%s ", $$3; print }' $^ | \
+-	$(MAKEDB) -o $@ -
+-	@echo "done."
+-
+-$(VAR_DB)/group.db: /etc/group
+-	@echo -n "$(patsubst %.db,%,$(@F))... "
+-	@$(AWK) 'BEGIN { FS=":"; OFS=":" } \
+-		 /^[ \t]*$$/ { next } \
+-		 /^[ \t]*#/ { next } \
+-		 /^[^#]/ { printf ".%s ", $$1; print; \
+-			   printf "=%s ", $$3; print; \
+-			   if ($$4 != "") { \
+-			     split($$4, grmems, ","); \
+-			     for (memidx in grmems) { \
+-			       mem=grmems[memidx]; \
+-			       if (members[mem] == "") \
+-				 members[mem]=$$3; \
+-			       else \
+-				 members[mem]=members[mem] "," $$3; \
+-			     } \
+-			     delete grmems; } } \
+-		 END { for (mem in members) \
+-			 printf ":%s %s %s\n", mem, mem, members[mem]; }' $^ | \
+-	$(MAKEDB) -o $@ -
+-	@echo "done."
+-
+-$(VAR_DB)/ethers.db: /etc/ethers
+-	@echo -n "$(patsubst %.db,%,$(@F))... "
+-	@$(AWK) '/^[ \t]*$$/ { next } \
+-		 /^[ \t]*#/ { next } \
+-		 /^[^#]/ { printf ".%s ", $$1; print; \
+-			   printf "=%s ", $$2; print }' $^ | \
+-	$(MAKEDB) -o $@ -
+-	@echo "done."
+-
+-$(VAR_DB)/protocols.db: /etc/protocols
+-	@echo -n "$(patsubst %.db,%,$(@F))... "
+-	@$(AWK) '/^[ \t]*$$/ { next } \
+-		 /^[ \t]*#/ { next } \
+-		 /^[^#]/ { printf ".%s ", $$1; print; \
+-			   printf "=%s ", $$2; print; \
+-			   for (i = 3; i <= NF && !($$i ~ /^#/); ++i) \
+-			     { printf ".%s ", $$i; print } }' $^ | \
+-	$(MAKEDB) -o $@ -
+-	@echo "done."
+-
+-$(VAR_DB)/rpc.db: /etc/rpc
+-	@echo -n "$(patsubst %.db,%,$(@F))... "
+-	@$(AWK) '/^[ \t]*$$/ { next } \
+-		 /^[ \t]*#/ { next } \
+-		 /^[^#]/ { printf ".%s ", $$1; print; \
+-			   printf "=%s ", $$2; print; \
+-			   for (i = 3; i <= NF && !($$i ~ /^#/); ++i) \
+-			     { printf ".%s ", $$i; print } }' $^ | \
+-	$(MAKEDB) -o $@ -
+-	@echo "done."
+-
+-$(VAR_DB)/services.db: /etc/services
+-	@echo -n "$(patsubst %.db,%,$(@F))... "
+-	@$(AWK) 'BEGIN { FS="[ \t/]+" } \
+-		 /^[ \t]*$$/ { next } \
+-		 /^[ \t]*#/ { next } \
+-		 /^[^#]/ { sub(/[ \t]*#.*$$/, "");\
+-			   printf ":%s/%s ", $$1, $$3; print; \
+-			   printf ":%s/ ", $$1; print; \
+-			   printf "=%s/%s ", $$2, $$3; print; \
+-			   printf "=%s/ ", $$2; print; \
+-			   for (i = 4; i <= NF && !($$i ~ /^#/); ++i) \
+-			     { printf ":%s/%s ", $$i, $$3; print; \
+-			       printf ":%s/ ", $$i; print } }' $^ | \
+-	$(MAKEDB) -o $@ -
+-	@echo "done."
+-
+-$(VAR_DB)/shadow.db: /etc/shadow
+-	@echo -n "$(patsubst %.db,%,$(@F))... "
+-	@$(AWK) 'BEGIN { FS=":"; OFS=":" } \
+-		 /^[ \t]*$$/ { next } \
+-		 /^[ \t]*#/ { next } \
+-		 /^[^#]/ { printf ".%s ", $$1; print }' $^ | \
+-	(umask 077 && $(MAKEDB) -o $@ -)
+-	@echo "done."
+-	@if chgrp shadow $@ 2>/dev/null; then \
+-	  chmod g+r $@; \
+-	else \
+-	  chown 0 $@; chgrp 0 $@; chmod 600 $@; \
+-	  echo; \
+-	  echo "Warning: The shadow password database $@"; \
+-	  echo "has been set to be readable only by root.  You may want"; \
+-	  echo "to make it readable by the \`shadow' group depending"; \
+-	  echo "on your configuration."; \
+-	  echo; \
+-	fi
+-
+-$(VAR_DB)/gshadow.db: /etc/gshadow
+-	@echo -n "$(patsubst %.db,%,$(@F))... "
+-	@$(AWK) 'BEGIN { FS=":"; OFS=":" } \
+-		 /^[ \t]*$$/ { next } \
+-		 /^[ \t]*#/ { next } \
+-		 /^[^#]/ { printf ".%s ", $$1; print }' $^ | \
+-	(umask 077 && $(MAKEDB) -o $@ -)
+-	@echo "done."
+-	@if chgrp shadow $@ 2>/dev/null; then \
+-	  chmod g+r $@; \
+-	else \
+-	  chown 0 $@; chgrp 0 $@; chmod 600 $@; \
+-	  echo; \
+-	  echo "Warning: The shadow group database $@"; \
+-	  echo "has been set to be readable only by root.  You may want"; \
+-	  echo "to make it readable by the \`shadow' group depending"; \
+-	  echo "on your configuration."; \
+-	  echo; \
+-	fi
+-
+-$(VAR_DB)/netgroup.db: /etc/netgroup
+-	@echo -n "$(patsubst %.db,%,$(@F))... "
+-	@$(AWK) 'BEGIN { ini=1 } \
+-		 /^[ \t]*$$/ { next } \
+-		 /^[ \t]*#/ { next } \
+-		 /^[^#]/ { if (sub(/[ \t]*\\$$/, " ") == 0) end="\n"; \
+-			   else end=""; \
+-			   gsub(/[ \t]+/, " "); \
+-			   sub(/^[ \t]*/, ""); \
+-			   if (ini == 0) printf "%s%s", $$0, end; \
+-			   else printf ".%s %s%s", $$1, $$0, end; \
+-			   ini=end == "" ? 0 : 1; } \
+-			   END { if (ini==0) printf "\n" }' $^ | \
+-	$(MAKEDB) -o $@ -
+-	@echo "done."
+Index: glibc-2.19/nss/db-Makefile.in
+===================================================================
+--- /dev/null
++++ glibc-2.19/nss/db-Makefile.in
+@@ -0,0 +1,173 @@
++
++# Makefile to (re-)generate db versions of system database files.
++# Copyright (C) 1996-2014 Free Software Foundation, Inc.
++# This file is part of the GNU C Library.
++# Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
++#
++
++# The GNU C Library is free software; you can redistribute it and/or
++# modify it under the terms of the GNU Lesser General Public
++# License as published by the Free Software Foundation; either
++# version 2.1 of the License, or (at your option) any later version.
++
++# The GNU C Library is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++# Lesser General Public License for more details.
++
++# You should have received a copy of the GNU Lesser General Public
++# License along with the GNU C Library; if not, see
++# <http://www.gnu.org/licenses/>.
++
++DATABASES = $(wildcard @libc_cv_sysconfdir@/passwd	\
++		       @libc_cv_sysconfdir@/group	\
++		       @libc_cv_sysconfdir@/ethers	\
++		       @libc_cv_sysconfdir@/protocols	\
++		       @libc_cv_sysconfdir@/rpc		\
++		       @libc_cv_sysconfdir@/services	\
++		       @libc_cv_sysconfdir@/shadow	\
++		       @libc_cv_sysconfdir@/gshadow	\
++		       @libc_cv_sysconfdir@/netgroup)
++
++VAR_DB = /var/db
++
++AWK = awk
++MAKEDB = makedb --quiet
++
++all: $(patsubst %,$(VAR_DB)/%.db,$(notdir $(DATABASES)))
++
++
++$(VAR_DB)/passwd.db: @libc_cv_sysconfdir@/passwd
++	@echo -n "$(patsubst %.db,%,$(@F))... "
++	@$(AWK) 'BEGIN { FS=":"; OFS=":" } \
++		 /^[ \t]*$$/ { next } \
++		 /^[ \t]*#/ { next } \
++		 /^[^#]/ { printf ".%s ", $$1; print; \
++			   printf "=%s ", $$3; print }' $^ | \
++	$(MAKEDB) -o $@ -
++	@echo "done."
++
++$(VAR_DB)/group.db: @libc_cv_sysconfdir@/group
++	@echo -n "$(patsubst %.db,%,$(@F))... "
++	@$(AWK) 'BEGIN { FS=":"; OFS=":" } \
++		 /^[ \t]*$$/ { next } \
++		 /^[ \t]*#/ { next } \
++		 /^[^#]/ { printf ".%s ", $$1; print; \
++			   printf "=%s ", $$3; print; \
++			   if ($$4 != "") { \
++			     split($$4, grmems, ","); \
++			     for (memidx in grmems) { \
++			       mem=grmems[memidx]; \
++			       if (members[mem] == "") \
++				 members[mem]=$$3; \
++			       else \
++				 members[mem]=members[mem] "," $$3; \
++			     } \
++			     delete grmems; } } \
++		 END { for (mem in members) \
++			 printf ":%s %s %s\n", mem, mem, members[mem]; }' $^ | \
++	$(MAKEDB) -o $@ -
++	@echo "done."
++
++$(VAR_DB)/ethers.db: @libc_cv_sysconfdir@/ethers
++	@echo -n "$(patsubst %.db,%,$(@F))... "
++	@$(AWK) '/^[ \t]*$$/ { next } \
++		 /^[ \t]*#/ { next } \
++		 /^[^#]/ { printf ".%s ", $$1; print; \
++			   printf "=%s ", $$2; print }' $^ | \
++	$(MAKEDB) -o $@ -
++	@echo "done."
++
++$(VAR_DB)/protocols.db: @libc_cv_sysconfdir@/protocols
++	@echo -n "$(patsubst %.db,%,$(@F))... "
++	@$(AWK) '/^[ \t]*$$/ { next } \
++		 /^[ \t]*#/ { next } \
++		 /^[^#]/ { printf ".%s ", $$1; print; \
++			   printf "=%s ", $$2; print; \
++			   for (i = 3; i <= NF && !($$i ~ /^#/); ++i) \
++			     { printf ".%s ", $$i; print } }' $^ | \
++	$(MAKEDB) -o $@ -
++	@echo "done."
++
++$(VAR_DB)/rpc.db: @libc_cv_sysconfdir@/rpc
++	@echo -n "$(patsubst %.db,%,$(@F))... "
++	@$(AWK) '/^[ \t]*$$/ { next } \
++		 /^[ \t]*#/ { next } \
++		 /^[^#]/ { printf ".%s ", $$1; print; \
++			   printf "=%s ", $$2; print; \
++			   for (i = 3; i <= NF && !($$i ~ /^#/); ++i) \
++			     { printf ".%s ", $$i; print } }' $^ | \
++	$(MAKEDB) -o $@ -
++	@echo "done."
++
++$(VAR_DB)/services.db: @libc_cv_sysconfdir@/services
++	@echo -n "$(patsubst %.db,%,$(@F))... "
++	@$(AWK) 'BEGIN { FS="[ \t/]+" } \
++		 /^[ \t]*$$/ { next } \
++		 /^[ \t]*#/ { next } \
++		 /^[^#]/ { sub(/[ \t]*#.*$$/, "");\
++			   printf ":%s/%s ", $$1, $$3; print; \
++			   printf ":%s/ ", $$1; print; \
++			   printf "=%s/%s ", $$2, $$3; print; \
++			   printf "=%s/ ", $$2; print; \
++			   for (i = 4; i <= NF && !($$i ~ /^#/); ++i) \
++			     { printf ":%s/%s ", $$i, $$3; print; \
++			       printf ":%s/ ", $$i; print } }' $^ | \
++	$(MAKEDB) -o $@ -
++	@echo "done."
++
++$(VAR_DB)/shadow.db: @libc_cv_sysconfdir@/shadow
++	@echo -n "$(patsubst %.db,%,$(@F))... "
++	@$(AWK) 'BEGIN { FS=":"; OFS=":" } \
++		 /^[ \t]*$$/ { next } \
++		 /^[ \t]*#/ { next } \
++		 /^[^#]/ { printf ".%s ", $$1; print }' $^ | \
++	(umask 077 && $(MAKEDB) -o $@ -)
++	@echo "done."
++	@if chgrp shadow $@ 2>/dev/null; then \
++	  chmod g+r $@; \
++	else \
++	  chown 0 $@; chgrp 0 $@; chmod 600 $@; \
++	  echo; \
++	  echo "Warning: The shadow password database $@"; \
++	  echo "has been set to be readable only by root.  You may want"; \
++	  echo "to make it readable by the \`shadow' group depending"; \
++	  echo "on your configuration."; \
++	  echo; \
++	fi
++
++$(VAR_DB)/gshadow.db: @libc_cv_sysconfdir@/gshadow
++	@echo -n "$(patsubst %.db,%,$(@F))... "
++	@$(AWK) 'BEGIN { FS=":"; OFS=":" } \
++		 /^[ \t]*$$/ { next } \
++		 /^[ \t]*#/ { next } \
++		 /^[^#]/ { printf ".%s ", $$1; print }' $^ | \
++	(umask 077 && $(MAKEDB) -o $@ -)
++	@echo "done."
++	@if chgrp shadow $@ 2>/dev/null; then \
++	  chmod g+r $@; \
++	else \
++	  chown 0 $@; chgrp 0 $@; chmod 600 $@; \
++	  echo; \
++	  echo "Warning: The shadow group database $@"; \
++	  echo "has been set to be readable only by root.  You may want"; \
++	  echo "to make it readable by the \`shadow' group depending"; \
++	  echo "on your configuration."; \
++	  echo; \
++	fi
++
++$(VAR_DB)/netgroup.db: @libc_cv_sysconfdir@/netgroup
++	@echo -n "$(patsubst %.db,%,$(@F))... "
++	@$(AWK) 'BEGIN { ini=1 } \
++		 /^[ \t]*$$/ { next } \
++		 /^[ \t]*#/ { next } \
++		 /^[^#]/ { if (sub(/[ \t]*\\$$/, " ") == 0) end="\n"; \
++			   else end=""; \
++			   gsub(/[ \t]+/, " "); \
++			   sub(/^[ \t]*/, ""); \
++			   if (ini == 0) printf "%s%s", $$0, end; \
++			   else printf ".%s %s%s", $$1, $$0, end; \
++			   ini=end == "" ? 0 : 1; } \
++			   END { if (ini==0) printf "\n" }' $^ | \
++	$(MAKEDB) -o $@ -
++	@echo "done."
+Index: glibc-2.19/resolv/netdb.h
+===================================================================
+--- glibc-2.19.orig/resolv/netdb.h
++++ glibc-2.19/resolv/netdb.h
+@@ -42,12 +42,12 @@
+ #include <bits/netdb.h>
+ 
+ /* Absolute file name for network data base files.  */
+-#define	_PATH_HEQUIV		"/etc/hosts.equiv"
+-#define	_PATH_HOSTS		"/etc/hosts"
+-#define	_PATH_NETWORKS		"/etc/networks"
+-#define	_PATH_NSSWITCH_CONF	"/etc/nsswitch.conf"
+-#define	_PATH_PROTOCOLS		"/etc/protocols"
+-#define	_PATH_SERVICES		"/etc/services"
++#define	_PATH_HEQUIV		SYSCONFDIR "/hosts.equiv"
++#define	_PATH_HOSTS		SYSCONFDIR "/hosts"
++#define	_PATH_NETWORKS		SYSCONFDIR "/networks"
++#define	_PATH_NSSWITCH_CONF	SYSCONFDIR "/nsswitch.conf"
++#define	_PATH_PROTOCOLS		SYSCONFDIR "/protocols"
++#define	_PATH_SERVICES		SYSCONFDIR "/services"
+ 
+ 
+ __BEGIN_DECLS
+Index: glibc-2.19/resolv/resolv.h
+===================================================================
+--- glibc-2.19.orig/resolv/resolv.h
++++ /dev/null
+@@ -1,389 +0,0 @@
+-/*
+- * Copyright (c) 1983, 1987, 1989
+- *    The Regents of the University of California.  All rights reserved.
+- *
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions
+- * are met:
+- * 1. Redistributions of source code must retain the above copyright
+- *    notice, this list of conditions and the following disclaimer.
+- * 2. Redistributions in binary form must reproduce the above copyright
+- *    notice, this list of conditions and the following disclaimer in the
+- *    documentation and/or other materials provided with the distribution.
+- * 4. Neither the name of the University nor the names of its contributors
+- *    may be used to endorse or promote products derived from this software
+- *    without specific prior written permission.
+- *
+- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+- * SUCH DAMAGE.
+- */
+-
+-/*
+- * Portions Copyright (c) 1996-1999 by Internet Software Consortium.
+- *
+- * Permission to use, copy, modify, and distribute this software for any
+- * purpose with or without fee is hereby granted, provided that the above
+- * copyright notice and this permission notice appear in all copies.
+- *
+- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
+- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
+- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
+- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+- * SOFTWARE.
+- */
+-
+-/*
+- *	@(#)resolv.h	8.1 (Berkeley) 6/2/93
+- *	$BINDId: resolv.h,v 8.31 2000/03/30 20:16:50 vixie Exp $
+- */
+-
+-#ifndef _RESOLV_H_
+-
+-/* These headers are needed for types used in the `struct res_state'
+-   declaration.  */
+-#include <sys/types.h>
+-#include <netinet/in.h>
+-
+-#ifndef __need_res_state
+-# define _RESOLV_H_
+-
+-# include <sys/param.h>
+-# include <sys/cdefs.h>
+-# include <stdio.h>
+-# include <arpa/nameser.h>
+-#endif
+-
+-#ifndef __res_state_defined
+-# define __res_state_defined
+-
+-typedef enum { res_goahead, res_nextns, res_modified, res_done, res_error }
+-	res_sendhookact;
+-
+-typedef res_sendhookact (*res_send_qhook) (struct sockaddr_in * const *__ns,
+-					   const u_char **__query,
+-					   int *__querylen,
+-					   u_char *__ans,
+-					   int __anssiz,
+-					   int *__resplen);
+-
+-typedef res_sendhookact (*res_send_rhook) (const struct sockaddr_in *__ns,
+-					   const u_char *__query,
+-					   int __querylen,
+-					   u_char *__ans,
+-					   int __anssiz,
+-					   int *__resplen);
+-
+-/*
+- * Global defines and variables for resolver stub.
+- */
+-# define MAXNS			3	/* max # name servers we'll track */
+-# define MAXDFLSRCH		3	/* # default domain levels to try */
+-# define MAXDNSRCH		6	/* max # domains in search path */
+-# define LOCALDOMAINPARTS	2	/* min levels in name that is "local" */
+-
+-# define RES_TIMEOUT		5	/* min. seconds between retries */
+-# define MAXRESOLVSORT		10	/* number of net to sort on */
+-# define RES_MAXNDOTS		15	/* should reflect bit field size */
+-# define RES_MAXRETRANS		30	/* only for resolv.conf/RES_OPTIONS */
+-# define RES_MAXRETRY		5	/* only for resolv.conf/RES_OPTIONS */
+-# define RES_DFLRETRY		2	/* Default #/tries. */
+-# define RES_MAXTIME		65535	/* Infinity, in milliseconds. */
+-
+-struct __res_state {
+-	int	retrans;		/* retransmition time interval */
+-	int	retry;			/* number of times to retransmit */
+-	u_long	options;		/* option flags - see below. */
+-	int	nscount;		/* number of name servers */
+-	struct sockaddr_in
+-		nsaddr_list[MAXNS];	/* address of name server */
+-# define nsaddr	nsaddr_list[0]		/* for backward compatibility */
+-	u_short	id;			/* current message id */
+-	/* 2 byte hole here.  */
+-	char	*dnsrch[MAXDNSRCH+1];	/* components of domain to search */
+-	char	defdname[256];		/* default domain (deprecated) */
+-	u_long	pfcode;			/* RES_PRF_ flags - see below. */
+-	unsigned ndots:4;		/* threshold for initial abs. query */
+-	unsigned nsort:4;		/* number of elements in sort_list[] */
+-	unsigned ipv6_unavail:1;	/* connecting to IPv6 server failed */
+-	unsigned unused:23;
+-	struct {
+-		struct in_addr	addr;
+-		u_int32_t	mask;
+-	} sort_list[MAXRESOLVSORT];
+-	/* 4 byte hole here on 64-bit architectures.  */
+-	res_send_qhook qhook;		/* query hook */
+-	res_send_rhook rhook;		/* response hook */
+-	int	res_h_errno;		/* last one set for this context */
+-	int	_vcsock;		/* PRIVATE: for res_send VC i/o */
+-	u_int	_flags;			/* PRIVATE: see below */
+-	/* 4 byte hole here on 64-bit architectures.  */
+-	union {
+-		char	pad[52];	/* On an i386 this means 512b total. */
+-		struct {
+-			u_int16_t		nscount;
+-			u_int16_t		nsmap[MAXNS];
+-			int			nssocks[MAXNS];
+-			u_int16_t		nscount6;
+-			u_int16_t		nsinit;
+-			struct sockaddr_in6	*nsaddrs[MAXNS];
+-#ifdef _LIBC
+-			unsigned long long int	initstamp
+-			  __attribute__((packed));
+-#else
+-			unsigned int		_initstamp[2];
+-#endif
+-		} _ext;
+-	} _u;
+-};
+-
+-typedef struct __res_state *res_state;
+-# undef __need_res_state
+-#endif
+-
+-#ifdef _RESOLV_H_
+-/*
+- * Revision information.  This is the release date in YYYYMMDD format.
+- * It can change every day so the right thing to do with it is use it
+- * in preprocessor commands such as "#if (__RES > 19931104)".  Do not
+- * compare for equality; rather, use it to determine whether your resolver
+- * is new enough to contain a certain feature.
+- */
+-
+-#define	__RES	19991006
+-
+-/*
+- * Resolver configuration file.
+- * Normally not present, but may contain the address of the
+- * inital name server(s) to query and the domain search list.
+- */
+-
+-#ifndef _PATH_RESCONF
+-#define _PATH_RESCONF        "/etc/resolv.conf"
+-#endif
+-
+-struct res_sym {
+-	int	number;		/* Identifying number, like T_MX */
+-	char *	name;		/* Its symbolic name, like "MX" */
+-	char *	humanname;	/* Its fun name, like "mail exchanger" */
+-};
+-
+-/*
+- * Resolver flags (used to be discrete per-module statics ints).
+- */
+-#define	RES_F_VC	0x00000001	/* socket is TCP */
+-#define	RES_F_CONN	0x00000002	/* socket is connected */
+-#define RES_F_EDNS0ERR	0x00000004	/* EDNS0 caused errors */
+-
+-/* res_findzonecut() options */
+-#define	RES_EXHAUSTIVE	0x00000001	/* always do all queries */
+-
+-/*
+- * Resolver options (keep these in synch with res_debug.c, please)
+- */
+-#define RES_INIT	0x00000001	/* address initialized */
+-#define RES_DEBUG	0x00000002	/* print debug messages */
+-#define RES_AAONLY	0x00000004	/* authoritative answers only (!IMPL)*/
+-#define RES_USEVC	0x00000008	/* use virtual circuit */
+-#define RES_PRIMARY	0x00000010	/* query primary server only (!IMPL) */
+-#define RES_IGNTC	0x00000020	/* ignore trucation errors */
+-#define RES_RECURSE	0x00000040	/* recursion desired */
+-#define RES_DEFNAMES	0x00000080	/* use default domain name */
+-#define RES_STAYOPEN	0x00000100	/* Keep TCP socket open */
+-#define RES_DNSRCH	0x00000200	/* search up local domain tree */
+-#define	RES_INSECURE1	0x00000400	/* type 1 security disabled */
+-#define	RES_INSECURE2	0x00000800	/* type 2 security disabled */
+-#define	RES_NOALIASES	0x00001000	/* shuts off HOSTALIASES feature */
+-#define	RES_USE_INET6	0x00002000	/* use/map IPv6 in gethostbyname() */
+-#define RES_ROTATE	0x00004000	/* rotate ns list after each query */
+-#define	RES_NOCHECKNAME	0x00008000	/* do not check names for sanity (!IMPL) */
+-#define	RES_KEEPTSIG	0x00010000	/* do not strip TSIG records */
+-#define	RES_BLAST	0x00020000	/* blast all recursive servers */
+-#define RES_USEBSTRING	0x00040000	/* IPv6 reverse lookup with byte
+-					   strings */
+-#define RES_NOIP6DOTINT	0x00080000	/* Do not use .ip6.int in IPv6
+-					   reverse lookup */
+-#define RES_USE_EDNS0	0x00100000	/* Use EDNS0.  */
+-#define RES_SNGLKUP	0x00200000	/* one outstanding request at a time */
+-#define RES_SNGLKUPREOP	0x00400000	/* -"-, but open new socket for each
+-					   request */
+-#define RES_USE_DNSSEC	0x00800000	/* use DNSSEC using OK bit in OPT */
+-#define RES_NOTLDQUERY	0x01000000	/* Do not look up unqualified name
+-					   as a TLD.  */
+-
+-#define RES_DEFAULT	(RES_RECURSE|RES_DEFNAMES|RES_DNSRCH|RES_NOIP6DOTINT)
+-
+-/*
+- * Resolver "pfcode" values.  Used by dig.
+- */
+-#define RES_PRF_STATS	0x00000001
+-#define RES_PRF_UPDATE	0x00000002
+-#define RES_PRF_CLASS   0x00000004
+-#define RES_PRF_CMD	0x00000008
+-#define RES_PRF_QUES	0x00000010
+-#define RES_PRF_ANS	0x00000020
+-#define RES_PRF_AUTH	0x00000040
+-#define RES_PRF_ADD	0x00000080
+-#define RES_PRF_HEAD1	0x00000100
+-#define RES_PRF_HEAD2	0x00000200
+-#define RES_PRF_TTLID	0x00000400
+-#define RES_PRF_HEADX	0x00000800
+-#define RES_PRF_QUERY	0x00001000
+-#define RES_PRF_REPLY	0x00002000
+-#define RES_PRF_INIT	0x00004000
+-/*			0x00008000	*/
+-
+-/* Things involving an internal (static) resolver context. */
+-__BEGIN_DECLS
+-extern struct __res_state *__res_state(void) __attribute__ ((__const__));
+-__END_DECLS
+-#define _res (*__res_state())
+-
+-#ifndef __BIND_NOSTATIC
+-#define fp_nquery		__fp_nquery
+-#define fp_query		__fp_query
+-#define hostalias		__hostalias
+-#define p_query			__p_query
+-#define res_close		__res_close
+-#define res_init		__res_init
+-#define res_isourserver		__res_isourserver
+-#define res_mkquery		__res_mkquery
+-#define res_query		__res_query
+-#define res_querydomain		__res_querydomain
+-#define res_search		__res_search
+-#define res_send		__res_send
+-
+-__BEGIN_DECLS
+-void		fp_nquery (const u_char *, int, FILE *) __THROW;
+-void		fp_query (const u_char *, FILE *) __THROW;
+-const char *	hostalias (const char *) __THROW;
+-void		p_query (const u_char *) __THROW;
+-void		res_close (void) __THROW;
+-int		res_init (void) __THROW;
+-int		res_isourserver (const struct sockaddr_in *) __THROW;
+-int		res_mkquery (int, const char *, int, int, const u_char *,
+-			     int, const u_char *, u_char *, int) __THROW;
+-int		res_query (const char *, int, int, u_char *, int) __THROW;
+-int		res_querydomain (const char *, const char *, int, int,
+-				 u_char *, int) __THROW;
+-int		res_search (const char *, int, int, u_char *, int) __THROW;
+-int		res_send (const u_char *, int, u_char *, int) __THROW;
+-__END_DECLS
+-#endif
+-
+-#define b64_ntop		__b64_ntop
+-#define b64_pton		__b64_pton
+-#define dn_comp			__dn_comp
+-#define dn_count_labels		__dn_count_labels
+-#define dn_expand		__dn_expand
+-#define dn_skipname		__dn_skipname
+-#define fp_resstat		__fp_resstat
+-#define loc_aton		__loc_aton
+-#define loc_ntoa		__loc_ntoa
+-#define p_cdname		__p_cdname
+-#define p_cdnname		__p_cdnname
+-#define p_class			__p_class
+-#define p_fqname		__p_fqname
+-#define p_fqnname		__p_fqnname
+-#define p_option		__p_option
+-#define p_secstodate		__p_secstodate
+-#define p_section		__p_section
+-#define p_time			__p_time
+-#define p_type			__p_type
+-#define p_rcode			__p_rcode
+-#define putlong			__putlong
+-#define putshort		__putshort
+-#define res_dnok		__res_dnok
+-#define res_hnok		__res_hnok
+-#define res_hostalias		__res_hostalias
+-#define res_mailok		__res_mailok
+-#define res_nameinquery		__res_nameinquery
+-#define res_nclose		__res_nclose
+-#define res_ninit		__res_ninit
+-#define res_nmkquery		__res_nmkquery
+-#define res_npquery		__res_npquery
+-#define res_nquery		__res_nquery
+-#define res_nquerydomain	__res_nquerydomain
+-#define res_nsearch		__res_nsearch
+-#define res_nsend		__res_nsend
+-#define res_nisourserver	__res_nisourserver
+-#define res_ownok		__res_ownok
+-#define res_queriesmatch	__res_queriesmatch
+-#define res_randomid		__res_randomid
+-#define sym_ntop		__sym_ntop
+-#define sym_ntos		__sym_ntos
+-#define sym_ston		__sym_ston
+-__BEGIN_DECLS
+-int		res_hnok (const char *) __THROW;
+-int		res_ownok (const char *) __THROW;
+-int		res_mailok (const char *) __THROW;
+-int		res_dnok (const char *) __THROW;
+-int		sym_ston (const struct res_sym *, const char *, int *) __THROW;
+-const char *	sym_ntos (const struct res_sym *, int, int *) __THROW;
+-const char *	sym_ntop (const struct res_sym *, int, int *) __THROW;
+-int		b64_ntop (u_char const *, size_t, char *, size_t) __THROW;
+-int		b64_pton (char const *, u_char *, size_t) __THROW;
+-int		loc_aton (const char *__ascii, u_char *__binary) __THROW;
+-const char *	loc_ntoa (const u_char *__binary, char *__ascii) __THROW;
+-int		dn_skipname (const u_char *, const u_char *) __THROW;
+-void		putlong (u_int32_t, u_char *) __THROW;
+-void		putshort (u_int16_t, u_char *) __THROW;
+-const char *	p_class (int) __THROW;
+-const char *	p_time (u_int32_t) __THROW;
+-const char *	p_type (int) __THROW;
+-const char *	p_rcode (int) __THROW;
+-const u_char *	p_cdnname (const u_char *, const u_char *, int, FILE *)
+-     __THROW;
+-const u_char *	p_cdname (const u_char *, const u_char *, FILE *) __THROW;
+-const u_char *	p_fqnname (const u_char *__cp, const u_char *__msg,
+-			   int, char *, int) __THROW;
+-const u_char *	p_fqname (const u_char *, const u_char *, FILE *) __THROW;
+-const char *	p_option (u_long __option) __THROW;
+-char *		p_secstodate (u_long) __THROW;
+-int		dn_count_labels (const char *) __THROW;
+-int		dn_comp (const char *, u_char *, int, u_char **, u_char **)
+-     __THROW;
+-int		dn_expand (const u_char *, const u_char *, const u_char *,
+-			   char *, int) __THROW;
+-u_int		res_randomid (void) __THROW;
+-int		res_nameinquery (const char *, int, int,
+-				 const u_char *, const u_char *) __THROW;
+-int		res_queriesmatch (const u_char *, const u_char *,
+-				  const u_char *, const u_char *) __THROW;
+-const char *	p_section (int __section, int __opcode) __THROW;
+-/* Things involving a resolver context. */
+-int		res_ninit (res_state) __THROW;
+-int		res_nisourserver (const res_state,
+-				  const struct sockaddr_in *) __THROW;
+-void		fp_resstat (const res_state, FILE *) __THROW;
+-void		res_npquery (const res_state, const u_char *, int, FILE *)
+-     __THROW;
+-const char *	res_hostalias (const res_state, const char *, char *, size_t)
+-     __THROW;
+-int		res_nquery (res_state, const char *, int, int, u_char *, int)
+-     __THROW;
+-int		res_nsearch (res_state, const char *, int, int, u_char *, int)
+-     __THROW;
+-int		res_nquerydomain (res_state, const char *, const char *, int,
+-				  int, u_char *, int) __THROW;
+-int		res_nmkquery (res_state, int, const char *, int, int,
+-			      const u_char *, int, const u_char *, u_char *,
+-			      int) __THROW;
+-int		res_nsend (res_state, const u_char *, int, u_char *, int)
+-     __THROW;
+-void		res_nclose (res_state) __THROW;
+-__END_DECLS
+-#endif
+-
+-#endif /* !_RESOLV_H_ */
+Index: glibc-2.19/shadow/Makefile
+===================================================================
+--- glibc-2.19.orig/shadow/Makefile
++++ glibc-2.19/shadow/Makefile
+@@ -34,5 +34,6 @@ CFLAGS-fgetspent_r.c = -fexceptions $(li
+ CFLAGS-putspent.c = -fexceptions $(libio-mtsafe)
+ CFLAGS-getspnam.c = -fexceptions
+ CFLAGS-getspnam_r.c = -fexceptions
++CPPFLAGS-lckpwdf.c = -DSYSCONFDIR='"$(sysconfdir)"'
+ 
+ include ../Rules
+Index: glibc-2.19/shadow/lckpwdf.c
+===================================================================
+--- glibc-2.19.orig/shadow/lckpwdf.c
++++ glibc-2.19/shadow/lckpwdf.c
+@@ -29,7 +29,7 @@
+ 
+ 
+ /* Name of the lock file.  */
+-#define PWD_LOCKFILE "/etc/.pwd.lock"
++#define PWD_LOCKFILE SYSCONFDIR "/.pwd.lock"
+ 
+ /* How long to wait for getting the lock before returning with an
+    error.  */
+Index: glibc-2.19/configure.ac
+===================================================================
+--- glibc-2.19.orig/configure.ac
++++ glibc-2.19/configure.ac
+@@ -2173,7 +2173,7 @@ RELEASE=`sed -n -e 's/^#define RELEASE "
+ AC_SUBST(VERSION)
+ AC_SUBST(RELEASE)
+ 
+-AC_CONFIG_FILES([config.make Makefile])
++AC_CONFIG_FILES([config.make Makefile nss/db-Makefile resolv/netdb.h resolv/resolv.h])
+ AC_CONFIG_COMMANDS([default],[[
+ case $CONFIG_FILES in *config.make*)
+ echo "$config_vars" >> config.make;;
+Index: glibc-2.19/resolv/netdb.h.in
+===================================================================
+--- /dev/null
++++ glibc-2.19/resolv/netdb.h.in
+@@ -0,0 +1,715 @@
++  /* Copyright (C) 1996-2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <http://www.gnu.org/licenses/>.  */
++
++/* All data returned by the network data base library are supplied in
++   host order and returned in network order (suitable for use in
++   system calls).  */
++
++#ifndef	_NETDB_H
++#define	_NETDB_H	1
++
++#include <features.h>
++
++#include <netinet/in.h>
++#include <stdint.h>
++#ifdef __USE_MISC
++/* This is necessary to make this include file properly replace the
++   Sun version.  */
++# include <rpc/netdb.h>
++#endif
++
++#ifdef __USE_GNU
++# define __need_sigevent_t
++# include <bits/siginfo.h>
++# define __need_timespec
++# include <time.h>
++#endif
++
++#include <bits/netdb.h>
++
++/* Absolute file name for network data base files.  */
++#define	_PATH_HEQUIV		"@libc_cv_sysconfdir@/hosts.equiv"
++#define	_PATH_HOSTS		"@libc_cv_sysconfdir@/hosts"
++#define	_PATH_NETWORKS		"@libc_cv_sysconfdir@/networks"
++#define	_PATH_NSSWITCH_CONF	"@libc_cv_sysconfdir@/nsswitch.conf"
++#define	_PATH_PROTOCOLS		"@libc_cv_sysconfdir@/protocols"
++#define	_PATH_SERVICES		"@libc_cv_sysconfdir@/services"
++
++
++__BEGIN_DECLS
++
++#if defined __USE_MISC || !defined __USE_XOPEN2K8
++/* Error status for non-reentrant lookup functions.
++   We use a macro to access always the thread-specific `h_errno' variable.  */
++# define h_errno (*__h_errno_location ())
++
++/* Function to get address of global `h_errno' variable.  */
++extern int *__h_errno_location (void) __THROW __attribute__ ((__const__));
++
++
++/* Possible values left in `h_errno'.  */
++# define HOST_NOT_FOUND	1	/* Authoritative Answer Host not found.  */
++# define TRY_AGAIN	2	/* Non-Authoritative Host not found,
++				   or SERVERFAIL.  */
++# define NO_RECOVERY	3	/* Non recoverable errors, FORMERR, REFUSED,
++				   NOTIMP.  */
++# define NO_DATA	4	/* Valid name, no data record of requested
++				   type.  */
++#endif
++#ifdef __USE_MISC
++# define NETDB_INTERNAL	-1	/* See errno.  */
++# define NETDB_SUCCESS	0	/* No problem.  */
++# define NO_ADDRESS	NO_DATA	/* No address, look for MX record.  */
++#endif
++
++#if defined __USE_XOPEN2K || defined __USE_XOPEN_EXTENDED
++/* Highest reserved Internet port number.  */
++# define IPPORT_RESERVED	1024
++#endif
++
++#ifdef __USE_GNU
++/* Scope delimiter for getaddrinfo(), getnameinfo().  */
++# define SCOPE_DELIMITER	'%'
++#endif
++
++#ifdef __USE_MISC
++/* Print error indicated by `h_errno' variable on standard error.  STR
++   if non-null is printed before the error string.  */
++extern void herror (const char *__str) __THROW;
++
++/* Return string associated with error ERR_NUM.  */
++extern const char *hstrerror (int __err_num) __THROW;
++#endif
++
++
++/* Description of data base entry for a single host.  */
++struct hostent
++{
++  char *h_name;			/* Official name of host.  */
++  char **h_aliases;		/* Alias list.  */
++  int h_addrtype;		/* Host address type.  */
++  int h_length;			/* Length of address.  */
++  char **h_addr_list;		/* List of addresses from name server.  */
++#ifdef __USE_MISC
++# define	h_addr	h_addr_list[0] /* Address, for backward compatibility.*/
++#endif
++};
++
++/* Open host data base files and mark them as staying open even after
++   a later search if STAY_OPEN is non-zero.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern void sethostent (int __stay_open);
++
++/* Close host data base files and clear `stay open' flag.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern void endhostent (void);
++
++/* Get next entry from host data base file.  Open data base if
++   necessary.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern struct hostent *gethostent (void);
++
++/* Return entry from host data base which address match ADDR with
++   length LEN and type TYPE.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern struct hostent *gethostbyaddr (const void *__addr, __socklen_t __len,
++				      int __type);
++
++/* Return entry from host data base for host with NAME.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern struct hostent *gethostbyname (const char *__name);
++
++#ifdef __USE_MISC
++/* Return entry from host data base for host with NAME.  AF must be
++   set to the address type which is `AF_INET' for IPv4 or `AF_INET6'
++   for IPv6.
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern struct hostent *gethostbyname2 (const char *__name, int __af);
++
++/* Reentrant versions of the functions above.  The additional
++   arguments specify a buffer of BUFLEN starting at BUF.  The last
++   argument is a pointer to a variable which gets the value which
++   would be stored in the global variable `herrno' by the
++   non-reentrant functions.
++
++   These functions are not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation they are cancellation points and
++   therefore not marked with __THROW.  */
++extern int gethostent_r (struct hostent *__restrict __result_buf,
++			 char *__restrict __buf, size_t __buflen,
++			 struct hostent **__restrict __result,
++			 int *__restrict __h_errnop);
++
++extern int gethostbyaddr_r (const void *__restrict __addr, __socklen_t __len,
++			    int __type,
++			    struct hostent *__restrict __result_buf,
++			    char *__restrict __buf, size_t __buflen,
++			    struct hostent **__restrict __result,
++			    int *__restrict __h_errnop);
++
++extern int gethostbyname_r (const char *__restrict __name,
++			    struct hostent *__restrict __result_buf,
++			    char *__restrict __buf, size_t __buflen,
++			    struct hostent **__restrict __result,
++			    int *__restrict __h_errnop);
++
++extern int gethostbyname2_r (const char *__restrict __name, int __af,
++			     struct hostent *__restrict __result_buf,
++			     char *__restrict __buf, size_t __buflen,
++			     struct hostent **__restrict __result,
++			     int *__restrict __h_errnop);
++#endif	/* misc */
++
++
++/* Open network data base files and mark them as staying open even
++   after a later search if STAY_OPEN is non-zero.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern void setnetent (int __stay_open);
++
++/* Close network data base files and clear `stay open' flag.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern void endnetent (void);
++
++/* Get next entry from network data base file.  Open data base if
++   necessary.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern struct netent *getnetent (void);
++
++/* Return entry from network data base which address match NET and
++   type TYPE.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern struct netent *getnetbyaddr (uint32_t __net, int __type);
++
++/* Return entry from network data base for network with NAME.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern struct netent *getnetbyname (const char *__name);
++
++#ifdef	__USE_MISC
++/* Reentrant versions of the functions above.  The additional
++   arguments specify a buffer of BUFLEN starting at BUF.  The last
++   argument is a pointer to a variable which gets the value which
++   would be stored in the global variable `herrno' by the
++   non-reentrant functions.
++
++   These functions are not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation they are cancellation points and
++   therefore not marked with __THROW.  */
++extern int getnetent_r (struct netent *__restrict __result_buf,
++			char *__restrict __buf, size_t __buflen,
++			struct netent **__restrict __result,
++			int *__restrict __h_errnop);
++
++extern int getnetbyaddr_r (uint32_t __net, int __type,
++			   struct netent *__restrict __result_buf,
++			   char *__restrict __buf, size_t __buflen,
++			   struct netent **__restrict __result,
++			   int *__restrict __h_errnop);
++
++extern int getnetbyname_r (const char *__restrict __name,
++			   struct netent *__restrict __result_buf,
++			   char *__restrict __buf, size_t __buflen,
++			   struct netent **__restrict __result,
++			   int *__restrict __h_errnop);
++#endif	/* misc */
++
++
++/* Description of data base entry for a single service.  */
++struct servent
++{
++  char *s_name;			/* Official service name.  */
++  char **s_aliases;		/* Alias list.  */
++  int s_port;			/* Port number.  */
++  char *s_proto;		/* Protocol to use.  */
++};
++
++/* Open service data base files and mark them as staying open even
++   after a later search if STAY_OPEN is non-zero.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern void setservent (int __stay_open);
++
++/* Close service data base files and clear `stay open' flag.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern void endservent (void);
++
++/* Get next entry from service data base file.  Open data base if
++   necessary.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern struct servent *getservent (void);
++
++/* Return entry from network data base for network with NAME and
++   protocol PROTO.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern struct servent *getservbyname (const char *__name, const char *__proto);
++
++/* Return entry from service data base which matches port PORT and
++   protocol PROTO.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern struct servent *getservbyport (int __port, const char *__proto);
++
++
++#ifdef	__USE_MISC
++/* Reentrant versions of the functions above.  The additional
++   arguments specify a buffer of BUFLEN starting at BUF.
++
++   These functions are not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation they are cancellation points and
++   therefore not marked with __THROW.  */
++extern int getservent_r (struct servent *__restrict __result_buf,
++			 char *__restrict __buf, size_t __buflen,
++			 struct servent **__restrict __result);
++
++extern int getservbyname_r (const char *__restrict __name,
++			    const char *__restrict __proto,
++			    struct servent *__restrict __result_buf,
++			    char *__restrict __buf, size_t __buflen,
++			    struct servent **__restrict __result);
++
++extern int getservbyport_r (int __port, const char *__restrict __proto,
++			    struct servent *__restrict __result_buf,
++			    char *__restrict __buf, size_t __buflen,
++			    struct servent **__restrict __result);
++#endif	/* misc */
++
++
++/* Description of data base entry for a single service.  */
++struct protoent
++{
++  char *p_name;			/* Official protocol name.  */
++  char **p_aliases;		/* Alias list.  */
++  int p_proto;			/* Protocol number.  */
++};
++
++/* Open protocol data base files and mark them as staying open even
++   after a later search if STAY_OPEN is non-zero.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern void setprotoent (int __stay_open);
++
++/* Close protocol data base files and clear `stay open' flag.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern void endprotoent (void);
++
++/* Get next entry from protocol data base file.  Open data base if
++   necessary.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern struct protoent *getprotoent (void);
++
++/* Return entry from protocol data base for network with NAME.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern struct protoent *getprotobyname (const char *__name);
++
++/* Return entry from protocol data base which number is PROTO.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern struct protoent *getprotobynumber (int __proto);
++
++
++#ifdef	__USE_MISC
++/* Reentrant versions of the functions above.  The additional
++   arguments specify a buffer of BUFLEN starting at BUF.
++
++   These functions are not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation they are cancellation points and
++   therefore not marked with __THROW.  */
++extern int getprotoent_r (struct protoent *__restrict __result_buf,
++			  char *__restrict __buf, size_t __buflen,
++			  struct protoent **__restrict __result);
++
++extern int getprotobyname_r (const char *__restrict __name,
++			     struct protoent *__restrict __result_buf,
++			     char *__restrict __buf, size_t __buflen,
++			     struct protoent **__restrict __result);
++
++extern int getprotobynumber_r (int __proto,
++			       struct protoent *__restrict __result_buf,
++			       char *__restrict __buf, size_t __buflen,
++			       struct protoent **__restrict __result);
++
++
++/* Establish network group NETGROUP for enumeration.
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern int setnetgrent (const char *__netgroup);
++
++/* Free all space allocated by previous `setnetgrent' call.
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern void endnetgrent (void);
++
++/* Get next member of netgroup established by last `setnetgrent' call
++   and return pointers to elements in HOSTP, USERP, and DOMAINP.
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern int getnetgrent (char **__restrict __hostp,
++			char **__restrict __userp,
++			char **__restrict __domainp);
++
++
++/* Test whether NETGROUP contains the triple (HOST,USER,DOMAIN).
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern int innetgr (const char *__netgroup, const char *__host,
++		    const char *__user, const char *__domain);
++
++/* Reentrant version of `getnetgrent' where result is placed in BUFFER.
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern int getnetgrent_r (char **__restrict __hostp,
++			  char **__restrict __userp,
++			  char **__restrict __domainp,
++			  char *__restrict __buffer, size_t __buflen);
++#endif	/* misc */
++
++
++#ifdef __USE_MISC
++/* Call `rshd' at port RPORT on remote machine *AHOST to execute CMD.
++   The local user is LOCUSER, on the remote machine the command is
++   executed as REMUSER.  In *FD2P the descriptor to the socket for the
++   connection is returned.  The caller must have the right to use a
++   reserved port.  When the function returns *AHOST contains the
++   official host name.
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern int rcmd (char **__restrict __ahost, unsigned short int __rport,
++		 const char *__restrict __locuser,
++		 const char *__restrict __remuser,
++		 const char *__restrict __cmd, int *__restrict __fd2p);
++
++/* This is the equivalent function where the protocol can be selected
++   and which therefore can be used for IPv6.
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern int rcmd_af (char **__restrict __ahost, unsigned short int __rport,
++		    const char *__restrict __locuser,
++		    const char *__restrict __remuser,
++		    const char *__restrict __cmd, int *__restrict __fd2p,
++		    sa_family_t __af);
++
++/* Call `rexecd' at port RPORT on remote machine *AHOST to execute
++   CMD.  The process runs at the remote machine using the ID of user
++   NAME whose cleartext password is PASSWD.  In *FD2P the descriptor
++   to the socket for the connection is returned.  When the function
++   returns *AHOST contains the official host name.
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern int rexec (char **__restrict __ahost, int __rport,
++		  const char *__restrict __name,
++		  const char *__restrict __pass,
++		  const char *__restrict __cmd, int *__restrict __fd2p);
++
++/* This is the equivalent function where the protocol can be selected
++   and which therefore can be used for IPv6.
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern int rexec_af (char **__restrict __ahost, int __rport,
++		     const char *__restrict __name,
++		     const char *__restrict __pass,
++		     const char *__restrict __cmd, int *__restrict __fd2p,
++		     sa_family_t __af);
++
++/* Check whether user REMUSER on system RHOST is allowed to login as LOCUSER.
++   If SUSER is not zero the user tries to become superuser.  Return 0 if
++   it is possible.
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern int ruserok (const char *__rhost, int __suser,
++		    const char *__remuser, const char *__locuser);
++
++/* This is the equivalent function where the protocol can be selected
++   and which therefore can be used for IPv6.
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern int ruserok_af (const char *__rhost, int __suser,
++		       const char *__remuser, const char *__locuser,
++		       sa_family_t __af);
++
++/* Check whether user REMUSER on system indicated by IPv4 address
++   RADDR is allowed to login as LOCUSER.  Non-IPv4 (e.g., IPv6) are
++   not supported.  If SUSER is not zero the user tries to become
++   superuser.  Return 0 if it is possible.
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern int iruserok (uint32_t __raddr, int __suser,
++		     const char *__remuser, const char *__locuser);
++
++/* This is the equivalent function where the pfamiliy if the address
++   pointed to by RADDR is determined by the value of AF.  It therefore
++   can be used for IPv6
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern int iruserok_af (const void *__raddr, int __suser,
++			const char *__remuser, const char *__locuser,
++			sa_family_t __af);
++
++/* Try to allocate reserved port, returning a descriptor for a socket opened
++   at this port or -1 if unsuccessful.  The search for an available port
++   will start at ALPORT and continues with lower numbers.
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern int rresvport (int *__alport);
++
++/* This is the equivalent function where the protocol can be selected
++   and which therefore can be used for IPv6.
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern int rresvport_af (int *__alport, sa_family_t __af);
++#endif
++
++
++/* Extension from POSIX.1g.  */
++#ifdef	__USE_POSIX
++/* Structure to contain information about address of a service provider.  */
++struct addrinfo
++{
++  int ai_flags;			/* Input flags.  */
++  int ai_family;		/* Protocol family for socket.  */
++  int ai_socktype;		/* Socket type.  */
++  int ai_protocol;		/* Protocol for socket.  */
++  socklen_t ai_addrlen;		/* Length of socket address.  */
++  struct sockaddr *ai_addr;	/* Socket address for socket.  */
++  char *ai_canonname;		/* Canonical name for service location.  */
++  struct addrinfo *ai_next;	/* Pointer to next in list.  */
++};
++
++# ifdef __USE_GNU
++/* Structure used as control block for asynchronous lookup.  */
++struct gaicb
++{
++  const char *ar_name;		/* Name to look up.  */
++  const char *ar_service;	/* Service name.  */
++  const struct addrinfo *ar_request; /* Additional request specification.  */
++  struct addrinfo *ar_result;	/* Pointer to result.  */
++  /* The following are internal elements.  */
++  int __return;
++  int __glibc_reserved[5];
++};
++
++/* Lookup mode.  */
++#  define GAI_WAIT	0
++#  define GAI_NOWAIT	1
++# endif
++
++/* Possible values for `ai_flags' field in `addrinfo' structure.  */
++# define AI_PASSIVE	0x0001	/* Socket address is intended for `bind'.  */
++# define AI_CANONNAME	0x0002	/* Request for canonical name.  */
++# define AI_NUMERICHOST	0x0004	/* Don't use name resolution.  */
++# define AI_V4MAPPED	0x0008	/* IPv4 mapped addresses are acceptable.  */
++# define AI_ALL		0x0010	/* Return IPv4 mapped and IPv6 addresses.  */
++# define AI_ADDRCONFIG	0x0020	/* Use configuration of this host to choose
++				   returned address type..  */
++# ifdef __USE_GNU
++#  define AI_IDN	0x0040	/* IDN encode input (assuming it is encoded
++				   in the current locale's character set)
++				   before looking it up. */
++#  define AI_CANONIDN	0x0080	/* Translate canonical name from IDN format. */
++#  define AI_IDN_ALLOW_UNASSIGNED 0x0100 /* Don't reject unassigned Unicode
++					    code points.  */
++#  define AI_IDN_USE_STD3_ASCII_RULES 0x0200 /* Validate strings according to
++						STD3 rules.  */
++# endif
++# define AI_NUMERICSERV	0x0400	/* Don't use name resolution.  */
++
++/* Error values for `getaddrinfo' function.  */
++# define EAI_BADFLAGS	  -1	/* Invalid value for `ai_flags' field.  */
++# define EAI_NONAME	  -2	/* NAME or SERVICE is unknown.  */
++# define EAI_AGAIN	  -3	/* Temporary failure in name resolution.  */
++# define EAI_FAIL	  -4	/* Non-recoverable failure in name res.  */
++# define EAI_FAMILY	  -6	/* `ai_family' not supported.  */
++# define EAI_SOCKTYPE	  -7	/* `ai_socktype' not supported.  */
++# define EAI_SERVICE	  -8	/* SERVICE not supported for `ai_socktype'.  */
++# define EAI_MEMORY	  -10	/* Memory allocation failure.  */
++# define EAI_SYSTEM	  -11	/* System error returned in `errno'.  */
++# define EAI_OVERFLOW	  -12	/* Argument buffer overflow.  */
++# ifdef __USE_GNU
++#  define EAI_NODATA	  -5	/* No address associated with NAME.  */
++#  define EAI_ADDRFAMILY  -9	/* Address family for NAME not supported.  */
++#  define EAI_INPROGRESS  -100	/* Processing request in progress.  */
++#  define EAI_CANCELED	  -101	/* Request canceled.  */
++#  define EAI_NOTCANCELED -102	/* Request not canceled.  */
++#  define EAI_ALLDONE	  -103	/* All requests done.  */
++#  define EAI_INTR	  -104	/* Interrupted by a signal.  */
++#  define EAI_IDN_ENCODE  -105	/* IDN encoding failed.  */
++# endif
++
++# ifdef __USE_MISC
++#  define NI_MAXHOST      1025
++#  define NI_MAXSERV      32
++# endif
++
++# define NI_NUMERICHOST	1	/* Don't try to look up hostname.  */
++# define NI_NUMERICSERV 2	/* Don't convert port number to name.  */
++# define NI_NOFQDN	4	/* Only return nodename portion.  */
++# define NI_NAMEREQD	8	/* Don't return numeric addresses.  */
++# define NI_DGRAM	16	/* Look up UDP service rather than TCP.  */
++# ifdef __USE_GNU
++#  define NI_IDN	32	/* Convert name from IDN format.  */
++#  define NI_IDN_ALLOW_UNASSIGNED 64 /* Don't reject unassigned Unicode
++					code points.  */
++#  define NI_IDN_USE_STD3_ASCII_RULES 128 /* Validate strings according to
++					     STD3 rules.  */
++# endif
++
++/* Translate name of a service location and/or a service name to set of
++   socket addresses.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern int getaddrinfo (const char *__restrict __name,
++			const char *__restrict __service,
++			const struct addrinfo *__restrict __req,
++			struct addrinfo **__restrict __pai);
++
++/* Free `addrinfo' structure AI including associated storage.  */
++extern void freeaddrinfo (struct addrinfo *__ai) __THROW;
++
++/* Convert error return from getaddrinfo() to a string.  */
++extern const char *gai_strerror (int __ecode) __THROW;
++
++/* Translate a socket address to a location and service name.
++
++   This function is a possible cancellation point and therefore not
++   marked with __THROW.  */
++extern int getnameinfo (const struct sockaddr *__restrict __sa,
++			socklen_t __salen, char *__restrict __host,
++			socklen_t __hostlen, char *__restrict __serv,
++			socklen_t __servlen, int __flags);
++#endif	/* POSIX */
++
++#ifdef __USE_GNU
++/* Enqueue ENT requests from the LIST.  If MODE is GAI_WAIT wait until all
++   requests are handled.  If WAIT is GAI_NOWAIT return immediately after
++   queueing the requests and signal completion according to SIG.
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern int getaddrinfo_a (int __mode, struct gaicb *__list[__restrict_arr],
++			  int __ent, struct sigevent *__restrict __sig);
++
++/* Suspend execution of the thread until at least one of the ENT requests
++   in LIST is handled.  If TIMEOUT is not a null pointer it specifies the
++   longest time the function keeps waiting before returning with an error.
++
++   This function is not part of POSIX and therefore no official
++   cancellation point.  But due to similarity with an POSIX interface
++   or due to the implementation it is a cancellation point and
++   therefore not marked with __THROW.  */
++extern int gai_suspend (const struct gaicb *const __list[], int __ent,
++			const struct timespec *__timeout);
++
++/* Get the error status of the request REQ.  */
++extern int gai_error (struct gaicb *__req) __THROW;
++
++/* Cancel the requests associated with GAICBP.  */
++extern int gai_cancel (struct gaicb *__gaicbp) __THROW;
++#endif	/* GNU */
++
++__END_DECLS
++
++#endif	/* netdb.h */
+Index: glibc-2.19/resolv/resolv.h.in
+===================================================================
+--- /dev/null
++++ glibc-2.19/resolv/resolv.h.in
+@@ -0,0 +1,389 @@
++/*
++ * Copyright (c) 1983, 1987, 1989
++ *    The Regents of the University of California.  All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ * 4. Neither the name of the University nor the names of its contributors
++ *    may be used to endorse or promote products derived from this software
++ *    without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
++ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
++ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
++ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
++ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
++ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
++ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
++ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
++ * SUCH DAMAGE.
++ */
++
++/*
++ * Portions Copyright (c) 1996-1999 by Internet Software Consortium.
++ *
++ * Permission to use, copy, modify, and distribute this software for any
++ * purpose with or without fee is hereby granted, provided that the above
++ * copyright notice and this permission notice appear in all copies.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
++ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
++ * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
++ * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
++ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
++ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
++ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
++ * SOFTWARE.
++ */
++
++/*
++ *	@(#)resolv.h	8.1 (Berkeley) 6/2/93
++ *	$BINDId: resolv.h,v 8.31 2000/03/30 20:16:50 vixie Exp $
++ */
++
++#ifndef _RESOLV_H_
++
++/* These headers are needed for types used in the `struct res_state'
++   declaration.  */
++#include <sys/types.h>
++#include <netinet/in.h>
++
++#ifndef __need_res_state
++# define _RESOLV_H_
++
++# include <sys/param.h>
++# include <sys/cdefs.h>
++# include <stdio.h>
++# include <arpa/nameser.h>
++#endif
++
++#ifndef __res_state_defined
++# define __res_state_defined
++
++typedef enum { res_goahead, res_nextns, res_modified, res_done, res_error }
++	res_sendhookact;
++
++typedef res_sendhookact (*res_send_qhook) (struct sockaddr_in * const *__ns,
++					   const u_char **__query,
++					   int *__querylen,
++					   u_char *__ans,
++					   int __anssiz,
++					   int *__resplen);
++
++typedef res_sendhookact (*res_send_rhook) (const struct sockaddr_in *__ns,
++					   const u_char *__query,
++					   int __querylen,
++					   u_char *__ans,
++					   int __anssiz,
++					   int *__resplen);
++
++/*
++ * Global defines and variables for resolver stub.
++ */
++# define MAXNS			3	/* max # name servers we'll track */
++# define MAXDFLSRCH		3	/* # default domain levels to try */
++# define MAXDNSRCH		6	/* max # domains in search path */
++# define LOCALDOMAINPARTS	2	/* min levels in name that is "local" */
++
++# define RES_TIMEOUT		5	/* min. seconds between retries */
++# define MAXRESOLVSORT		10	/* number of net to sort on */
++# define RES_MAXNDOTS		15	/* should reflect bit field size */
++# define RES_MAXRETRANS		30	/* only for resolv.conf/RES_OPTIONS */
++# define RES_MAXRETRY		5	/* only for resolv.conf/RES_OPTIONS */
++# define RES_DFLRETRY		2	/* Default #/tries. */
++# define RES_MAXTIME		65535	/* Infinity, in milliseconds. */
++
++struct __res_state {
++	int	retrans;		/* retransmition time interval */
++	int	retry;			/* number of times to retransmit */
++	u_long	options;		/* option flags - see below. */
++	int	nscount;		/* number of name servers */
++	struct sockaddr_in
++		nsaddr_list[MAXNS];	/* address of name server */
++# define nsaddr	nsaddr_list[0]		/* for backward compatibility */
++	u_short	id;			/* current message id */
++	/* 2 byte hole here.  */
++	char	*dnsrch[MAXDNSRCH+1];	/* components of domain to search */
++	char	defdname[256];		/* default domain (deprecated) */
++	u_long	pfcode;			/* RES_PRF_ flags - see below. */
++	unsigned ndots:4;		/* threshold for initial abs. query */
++	unsigned nsort:4;		/* number of elements in sort_list[] */
++	unsigned ipv6_unavail:1;	/* connecting to IPv6 server failed */
++	unsigned unused:23;
++	struct {
++		struct in_addr	addr;
++		u_int32_t	mask;
++	} sort_list[MAXRESOLVSORT];
++	/* 4 byte hole here on 64-bit architectures.  */
++	res_send_qhook qhook;		/* query hook */
++	res_send_rhook rhook;		/* response hook */
++	int	res_h_errno;		/* last one set for this context */
++	int	_vcsock;		/* PRIVATE: for res_send VC i/o */
++	u_int	_flags;			/* PRIVATE: see below */
++	/* 4 byte hole here on 64-bit architectures.  */
++	union {
++		char	pad[52];	/* On an i386 this means 512b total. */
++		struct {
++			u_int16_t		nscount;
++			u_int16_t		nsmap[MAXNS];
++			int			nssocks[MAXNS];
++			u_int16_t		nscount6;
++			u_int16_t		nsinit;
++			struct sockaddr_in6	*nsaddrs[MAXNS];
++#ifdef _LIBC
++			unsigned long long int	initstamp
++			  __attribute__((packed));
++#else
++			unsigned int		_initstamp[2];
++#endif
++		} _ext;
++	} _u;
++};
++
++typedef struct __res_state *res_state;
++# undef __need_res_state
++#endif
++
++#ifdef _RESOLV_H_
++/*
++ * Revision information.  This is the release date in YYYYMMDD format.
++ * It can change every day so the right thing to do with it is use it
++ * in preprocessor commands such as "#if (__RES > 19931104)".  Do not
++ * compare for equality; rather, use it to determine whether your resolver
++ * is new enough to contain a certain feature.
++ */
++
++#define	__RES	19991006
++
++/*
++ * Resolver configuration file.
++ * Normally not present, but may contain the address of the
++ * inital name server(s) to query and the domain search list.
++ */
++
++#ifndef _PATH_RESCONF
++#define _PATH_RESCONF        "@libc_cv_sysconfdir@/resolv.conf"
++#endif
++
++struct res_sym {
++	int	number;		/* Identifying number, like T_MX */
++	char *	name;		/* Its symbolic name, like "MX" */
++	char *	humanname;	/* Its fun name, like "mail exchanger" */
++};
++
++/*
++ * Resolver flags (used to be discrete per-module statics ints).
++ */
++#define	RES_F_VC	0x00000001	/* socket is TCP */
++#define	RES_F_CONN	0x00000002	/* socket is connected */
++#define RES_F_EDNS0ERR	0x00000004	/* EDNS0 caused errors */
++
++/* res_findzonecut() options */
++#define	RES_EXHAUSTIVE	0x00000001	/* always do all queries */
++
++/*
++ * Resolver options (keep these in synch with res_debug.c, please)
++ */
++#define RES_INIT	0x00000001	/* address initialized */
++#define RES_DEBUG	0x00000002	/* print debug messages */
++#define RES_AAONLY	0x00000004	/* authoritative answers only (!IMPL)*/
++#define RES_USEVC	0x00000008	/* use virtual circuit */
++#define RES_PRIMARY	0x00000010	/* query primary server only (!IMPL) */
++#define RES_IGNTC	0x00000020	/* ignore trucation errors */
++#define RES_RECURSE	0x00000040	/* recursion desired */
++#define RES_DEFNAMES	0x00000080	/* use default domain name */
++#define RES_STAYOPEN	0x00000100	/* Keep TCP socket open */
++#define RES_DNSRCH	0x00000200	/* search up local domain tree */
++#define	RES_INSECURE1	0x00000400	/* type 1 security disabled */
++#define	RES_INSECURE2	0x00000800	/* type 2 security disabled */
++#define	RES_NOALIASES	0x00001000	/* shuts off HOSTALIASES feature */
++#define	RES_USE_INET6	0x00002000	/* use/map IPv6 in gethostbyname() */
++#define RES_ROTATE	0x00004000	/* rotate ns list after each query */
++#define	RES_NOCHECKNAME	0x00008000	/* do not check names for sanity (!IMPL) */
++#define	RES_KEEPTSIG	0x00010000	/* do not strip TSIG records */
++#define	RES_BLAST	0x00020000	/* blast all recursive servers */
++#define RES_USEBSTRING	0x00040000	/* IPv6 reverse lookup with byte
++					   strings */
++#define RES_NOIP6DOTINT	0x00080000	/* Do not use .ip6.int in IPv6
++					   reverse lookup */
++#define RES_USE_EDNS0	0x00100000	/* Use EDNS0.  */
++#define RES_SNGLKUP	0x00200000	/* one outstanding request at a time */
++#define RES_SNGLKUPREOP	0x00400000	/* -"-, but open new socket for each
++					   request */
++#define RES_USE_DNSSEC	0x00800000	/* use DNSSEC using OK bit in OPT */
++#define RES_NOTLDQUERY	0x01000000	/* Do not look up unqualified name
++					   as a TLD.  */
++
++#define RES_DEFAULT	(RES_RECURSE|RES_DEFNAMES|RES_DNSRCH|RES_NOIP6DOTINT)
++
++/*
++ * Resolver "pfcode" values.  Used by dig.
++ */
++#define RES_PRF_STATS	0x00000001
++#define RES_PRF_UPDATE	0x00000002
++#define RES_PRF_CLASS   0x00000004
++#define RES_PRF_CMD	0x00000008
++#define RES_PRF_QUES	0x00000010
++#define RES_PRF_ANS	0x00000020
++#define RES_PRF_AUTH	0x00000040
++#define RES_PRF_ADD	0x00000080
++#define RES_PRF_HEAD1	0x00000100
++#define RES_PRF_HEAD2	0x00000200
++#define RES_PRF_TTLID	0x00000400
++#define RES_PRF_HEADX	0x00000800
++#define RES_PRF_QUERY	0x00001000
++#define RES_PRF_REPLY	0x00002000
++#define RES_PRF_INIT	0x00004000
++/*			0x00008000	*/
++
++/* Things involving an internal (static) resolver context. */
++__BEGIN_DECLS
++extern struct __res_state *__res_state(void) __attribute__ ((__const__));
++__END_DECLS
++#define _res (*__res_state())
++
++#ifndef __BIND_NOSTATIC
++#define fp_nquery		__fp_nquery
++#define fp_query		__fp_query
++#define hostalias		__hostalias
++#define p_query			__p_query
++#define res_close		__res_close
++#define res_init		__res_init
++#define res_isourserver		__res_isourserver
++#define res_mkquery		__res_mkquery
++#define res_query		__res_query
++#define res_querydomain		__res_querydomain
++#define res_search		__res_search
++#define res_send		__res_send
++
++__BEGIN_DECLS
++void		fp_nquery (const u_char *, int, FILE *) __THROW;
++void		fp_query (const u_char *, FILE *) __THROW;
++const char *	hostalias (const char *) __THROW;
++void		p_query (const u_char *) __THROW;
++void		res_close (void) __THROW;
++int		res_init (void) __THROW;
++int		res_isourserver (const struct sockaddr_in *) __THROW;
++int		res_mkquery (int, const char *, int, int, const u_char *,
++			     int, const u_char *, u_char *, int) __THROW;
++int		res_query (const char *, int, int, u_char *, int) __THROW;
++int		res_querydomain (const char *, const char *, int, int,
++				 u_char *, int) __THROW;
++int		res_search (const char *, int, int, u_char *, int) __THROW;
++int		res_send (const u_char *, int, u_char *, int) __THROW;
++__END_DECLS
++#endif
++
++#define b64_ntop		__b64_ntop
++#define b64_pton		__b64_pton
++#define dn_comp			__dn_comp
++#define dn_count_labels		__dn_count_labels
++#define dn_expand		__dn_expand
++#define dn_skipname		__dn_skipname
++#define fp_resstat		__fp_resstat
++#define loc_aton		__loc_aton
++#define loc_ntoa		__loc_ntoa
++#define p_cdname		__p_cdname
++#define p_cdnname		__p_cdnname
++#define p_class			__p_class
++#define p_fqname		__p_fqname
++#define p_fqnname		__p_fqnname
++#define p_option		__p_option
++#define p_secstodate		__p_secstodate
++#define p_section		__p_section
++#define p_time			__p_time
++#define p_type			__p_type
++#define p_rcode			__p_rcode
++#define putlong			__putlong
++#define putshort		__putshort
++#define res_dnok		__res_dnok
++#define res_hnok		__res_hnok
++#define res_hostalias		__res_hostalias
++#define res_mailok		__res_mailok
++#define res_nameinquery		__res_nameinquery
++#define res_nclose		__res_nclose
++#define res_ninit		__res_ninit
++#define res_nmkquery		__res_nmkquery
++#define res_npquery		__res_npquery
++#define res_nquery		__res_nquery
++#define res_nquerydomain	__res_nquerydomain
++#define res_nsearch		__res_nsearch
++#define res_nsend		__res_nsend
++#define res_nisourserver	__res_nisourserver
++#define res_ownok		__res_ownok
++#define res_queriesmatch	__res_queriesmatch
++#define res_randomid		__res_randomid
++#define sym_ntop		__sym_ntop
++#define sym_ntos		__sym_ntos
++#define sym_ston		__sym_ston
++__BEGIN_DECLS
++int		res_hnok (const char *) __THROW;
++int		res_ownok (const char *) __THROW;
++int		res_mailok (const char *) __THROW;
++int		res_dnok (const char *) __THROW;
++int		sym_ston (const struct res_sym *, const char *, int *) __THROW;
++const char *	sym_ntos (const struct res_sym *, int, int *) __THROW;
++const char *	sym_ntop (const struct res_sym *, int, int *) __THROW;
++int		b64_ntop (u_char const *, size_t, char *, size_t) __THROW;
++int		b64_pton (char const *, u_char *, size_t) __THROW;
++int		loc_aton (const char *__ascii, u_char *__binary) __THROW;
++const char *	loc_ntoa (const u_char *__binary, char *__ascii) __THROW;
++int		dn_skipname (const u_char *, const u_char *) __THROW;
++void		putlong (u_int32_t, u_char *) __THROW;
++void		putshort (u_int16_t, u_char *) __THROW;
++const char *	p_class (int) __THROW;
++const char *	p_time (u_int32_t) __THROW;
++const char *	p_type (int) __THROW;
++const char *	p_rcode (int) __THROW;
++const u_char *	p_cdnname (const u_char *, const u_char *, int, FILE *)
++     __THROW;
++const u_char *	p_cdname (const u_char *, const u_char *, FILE *) __THROW;
++const u_char *	p_fqnname (const u_char *__cp, const u_char *__msg,
++			   int, char *, int) __THROW;
++const u_char *	p_fqname (const u_char *, const u_char *, FILE *) __THROW;
++const char *	p_option (u_long __option) __THROW;
++char *		p_secstodate (u_long) __THROW;
++int		dn_count_labels (const char *) __THROW;
++int		dn_comp (const char *, u_char *, int, u_char **, u_char **)
++     __THROW;
++int		dn_expand (const u_char *, const u_char *, const u_char *,
++			   char *, int) __THROW;
++u_int		res_randomid (void) __THROW;
++int		res_nameinquery (const char *, int, int,
++				 const u_char *, const u_char *) __THROW;
++int		res_queriesmatch (const u_char *, const u_char *,
++				  const u_char *, const u_char *) __THROW;
++const char *	p_section (int __section, int __opcode) __THROW;
++/* Things involving a resolver context. */
++int		res_ninit (res_state) __THROW;
++int		res_nisourserver (const res_state,
++				  const struct sockaddr_in *) __THROW;
++void		fp_resstat (const res_state, FILE *) __THROW;
++void		res_npquery (const res_state, const u_char *, int, FILE *)
++     __THROW;
++const char *	res_hostalias (const res_state, const char *, char *, size_t)
++     __THROW;
++int		res_nquery (res_state, const char *, int, int, u_char *, int)
++     __THROW;
++int		res_nsearch (res_state, const char *, int, int, u_char *, int)
++     __THROW;
++int		res_nquerydomain (res_state, const char *, const char *, int,
++				  int, u_char *, int) __THROW;
++int		res_nmkquery (res_state, int, const char *, int, int,
++			      const u_char *, int, const u_char *, u_char *,
++			      int) __THROW;
++int		res_nsend (res_state, const u_char *, int, u_char *, int)
++     __THROW;
++void		res_nclose (res_state) __THROW;
++__END_DECLS
++#endif
++
++#endif /* !_RESOLV_H_ */
+Index: glibc-2.19/configure
+===================================================================
+--- glibc-2.19.orig/configure
++++ glibc-2.19/configure
+@@ -7387,7 +7387,7 @@ RELEASE=`sed -n -e 's/^#define RELEASE "
+ 
+ 
+ 
+-ac_config_files="$ac_config_files config.make Makefile"
++ac_config_files="$ac_config_files config.make Makefile nss/db-Makefile resolv/netdb.h resolv/resolv.h"
+ 
+ ac_config_commands="$ac_config_commands default"
+ 
+@@ -8107,6 +8107,9 @@ do
+     "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
+     "config.make") CONFIG_FILES="$CONFIG_FILES config.make" ;;
+     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
++    "nss/db-Makefile") CONFIG_FILES="$CONFIG_FILES nss/db-Makefile" ;;
++    "resolv/netdb.h") CONFIG_FILES="$CONFIG_FILES resolv/netdb.h" ;;
++    "resolv/resolv.h") CONFIG_FILES="$CONFIG_FILES resolv/resolv.h" ;;
+     "default") CONFIG_COMMANDS="$CONFIG_COMMANDS default" ;;
+ 
+   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;

@@ -1,7 +1,7 @@
-Index: work/glibc-2.17/sysdeps/generic/paths.h
+Index: glibc-2.19/sysdeps/generic/paths.h
 ===================================================================
---- work.orig/glibc-2.17/sysdeps/generic/paths.h
-+++ work/glibc-2.17/sysdeps/generic/paths.h
+--- glibc-2.19.orig/sysdeps/generic/paths.h
++++ glibc-2.19/sysdeps/generic/paths.h
 @@ -33,43 +33,43 @@
  #define	_PATHS_H_
  
@@ -67,10 +67,10 @@ Index: work/glibc-2.17/sysdeps/generic/paths.h
  #define	_PATH_VARTMP	"/var/tmp/"
  
  #endif /* !_PATHS_H_ */
-Index: work/glibc-2.17/sysdeps/unix/sysv/linux/paths.h
+Index: glibc-2.19/sysdeps/unix/sysv/linux/paths.h
 ===================================================================
---- work.orig/glibc-2.17/sysdeps/unix/sysv/linux/paths.h
-+++ work/glibc-2.17/sysdeps/unix/sysv/linux/paths.h
+--- glibc-2.19.orig/sysdeps/unix/sysv/linux/paths.h
++++ glibc-2.19/sysdeps/unix/sysv/linux/paths.h
 @@ -33,43 +33,43 @@
  #define	_PATHS_H_
  
@@ -134,10 +134,10 @@ Index: work/glibc-2.17/sysdeps/unix/sysv/linux/paths.h
  #define	_PATH_VARTMP	"/var/tmp/"
  
  #endif /* !_PATHS_H_ */
-Index: work/glibc-2.17/sysdeps/posix/system.c
+Index: glibc-2.19/sysdeps/posix/system.c
 ===================================================================
---- work.orig/glibc-2.17/sysdeps/posix/system.c
-+++ work/glibc-2.17/sysdeps/posix/system.c
+--- glibc-2.19.orig/sysdeps/posix/system.c
++++ glibc-2.19/sysdeps/posix/system.c
 @@ -26,7 +26,7 @@
  #include <sysdep-cancel.h>
  
@@ -147,10 +147,10 @@ Index: work/glibc-2.17/sysdeps/posix/system.c
  #define	SHELL_NAME	"sh"		/* Name to give it.  */
  
  
-Index: work/glibc-2.17/libio/iopopen.c
+Index: glibc-2.19/libio/iopopen.c
 ===================================================================
---- work.orig/glibc-2.17/libio/iopopen.c
-+++ work/glibc-2.17/libio/iopopen.c
+--- glibc-2.19.orig/libio/iopopen.c
++++ glibc-2.19/libio/iopopen.c
 @@ -222,7 +222,7 @@ _IO_new_proc_open (fp, command, mode)
  	    _IO_close (fd);
  	}
