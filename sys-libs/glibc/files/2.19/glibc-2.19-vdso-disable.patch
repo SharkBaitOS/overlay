@@ -1,0 +1,37 @@
+Disable vdso for some buggy kernels
+http://thread.gmane.org/gmane.comp.lib.glibc.user/1903
+
+Index: glibc-2.19/elf/dl-support.c
+===================================================================
+--- glibc-2.19.orig/elf/dl-support.c
++++ glibc-2.19/elf/dl-support.c
+@@ -260,16 +260,6 @@ _dl_aux_init (ElfW(auxv_t) *av)
+       case AT_FPUCW:
+ 	GLRO(dl_fpu_control) = av->a_un.a_val;
+ 	break;
+-#ifdef NEED_DL_SYSINFO
+-      case AT_SYSINFO:
+-	GL(dl_sysinfo) = av->a_un.a_val;
+-	break;
+-#endif
+-#ifdef NEED_DL_SYSINFO_DSO
+-      case AT_SYSINFO_EHDR:
+-	GL(dl_sysinfo_dso) = (void *) av->a_un.a_val;
+-	break;
+-#endif
+       case AT_UID:
+ 	uid ^= av->a_un.a_val;
+ 	seen |= 1;
+Index: glibc-2.19/elf/setup-vdso.h
+===================================================================
+--- glibc-2.19.orig/elf/setup-vdso.h
++++ glibc-2.19/elf/setup-vdso.h
+@@ -20,7 +20,7 @@ static inline void __attribute__ ((alway
+ setup_vdso (struct link_map *main_map __attribute__ ((unused)),
+ 	    struct link_map ***first_preload __attribute__ ((unused)))
+ {
+-#ifdef NEED_DL_SYSINFO_DSO
++#if 0
+   if (GLRO(dl_sysinfo_dso) == NULL)
+     return;
+ 

@@ -157,6 +157,8 @@ eblit-src_unpack-pre() {
 }
 
 eblit-src_unpack-post() {
+	eprefixify extra/locale/locale-gen
+
 	cd "${S}"
 
 	if use hardened ; then
@@ -199,7 +201,7 @@ eblit-src_unpack-post() {
 		fi
 
 		if [[ ${lsb_id} == *CentOS ]] || [[ ${lsb_id} == *RedHat* ]]; then
-			if [[ ${lsb_rel} == 5.6 ]]; then
+			if [[ ${lsb_rel} == *5.6 ]]; then
 				elog "Your kernel is known to have vdso bug, disabling this feature"
 				elog "https://bugzilla.redhat.com/show_bug.cgi?id=678613"
 				epatch "${FILESDIR}"/${PV}/${P}-vdso-disable.patch

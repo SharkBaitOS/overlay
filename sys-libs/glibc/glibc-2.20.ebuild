@@ -193,14 +193,6 @@ eblit-src_prepare-post() {
 			local lsb_rel=$(lsb_release -r)
 		fi
 
-		if [[ ${lsb_id} == *CentOS ]] || [[ ${lsb_id} == *RedHat* ]]; then
-			if [[ ${lsb_rel} == 5.6 ]]; then
-				elog "Your kernel is known to have vdso bug, disabling this feature"
-				elog "https://bugzilla.redhat.com/show_bug.cgi?id=678613"
-				epatch "${FILESDIR}"/${PV}/${P}-vdso-disable.patch
-			fi
-		fi
-
 		epatch "${FILESDIR}"/2.17/${PN}-2.17-runtime-prefix.patch
 	        eprefixify sysdeps/{{generic,unix/sysv/linux}/paths.h,posix/system.c} \
 			libio/iopopen.c
