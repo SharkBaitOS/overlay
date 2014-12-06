@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/sys-libs/glibc/files/eblits/common.eblit,v 1.45 2014/10/18 23:09:51 vapier Exp $
 
-: ${TPREFIX:=${EPREFIX}}
+: ${TPREFIX:=$(is_crosscompile && echo "" || echo ${EPREFIX})}
 
 # ROOT variable is not used in src_*; emulate that with $(alt_prefix root).
 # P:=Prefix X:=Cross-Triplet PX: Cross-Triplet-Prefix
@@ -16,7 +16,8 @@
 #  ebuild helper ED/   /usr/CTARGET/TPREFIX          /usr/CTARGET   NULL      $(alt_prefix)         
 alt_prefix() {
 	if is_crosscompile; then
-		echo -n "${EPREFIX}"/usr/${CTARGET}
+		[[ $1 == root ]] && echo -n ${EPREFIX}
+		echo -n /usr/${CTARGET}
 		[[ $1 == root ]] || echo ${TPREFIX}
 	fi
 }
