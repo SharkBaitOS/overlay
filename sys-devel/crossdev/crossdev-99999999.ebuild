@@ -5,7 +5,7 @@
 EAPI="3"
 
 if [[ ${PV} == "99999999" ]] ; then
-	EGIT_REPO_URI="http://git.heroxbd.z.tuna.tsinghua.edu.cn/crossdev.git"
+	EGIT_REPO_URI="https://github.com/heroxbd/crossdev.git"
 	inherit git-2
 	SRC_URI=""
 	#KEYWORDS=""
