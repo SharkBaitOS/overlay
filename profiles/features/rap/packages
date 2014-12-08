@@ -9,3 +9,9 @@
 
 # permission is not handled by portage for normal users
 -*net-misc/iputils
+
+# has not been prefixified
+-*sys-apps/baselayout
+
+# not a must
+-*sys-fs/e2fsprogs
