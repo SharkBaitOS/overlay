@@ -11,7 +11,7 @@
 -*net-misc/iputils
 
 # has not been prefixified
--*sys-apps/baselayout
+-*>=sys-apps/baselayout-2
 
 # not a must
 -*sys-fs/e2fsprogs
