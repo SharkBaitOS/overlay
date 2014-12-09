@@ -10,8 +10,8 @@
 # permission is not handled by portage for normal users
 -*net-misc/iputils
 
-# has not been prefixified
--*>=sys-apps/baselayout-2
-
 # not a must
 -*sys-fs/e2fsprogs
+
+# draws in baselayout-prefix
+-*virtual/service-manager-0
