@@ -14,4 +14,4 @@
 -*sys-fs/e2fsprogs
 
 # draws in baselayout-prefix
--*virtual/service-manager-0
+-*virtual/service-manager
