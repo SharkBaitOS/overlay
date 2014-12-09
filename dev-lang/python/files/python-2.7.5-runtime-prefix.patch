@@ -1,0 +1,26 @@
+Index: Python-2.7.5/Lib/popen2.py
+===================================================================
+--- Python-2.7.5.orig/Lib/popen2.py
++++ Python-2.7.5/Lib/popen2.py
+@@ -81,7 +81,7 @@ class Popen3:
+ 
+     def _run_child(self, cmd):
+         if isinstance(cmd, basestring):
+-            cmd = ['/bin/sh', '-c', cmd]
++            cmd = ['@GENTOO_PORTAGE_EPREFIX@/bin/sh', '-c', cmd]
+         os.closerange(3, MAXFD)
+         try:
+             os.execvp(cmd[0], cmd)
+Index: Python-2.7.5/Lib/subprocess.py
+===================================================================
+--- Python-2.7.5.orig/Lib/subprocess.py
++++ Python-2.7.5/Lib/subprocess.py
+@@ -1184,7 +1184,7 @@ class Popen(object):
+                 args = list(args)
+ 
+             if shell:
+-                args = ["/bin/sh", "-c"] + args
++                args = ["@GENTOO_PORTAGE_EPREFIX@/bin/sh", "-c"] + args
+                 if executable:
+                     args[0] = executable
+ 
