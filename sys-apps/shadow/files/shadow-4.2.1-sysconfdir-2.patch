@@ -1,0 +1,548 @@
+From ea2788255a4ebc4e72d988b840ae0f59ada27ca1 Mon Sep 17 00:00:00 2001
+From: Benda Xu <heroxbd@gentoo.org>
+Date: Tue, 9 Dec 2014 13:34:51 +0900
+Subject: [PATCH 2/2] Manage and override pathes in headers.
+
+        * lib/getdef.c: move LOGINDEFS into lib/getdef.h
+        * lib/getdef.h: rename to .in
+        * configure.in: generate lib/getdef.h lib/port.h
+        * lib/gshadow_.h: move GSHADOW into lib/defines.h
+        * lib/port.h: override /etc with @sysconfdir@
+        rename to .in
+        * src/chsh.c: move SHELLS_FILE into lib/defines.h
+        * src/login_nopam.c: move TABLE into lib/defines.h
+	and rename to ACCESS_TABLE
+        * src/logoutd.c: move HUP_MESG_FILE into lib/defines.h
+        * src/suauth.c: move SUAUTHFILE into lib/defines.h
+        * src/useradd.c: move SKEL_DIR, USER_DEFAULTS_FILE,
+        LASTLOG_FILE into defines.h
+---
+ configure.in                  |  2 ++
+ lib/defines.h.in              | 31 +++++++++++++++++++++++++++++++
+ lib/getdef.c                  |  4 ----
+ lib/{getdef.h => getdef.h.in} |  4 ++++
+ lib/gshadow_.h                |  2 +-
+ lib/{port.h => port.h.in}     |  2 +-
+ src/chsh.c                    |  3 ---
+ src/login_nopam.c             | 15 +++++----------
+ src/logoutd.c                 |  4 ----
+ src/suauth.c                  |  4 ----
+ src/useradd.c                 | 13 -------------
+ 11 files changed, 44 insertions(+), 40 deletions(-)
+ rename lib/{getdef.h => getdef.h.in} (97%)
+ rename lib/{port.h => port.h.in} (98%)
+
+Index: shadow-4.2.1/configure.in
+===================================================================
+--- shadow-4.2.1.orig/configure.in
++++ shadow-4.2.1/configure.in
+@@ -632,6 +632,8 @@ AM_CONDITIONAL(USE_NLS, test "x$USE_NLS"
+ AC_CONFIG_FILES([
+ 	Makefile
+ 	lib/defines.h
++	lib/getdef.h
++	lib/port.h
+ 	po/Makefile.in
+ 	doc/Makefile
+ 	man/Makefile
+Index: shadow-4.2.1/lib/defines.h.in
+===================================================================
+--- shadow-4.2.1.orig/lib/defines.h.in
++++ shadow-4.2.1/lib/defines.h.in
+@@ -316,6 +316,37 @@ char *strchr (), *strrchr (), *strtok ()
+ #endif
+ #endif
+ 
++#ifndef SKEL_DIR
++#define SKEL_DIR "@sysconfdir@/skel"
++#endif
++#ifndef USER_DEFAULTS_FILE
++#define USER_DEFAULTS_FILE "@sysconfdir@/default/useradd"
++#define NEW_USER_FILE "@sysconfdir@/default/nuaddXXXXXX"
++#endif
++/*
++ * Needed for MkLinux DR1/2/2.1 - J.
++ */
++#ifndef LASTLOG_FILE
++#define LASTLOG_FILE "@localstatedir@/log/lastlog"
++#endif
++
++#ifndef HUP_MESG_FILE
++#define HUP_MESG_FILE "@sysconfdir@/logoutd.mesg"
++#endif
++
++#ifndef SUAUTHFILE
++#define SUAUTHFILE "@sysconfdir@/suauth"
++#endif
++
++ /* Path name of the access control file. */
++#ifndef ACCESS_TABLE
++#define ACCESS_TABLE "@sysconfdir@/login.access"
++#endif
++
++#ifndef SHELLS_FILE
++#define SHELLS_FILE "@sysconfdir@/shells"
++#endif
++
+ #ifndef NULL
+ #define NULL ((void *) 0)
+ #endif
+Index: shadow-4.2.1/lib/getdef.c
+===================================================================
+--- shadow-4.2.1.orig/lib/getdef.c
++++ shadow-4.2.1/lib/getdef.c
+@@ -138,10 +138,6 @@ static struct itemdef def_table[] = {
+ 	{NULL, NULL}
+ };
+ 
+-#ifndef LOGINDEFS
+-#define LOGINDEFS "/etc/login.defs"
+-#endif
+-
+ static char def_fname[] = LOGINDEFS;	/* login config defs file       */
+ static bool def_loaded = false;		/* are defs already loaded?     */
+ 
+Index: shadow-4.2.1/lib/getdef.h
+===================================================================
+--- shadow-4.2.1.orig/lib/getdef.h
++++ /dev/null
+@@ -1,47 +0,0 @@
+-/*
+- * Copyright (c) 1991 - 1994, Julianne Frances Haugh
+- * Copyright (c) 1996 - 2000, Marek Michałkiewicz
+- * Copyright (c) 2002 - 2006, Tomasz Kłoczko
+- * Copyright (c) 2008       , Nicolas François
+- * All rights reserved.
+- *
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions
+- * are met:
+- * 1. Redistributions of source code must retain the above copyright
+- *    notice, this list of conditions and the following disclaimer.
+- * 2. Redistributions in binary form must reproduce the above copyright
+- *    notice, this list of conditions and the following disclaimer in the
+- *    documentation and/or other materials provided with the distribution.
+- * 3. The name of the copyright holders or contributors may not be used to
+- *    endorse or promote products derived from this software without
+- *    specific prior written permission.
+- *
+- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+- * PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
+- * HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+- */
+-#ifndef _GETDEF_H
+-#define _GETDEF_H
+-
+-/* getdef.c */
+-extern bool getdef_bool (const char *);
+-extern long getdef_long (const char *, long);
+-extern int getdef_num (const char *, int);
+-extern unsigned long getdef_ulong (const char *, unsigned long);
+-extern unsigned int getdef_unum (const char *, unsigned int);
+-extern /*@observer@*/ /*@null@*/const char *getdef_str (const char *);
+-extern int putdef_str (const char *, const char *);
+-
+-/* default UMASK value if not specified in /etc/login.defs */
+-#define		GETDEF_DEFAULT_UMASK	022
+-
+-#endif				/* _GETDEF_H */
+Index: shadow-4.2.1/lib/getdef.h.in
+===================================================================
+--- /dev/null
++++ shadow-4.2.1/lib/getdef.h.in
+@@ -0,0 +1,51 @@
++/*
++ * Copyright (c) 1991 - 1994, Julianne Frances Haugh
++ * Copyright (c) 1996 - 2000, Marek Michałkiewicz
++ * Copyright (c) 2002 - 2006, Tomasz Kłoczko
++ * Copyright (c) 2008       , Nicolas François
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ * 3. The name of the copyright holders or contributors may not be used to
++ *    endorse or promote products derived from this software without
++ *    specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
++ * PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
++ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++#ifndef _GETDEF_H
++#define _GETDEF_H
++
++#ifndef LOGINDEFS
++#define LOGINDEFS "@sysconfdir@/login.defs"
++#endif
++
++/* getdef.c */
++extern bool getdef_bool (const char *);
++extern long getdef_long (const char *, long);
++extern int getdef_num (const char *, int);
++extern unsigned long getdef_ulong (const char *, unsigned long);
++extern unsigned int getdef_unum (const char *, unsigned int);
++extern /*@observer@*/ /*@null@*/const char *getdef_str (const char *);
++extern int putdef_str (const char *, const char *);
++
++/* default UMASK value if not specified in /etc/login.defs */
++#define		GETDEF_DEFAULT_UMASK	022
++
++#endif				/* _GETDEF_H */
+Index: shadow-4.2.1/lib/gshadow_.h
+===================================================================
+--- shadow-4.2.1.orig/lib/gshadow_.h
++++ shadow-4.2.1/lib/gshadow_.h
+@@ -71,5 +71,5 @@ void endsgent ();
+ int putsgent ();
+ #endif
+ 
+-#define	GSHADOW	"/etc/gshadow"
++#define	GSHADOW	"@sysconfdir@/gshadow"
+ #endif				/* ifndef _H_GSHADOW */
+Index: shadow-4.2.1/lib/port.h
+===================================================================
+--- shadow-4.2.1.orig/lib/port.h
++++ /dev/null
+@@ -1,83 +0,0 @@
+-/*
+- * Copyright (c) 1989 - 1991, Julianne Frances Haugh
+- * Copyright (c) 1996 - 1997, Marek Michałkiewicz
+- * Copyright (c) 2005       , Tomasz Kłoczko
+- * All rights reserved.
+- *
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions
+- * are met:
+- * 1. Redistributions of source code must retain the above copyright
+- *    notice, this list of conditions and the following disclaimer.
+- * 2. Redistributions in binary form must reproduce the above copyright
+- *    notice, this list of conditions and the following disclaimer in the
+- *    documentation and/or other materials provided with the distribution.
+- * 3. The name of the copyright holders or contributors may not be used to
+- *    endorse or promote products derived from this software without
+- *    specific prior written permission.
+- *
+- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+- * PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
+- * HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+- */
+-
+-/*
+- * port.h - structure of /etc/porttime
+- *
+- *	$Id$
+- *
+- *	Each entry in /etc/porttime consists of a TTY device
+- *	name or "*" to indicate all TTY devices, followed by
+- *	a list of 1 or more user IDs or "*" to indicate all
+- *	user names, followed by a list of zero or more valid
+- *	login times.  Login time entries consist of zero or
+- *	more day names (Su, Mo, Tu, We, Th, Fr, Sa, Wk, Al)
+- *	followed by a pair of time values in HHMM format
+- *	separated by a "-".
+- */
+-
+-/*
+- * PORTS - Name of system port access time file.
+- * PORT_IDS - Allowable number of IDs per entry.
+- * PORT_TTY - Allowable number of TTYs per entry.
+- * PORT_TIMES - Allowable number of time entries per entry.
+- * PORT_DAY - Day of the week to a bit value (0 = Sunday).
+- */
+-
+-#define	PORTS	"/etc/porttime"
+-#define	PORT_IDS	64
+-#define	PORT_TTY	64
+-#define	PORT_TIMES	24
+-#define	PORT_DAY(day)	(1<<(day))
+-
+-/*
+- *	pt_names - pointer to array of device names in /dev/
+- *	pt_users - pointer to array of applicable user IDs.
+- *	pt_times - pointer to list of allowable time periods.
+- */
+-
+-struct port {
+-	char **pt_names;
+-	char **pt_users;
+-	struct pt_time *pt_times;
+-};
+-
+-/*
+- *	t_days - bit array for each day of the week (0 = Sunday)
+- *	t_start - starting time for this entry
+- *	t_end - ending time for this entry
+- */
+-
+-struct pt_time {
+-	short t_days;
+-	short t_start;
+-	short t_end;
+-};
+Index: shadow-4.2.1/lib/port.h.in
+===================================================================
+--- /dev/null
++++ shadow-4.2.1/lib/port.h.in
+@@ -0,0 +1,83 @@
++/*
++ * Copyright (c) 1989 - 1991, Julianne Frances Haugh
++ * Copyright (c) 1996 - 1997, Marek Michałkiewicz
++ * Copyright (c) 2005       , Tomasz Kłoczko
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ * 3. The name of the copyright holders or contributors may not be used to
++ *    endorse or promote products derived from this software without
++ *    specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
++ * PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
++ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++/*
++ * port.h - structure of /etc/porttime
++ *
++ *	$Id$
++ *
++ *	Each entry in /etc/porttime consists of a TTY device
++ *	name or "*" to indicate all TTY devices, followed by
++ *	a list of 1 or more user IDs or "*" to indicate all
++ *	user names, followed by a list of zero or more valid
++ *	login times.  Login time entries consist of zero or
++ *	more day names (Su, Mo, Tu, We, Th, Fr, Sa, Wk, Al)
++ *	followed by a pair of time values in HHMM format
++ *	separated by a "-".
++ */
++
++/*
++ * PORTS - Name of system port access time file.
++ * PORT_IDS - Allowable number of IDs per entry.
++ * PORT_TTY - Allowable number of TTYs per entry.
++ * PORT_TIMES - Allowable number of time entries per entry.
++ * PORT_DAY - Day of the week to a bit value (0 = Sunday).
++ */
++
++#define	PORTS	"@sysconfdir@/porttime"
++#define	PORT_IDS	64
++#define	PORT_TTY	64
++#define	PORT_TIMES	24
++#define	PORT_DAY(day)	(1<<(day))
++
++/*
++ *	pt_names - pointer to array of device names in /dev/
++ *	pt_users - pointer to array of applicable user IDs.
++ *	pt_times - pointer to list of allowable time periods.
++ */
++
++struct port {
++	char **pt_names;
++	char **pt_users;
++	struct pt_time *pt_times;
++};
++
++/*
++ *	t_days - bit array for each day of the week (0 = Sunday)
++ *	t_start - starting time for this entry
++ *	t_end - ending time for this entry
++ */
++
++struct pt_time {
++	short t_days;
++	short t_start;
++	short t_end;
++};
+Index: shadow-4.2.1/src/chsh.c
+===================================================================
+--- shadow-4.2.1.orig/src/chsh.c
++++ shadow-4.2.1/src/chsh.c
+@@ -55,9 +55,6 @@
+ /*@-exitarg@*/
+ #include "exitcodes.h"
+ 
+-#ifndef SHELLS_FILE
+-#define SHELLS_FILE "/etc/shells"
+-#endif
+ /*
+  * Global variables
+  */
+Index: shadow-4.2.1/src/login_nopam.c
+===================================================================
+--- shadow-4.2.1.orig/src/login_nopam.c
++++ shadow-4.2.1/src/login_nopam.c
+@@ -57,11 +57,6 @@
+ #define MAXHOSTNAMELEN 256
+ #endif
+ 
+- /* Path name of the access control file. */
+-#ifndef	TABLE
+-#define TABLE	"/etc/login.access"
+-#endif
+-
+ /* Delimiters for fields and for lists of users, ttys or hosts. */
+ static char fs[] = ":";		/* field separator */
+ static char sep[] = ", \t";	/* list-element separator */
+@@ -89,7 +84,7 @@ int login_access (const char *user, cons
+ 	 * mandatory. The first field should be a "+" or "-" character. A
+ 	 * non-existing table means no access control.
+ 	 */
+-	fp = fopen (TABLE, "r");
++	fp = fopen (ACCESS_TABLE, "r");
+ 	if (NULL != fp) {
+ 		int lineno = 0;	/* for diagnostics */
+ 		while (   !match
+@@ -100,7 +95,7 @@ int login_access (const char *user, cons
+ 			if (line[end] != '\n') {
+ 				SYSLOG ((LOG_ERR,
+ 					 "%s: line %d: missing newline or line too long",
+-					 TABLE, lineno));
++					 ACCESS_TABLE, lineno));
+ 				continue;
+ 			}
+ 			if (line[0] == '#') {
+@@ -119,13 +114,13 @@ int login_access (const char *user, cons
+ 			    || (strtok ((char *) 0, fs) != NULL)) {
+ 				SYSLOG ((LOG_ERR,
+ 					 "%s: line %d: bad field count",
+-					 TABLE, lineno));
++					 ACCESS_TABLE, lineno));
+ 				continue;
+ 			}
+ 			if (perm[0] != '+' && perm[0] != '-') {
+ 				SYSLOG ((LOG_ERR,
+ 					 "%s: line %d: bad first field",
+-					 TABLE, lineno));
++					 ACCESS_TABLE, lineno));
+ 				continue;
+ 			}
+ 			match = (   list_match (froms, from, from_match)
+@@ -134,7 +129,7 @@ int login_access (const char *user, cons
+ 		(void) fclose (fp);
+ 	} else if (errno != ENOENT) {
+ 		int err = errno;
+-		SYSLOG ((LOG_ERR, "cannot open %s: %s", TABLE, strerror (err)));
++		SYSLOG ((LOG_ERR, "cannot open %s: %s", ACCESS_TABLE, strerror (err)));
+ 	}
+ 	return (!match || (line[0] == '+'))?1:0;
+ }
+Index: shadow-4.2.1/src/logoutd.c
+===================================================================
+--- shadow-4.2.1.orig/src/logoutd.c
++++ shadow-4.2.1/src/logoutd.c
+@@ -49,10 +49,6 @@ const char *Prog;
+ #define DEFAULT_HUP_MESG _("login time exceeded\n\n")
+ #endif
+ 
+-#ifndef HUP_MESG_FILE
+-#define HUP_MESG_FILE "/etc/logoutd.mesg"
+-#endif
+-
+ /* local function prototypes */
+ #ifdef USE_UTMPX
+ static int check_login (const struct utmpx *ut);
+Index: shadow-4.2.1/src/suauth.c
+===================================================================
+--- shadow-4.2.1.orig/src/suauth.c
++++ shadow-4.2.1/src/suauth.c
+@@ -39,10 +39,6 @@
+ #include "defines.h"
+ #include "prototypes.h"
+ 
+-#ifndef SUAUTHFILE
+-#define SUAUTHFILE "/etc/suauth"
+-#endif
+-
+ #define	NOACTION	0
+ #define	NOPWORD		1
+ #define	DENY		-1
+Index: shadow-4.2.1/src/useradd.c
+===================================================================
+--- shadow-4.2.1.orig/src/useradd.c
++++ shadow-4.2.1/src/useradd.c
+@@ -72,19 +72,6 @@
+ #include "tcbfuncs.h"
+ #endif
+ 
+-#ifndef SKEL_DIR
+-#define SKEL_DIR "/etc/skel"
+-#endif
+-#ifndef USER_DEFAULTS_FILE
+-#define USER_DEFAULTS_FILE "/etc/default/useradd"
+-#define NEW_USER_FILE "/etc/default/nuaddXXXXXX"
+-#endif
+-/*
+- * Needed for MkLinux DR1/2/2.1 - J.
+- */
+-#ifndef LASTLOG_FILE
+-#define LASTLOG_FILE "/var/log/lastlog"
+-#endif
+ /*
+  * Global variables
+  */
+Index: shadow-4.2.1/configure
+===================================================================
+--- shadow-4.2.1.orig/configure
++++ shadow-4.2.1/configure
+@@ -18063,7 +18063,7 @@ else
+ fi
+ 
+ 
+-ac_config_files="$ac_config_files Makefile lib/defines.h po/Makefile.in doc/Makefile man/Makefile man/config.xml man/po/Makefile man/cs/Makefile man/da/Makefile man/de/Makefile man/es/Makefile man/fi/Makefile man/fr/Makefile man/hu/Makefile man/id/Makefile man/it/Makefile man/ja/Makefile man/ko/Makefile man/pl/Makefile man/pt_BR/Makefile man/ru/Makefile man/sv/Makefile man/tr/Makefile man/zh_CN/Makefile man/zh_TW/Makefile libmisc/Makefile lib/Makefile src/Makefile contrib/Makefile etc/Makefile etc/pam.d/Makefile shadow.spec"
++ac_config_files="$ac_config_files Makefile lib/defines.h lib/getdef.h lib/port.h po/Makefile.in doc/Makefile man/Makefile man/config.xml man/po/Makefile man/cs/Makefile man/da/Makefile man/de/Makefile man/es/Makefile man/fi/Makefile man/fr/Makefile man/hu/Makefile man/id/Makefile man/it/Makefile man/ja/Makefile man/ko/Makefile man/pl/Makefile man/pt_BR/Makefile man/ru/Makefile man/sv/Makefile man/tr/Makefile man/zh_CN/Makefile man/zh_TW/Makefile libmisc/Makefile lib/Makefile src/Makefile contrib/Makefile etc/Makefile etc/pam.d/Makefile shadow.spec"
+ 
+ cat >confcache <<\_ACEOF
+ # This file is a shell script that caches the results of configure
+@@ -19124,6 +19124,8 @@ do
+     "po-directories") CONFIG_COMMANDS="$CONFIG_COMMANDS po-directories" ;;
+     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+     "lib/defines.h") CONFIG_FILES="$CONFIG_FILES lib/defines.h" ;;
++    "lib/getdef.h") CONFIG_FILES="$CONFIG_FILES lib/getdef.h" ;;
++    "lib/port.h") CONFIG_FILES="$CONFIG_FILES lib/port.h" ;;
+     "po/Makefile.in") CONFIG_FILES="$CONFIG_FILES po/Makefile.in" ;;
+     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
+     "man/Makefile") CONFIG_FILES="$CONFIG_FILES man/Makefile" ;;

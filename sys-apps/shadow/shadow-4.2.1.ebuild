@@ -35,6 +35,7 @@ RDEPEND="${RDEPEND}
 src_prepare() {
 	epatch "${FILESDIR}"/${PN}-4.1.3-dots-in-usernames.patch #22920
 	epatch "${FILESDIR}"/${PN}-4.2.1-sysconfdir.patch
+	epatch "${FILESDIR}"/${PN}-4.2.1-sysconfdir-2.patch
 	epatch_user
 	elibtoolize
 }

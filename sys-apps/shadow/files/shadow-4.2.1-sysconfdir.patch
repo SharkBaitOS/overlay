@@ -1,9 +1,13 @@
+From 54775500160de242f2371da8defc3ca639a95e5c Mon Sep 17 00:00:00 2001
+From: Benda Xu <heroxbd@gentoo.org>
+Date: Tue, 9 Dec 2014 12:47:31 +0900
+Subject: [PATCH 1/2] override /etc with @sysconfdir@.
+
 ---
- configure        |    3 
- configure.in     |    1 
- lib/defines.h    |  385 -------------------------------------------------------
- lib/defines.h.in |  385 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 388 insertions(+), 386 deletions(-)
+ configure.in                    | 1 +
+ lib/{defines.h => defines.h.in} | 8 ++++----
+ 2 files changed, 5 insertions(+), 4 deletions(-)
+ rename lib/{defines.h => defines.h.in} (98%)
 
 Index: shadow-4.2.1/configure
 ===================================================================
