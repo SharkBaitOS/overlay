@@ -1728,16 +1728,24 @@ toolchain_src_install() {
 	# Rather install the script, else portage with changing $FILESDIR
 	# between binary and source package borks things ....
 	if ! is_crosscompile ; then
+                cp "${GCC_FILESDIR}"/fix_libtool_files.sh "${T}"
+                cp "${GCC_FILESDIR}"/awk/fixlafiles.awk-no_gcc_la "${T}"
+                cp "${GCC_FILESDIR}"/awk/fixlafiles.awk "${T}"
+		eprefixify \
+                        "${T}"/fix_libtool_files.sh \
+                        "${T}"/fixlafiles.awk-no_gcc_la \
+                        "${T}"/fixlafiles.awk
+
 		insinto "${DATAPATH#${EPREFIX}}"
 		if tc_version_is_at_least 4.0 ; then
-			newins "${GCC_FILESDIR}"/awk/fixlafiles.awk-no_gcc_la fixlafiles.awk || die
+			newins "${T}"/fixlafiles.awk-no_gcc_la fixlafiles.awk || die
 			find "${D}/${LIBPATH}" -name libstdc++.la -type f -exec rm "{}" \;
 			find "${D}/${LIBPATH}" -name "lib?san.la" -type f -exec rm "{}" \; # 487550
 		else
-			doins "${GCC_FILESDIR}"/awk/fixlafiles.awk || die
+			doins "${T}"/fixlafiles.awk || die
 		fi
 		exeinto "${DATAPATH#${EPREFIX}}"
-		doexe "${GCC_FILESDIR}"/fix_libtool_files.sh || die
+		doexe "${T}"/fix_libtool_files.sh || die
 		doexe "${GCC_FILESDIR}"/c{89,99} || die
 	fi
 
