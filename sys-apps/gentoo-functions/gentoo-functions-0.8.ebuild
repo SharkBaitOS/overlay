@@ -26,5 +26,5 @@ src_prepare() {
 }
 
 src_install() {
-	emake install ROOTPREFIX="$EPREFIX"
+	emake install ROOTPREFIX="${EPREFIX}" PREFIX="${EPREFIX}/usr"
 }
