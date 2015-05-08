@@ -9,9 +9,11 @@
 
 # permission is not handled by portage for normal users
 -*net-misc/iputils
+-*sys-apps/iproute2
 
 # not a must
 -*sys-fs/e2fsprogs
+-*sys-apps/busybox
 
 # draws in baselayout-prefix
 -*virtual/service-manager
