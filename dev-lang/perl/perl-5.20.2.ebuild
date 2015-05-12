@@ -1,15 +1,15 @@
-# Copyright 1999-2014 Gentoo Foundation
+# Copyright 1999-2015 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/dev-lang/perl/perl-5.20.1-r3.ebuild,v 1.2 2014/11/29 20:57:32 dilfridge Exp $
+# $Header: /var/cvsroot/gentoo-x86/dev-lang/perl/perl-5.20.2.ebuild,v 1.10 2015/04/11 17:39:51 zlogene Exp $
 
 EAPI=5
 
-inherit eutils alternatives flag-o-matic toolchain-funcs multilib multiprocessing
+inherit eutils alternatives flag-o-matic toolchain-funcs multilib multiprocessing prefix
 
-PATCH_VER=2
+PATCH_VER=1
 
-PERL_OLDVERSEN="5.20.0"
-MODULE_AUTHOR=RJBS
+PERL_OLDVERSEN="5.20.0 5.20.1"
+MODULE_AUTHOR=SHAY
 
 SHORT_PV="${PV%.*}"
 MY_P="perl-${PV/_rc/-RC}"
@@ -27,7 +27,7 @@ HOMEPAGE="http://www.perl.org/"
 
 LICENSE="|| ( Artistic GPL-1+ )"
 SLOT="0/${SHORT_PV}"
-KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86 ~ppc-aix ~amd64-fbsd ~x86-fbsd ~x64-freebsd ~x86-freebsd ~hppa-hpux ~ia64-hpux ~x86-interix ~amd64-linux ~ia64-linux ~x86-linux ~ppc-macos ~x64-macos ~x86-macos ~m68k-mint ~sparc-solaris ~sparc64-solaris ~x64-solaris ~x86-solaris"
+KEYWORDS="alpha amd64 arm arm64 hppa ia64 m68k ~mips ppc ppc64 s390 sh sparc x86 ~ppc-aix ~amd64-fbsd ~x86-fbsd ~x64-freebsd ~x86-freebsd ~hppa-hpux ~ia64-hpux ~x86-interix ~amd64-linux ~ia64-linux ~x86-linux ~ppc-macos ~x64-macos ~x86-macos ~m68k-mint ~sparc-solaris ~sparc64-solaris ~x64-solaris ~x86-solaris"
 IUSE="berkdb debug doc gdbm ithreads"
 
 RDEPEND="
@@ -58,7 +58,7 @@ dual_scripts() {
 	src_remove_dual      perl-core/IO-Compress        2.64.0       zipdetails
 	src_remove_dual      perl-core/JSON-PP            2.272.30      json_pp
 	src_remove_dual      perl-core/Module-Build       0.420.500    config_data
-	src_remove_dual      perl-core/Module-CoreList    5.20.1      corelist
+	src_remove_dual      perl-core/Module-CoreList    5.201.502.140 corelist
 	src_remove_dual      perl-core/Pod-Parser         1.620.0      pod2usage podchecker podselect
 	src_remove_dual      perl-core/Pod-Perldoc        3.230.0      perldoc
 	src_remove_dual      perl-core/Test-Harness       3.330.0      prove
@@ -105,8 +105,11 @@ eblit-run() {
 src_prepare()	{ eblit-run src_prepare   v50160001 ; }
 src_configure()	{ eblit-run src_configure v50180002 ; }
 #src_compile()	{ eblit-run src_compile   v50160001 ; }
-src_test()		{ eblit-run src_test      v50160001 ; }
-src_install()	{ eblit-run src_install   v50160001 ; }
+src_test()		{
+	export NO_GENTOO_NETWORK_TESTS=1;
+	eblit-run src_test      v50160001 ;
+}
+src_install()	{ eblit-run src_install   v50200001 ; }
 
 # FILESDIR might not be available during binpkg install
 # FIXME: version passing

@@ -1,15 +1,15 @@
-# Copyright 1999-2014 Gentoo Foundation
+# Copyright 1999-2015 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/dev-lang/perl/perl-5.20.1-r2.ebuild,v 1.2 2014/11/29 20:57:32 dilfridge Exp $
+# $Header: /var/cvsroot/gentoo-x86/dev-lang/perl/perl-5.20.2-r1.ebuild,v 1.1 2015/05/09 21:49:38 dilfridge Exp $
 
 EAPI=5
 
-inherit eutils alternatives flag-o-matic toolchain-funcs multilib multiprocessing
+inherit eutils alternatives flag-o-matic toolchain-funcs multilib multiprocessing prefix
 
-PATCH_VER=1
+PATCH_VER=2
 
-PERL_OLDVERSEN="5.20.0"
-MODULE_AUTHOR=RJBS
+PERL_OLDVERSEN="5.20.0 5.20.1"
+MODULE_AUTHOR=SHAY
 
 SHORT_PV="${PV%.*}"
 MY_P="perl-${PV/_rc/-RC}"
@@ -21,7 +21,7 @@ SRC_URI="
 	mirror://cpan/src/5.0/${MY_P}.tar.bz2
 	mirror://cpan/authors/id/${MODULE_AUTHOR:0:1}/${MODULE_AUTHOR:0:2}/${MODULE_AUTHOR}/${MY_P}.tar.bz2
 	mirror://gentoo/${MY_P}-patches-${PATCH_VER}.tar.xz
-	http://dev.gentoo.org/~civil/distfiles/${CATEGORY}/${PN}/${MY_P}-patches-${PATCH_VER}.tar.xz
+	http://dev.gentoo.org/~dilfridge/distfiles/${MY_P}-patches-${PATCH_VER}.tar.xz
 "
 HOMEPAGE="http://www.perl.org/"
 
@@ -58,7 +58,7 @@ dual_scripts() {
 	src_remove_dual      perl-core/IO-Compress        2.64.0       zipdetails
 	src_remove_dual      perl-core/JSON-PP            2.272.30      json_pp
 	src_remove_dual      perl-core/Module-Build       0.420.500    config_data
-	src_remove_dual      perl-core/Module-CoreList    5.20.1      corelist
+	src_remove_dual      perl-core/Module-CoreList    5.201.502.140 corelist
 	src_remove_dual      perl-core/Pod-Parser         1.620.0      pod2usage podchecker podselect
 	src_remove_dual      perl-core/Pod-Perldoc        3.230.0      perldoc
 	src_remove_dual      perl-core/Test-Harness       3.330.0      prove
@@ -105,8 +105,11 @@ eblit-run() {
 src_prepare()	{ eblit-run src_prepare   v50160001 ; }
 src_configure()	{ eblit-run src_configure v50180002 ; }
 #src_compile()	{ eblit-run src_compile   v50160001 ; }
-src_test()		{ eblit-run src_test      v50160001 ; }
-src_install()	{ eblit-run src_install   v50160001 ; }
+src_test()		{
+	export NO_GENTOO_NETWORK_TESTS=1;
+	eblit-run src_test      v50160001 ;
+}
+src_install()	{ eblit-run src_install   v50200001 ; }
 
 # FILESDIR might not be available during binpkg install
 # FIXME: version passing

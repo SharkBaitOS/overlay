@@ -146,5 +146,8 @@ eblit-perl-src_configure() {
 		-Dinstallusrbinperl='n' \
 		-Ud_csh \
 		-Uusenm \
+		-Dsh="${EPREFIX}"/bin/sh \
+		-Dtargetsh="${EPREFIX}"/bin/sh \
+		-Dsysroot="${EROOT}" \
 		"${myconf[@]}" || die "Unable to configure"
 }
