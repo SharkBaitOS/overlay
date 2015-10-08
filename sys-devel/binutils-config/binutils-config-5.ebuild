@@ -4,6 +4,7 @@
 
 EAPI="4"
 
+inherit prefix
 DESCRIPTION="Utility to change the binutils version being used"
 HOMEPAGE="https://www.gentoo.org/"
 SRC_URI=""
@@ -20,7 +21,9 @@ RDEPEND="sys-apps/gentoo-functions
 S=${WORKDIR}
 
 src_install() {
-	newbin "${FILESDIR}"/${PN}-${PV} ${PN}
+	cp "${FILESDIR}"/${PN}-${PV} "${T}"/ || die "cp failed"
+	eprefixify "${T}"/${PN}-${PV}
+	newbin "${T}"/${PN}-${PV} ${PN}
 	doman "${FILESDIR}"/${PN}.8
 
 	insinto /usr/share/eselect/modules
