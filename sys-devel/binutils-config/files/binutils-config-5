@@ -108,7 +108,16 @@ setup_env() {
 	fi
 }
 
+# Lists of headers that various versions have installed.
+HEADERS=(
+	ansidecl.h bfd.h bfdlink.h demangle.h dis-asm.h dyn-string.h
+	fibheap.h hashtab.h libiberty.h objalloc.h plugin-api.h
+	splay-tree.h symcat.h
+)
+
 switch_profile() {
+	local x
+
 	ebegin "Switching to ${PROFILE}"
 
 	setup_env || return 1
@@ -133,25 +142,28 @@ switch_profile() {
 	else
 		dstlib=${ROOT}/usr/${HOST}/${TARGET}/lib
 	fi
-	# When upgrading, we need to clean up ldscripts and libs
+	# When upgrading, we need to clean up ldscripts and libs.
+	# Don't symlink back in the libs -- the binutils-lib package handles
+	# these now.
+	# TODO: Stop requiring even the ldscripts symlink.
 	mkdir -p "${dstlib}"
 	rm -rf "${ROOT}/${BINPATH_LINKS}"/ldscripts
 	atomic_ln "${LIBPATH}/ldscripts" "${dstlib}" "ldscripts"
-	find -L "${dstlib}" -type l -exec rm -v {} +
-	for x in lib* ; do
-		atomic_ln "${LIBPATH}/${x}" "${dstlib}" "${x}"
-	done
+	find -L "${dstlib}" -xtype l -name 'lib*' -exec rm -f {} +
 
 	#
-	# Generate include symlinks
+	# Clean out old generated include symlinks
 	#
 	INCPATH=${LIBPATH}/include
 	if [[ -d ${ROOT}/${INCPATH} ]] ; then
 		cd "${ROOT}/${INCPATH}" || exit 1
 		if [[ ${HOST} == ${TARGET} ]] ; then
-			mkdir -p "${ROOT}/usr/include"
-			for x in * ; do
-				atomic_ln "${INCPATH}/${x}" "${ROOT}/usr/include" "${x}"
+			# The binutils-lib package handles these files now.
+			for x in libiberty "${HEADERS[@]}" ; do
+				x="${ROOT}/usr/include/${x}"
+				if [[ -L ${x} ]] ; then
+					rm "${x}"
+				fi
 			done
 		else
 			# Clean out old path -- cannot use '-exec {} +' syntax here
@@ -165,22 +177,24 @@ switch_profile() {
 	#
 	# Make sure proper paths get updated
 	#
+	local env_update_flag="--no-ldconfig"
 	if [[ ${TARGET} == ${HOST} ]] ; then
+		# Delete old config now that binutils-libs installs these files.
+		# Note: This skips ldconfig update if env.d had LDPATH, but meh.
+		# Most people have upgraded to ld.so.conf.d, and someone else will
+		# eventually re-run ldconfig for us.
+		x="${ROOT}"/etc/ld.so.conf.d/05binutils.conf
+		if [[ -e ${x} ]]; then
+			rm -f "${x}"
+			env_update_flag=""
+		fi
+
 		DATAPATH=/usr/share/binutils-data/${TARGET}/${VER}
 		local e="${ROOT}"/etc/env.d/05binutils
 		local ee="${e}.tmp"
 		rm -f "${ee}"
 		[[ -d ${ROOT}/${DATAPATH}/man  ]] && echo "MANPATH=${DATAPATH}/man"   >> "${ee}"
 		[[ -d ${ROOT}/${DATAPATH}/info ]] && echo "INFOPATH=${DATAPATH}/info" >> "${ee}"
-		# hmm, `ld` has this in SEARCH_DIR(), but ld.so does not ...
-		if [[ -d ${ROOT}/etc/ld.so.conf.d ]] ; then
-			local l="${ROOT}"/etc/ld.so.conf.d/05binutils.conf
-			local ll="${l}.tmp"
-			echo "/usr/${TARGET}/lib" > "${ll}"
-			mv_if_diff "${ll}" "${l}"
-		else
-			echo "LDPATH=/usr/${TARGET}/lib" >> "${ee}"
-		fi
 		mv_if_diff "${ee}" "${e}"
 	fi
 
@@ -195,7 +209,7 @@ switch_profile() {
 	# Regen env.d if need/can be
 	#
 	if [[ ${ROOT} == "/" ]] && [[ ${TARGET} == ${HOST} ]] ; then
-		env-update
+		env-update ${env_update_flag}
 		echo
 		ewarn "Please remember to run:"
 		echo
@@ -239,7 +253,7 @@ uninstall_target() {
 		)
 		rm -f "${x[@]}"
 	done
-	for x in ansidecl.h bfd.h bfdlink.h dis-asm.h symcat.h ; do
+	for x in "${HEADERS[@]}" ; do
 		rm -f "${ROOT}"/usr/{${HOST}/,}${TARGET}/{usr/,}include/${x}
 	done
 	for x in bfd iberty opcodes ; do

@@ -1,6 +1,57 @@
 # ChangeLog for sys-devel/binutils-config
-# Copyright 1999-2014 Gentoo Foundation; Distributed under the GPL v2
-# $Header: /var/cvsroot/gentoo-x86/sys-devel/binutils-config/ChangeLog,v 1.66 2014/07/29 11:15:38 vapier Exp $
+# Copyright 1999-2015 Gentoo Foundation; Distributed under the GPL v2
+# $Header: /var/cvsroot/gentoo-x86/sys-devel/binutils-config/ChangeLog,v 1.79 2015/05/25 06:07:20 vapier Exp $
+
+*binutils-config-4-r3 (25 May 2015)
+
+  25 May 2015; Mike Frysinger <vapier@gentoo.org> +binutils-config-4-r3.ebuild,
+  files/binutils-config-4:
+  Do not delete native ld.so.conf.d fragment when uninstalling cross binutils
+  #549708 by Alexander Tsoy.
+
+  25 May 2015; Mike Frysinger <vapier@gentoo.org> binutils-config-4-r2.ebuild:
+  Mark arm64/m68k/s390/sh stable.
+
+  26 Apr 2015; Mikle Kolyada <zlogene@gentoo.org> binutils-config-4-r2.ebuild:
+  ia64 stable wrt bug #547330
+
+  26 Apr 2015; Mikle Kolyada <zlogene@gentoo.org> binutils-config-4-r2.ebuild:
+  alpha stable wrt bug #547330
+
+  26 Apr 2015; Pacho Ramos <pacho@gentoo.org> binutils-config-4-r2.ebuild:
+  ppc stable wrt bug #547330
+
+  24 Apr 2015; Mikle Kolyada <zlogene@gentoo.org> binutils-config-4-r2.ebuild:
+  arm stable wrt bug #547330
+
+  23 Apr 2015; Mikle Kolyada <zlogene@gentoo.org> binutils-config-4-r2.ebuild:
+  sparc stable wrt bug #547330
+
+  23 Apr 2015; Mikle Kolyada <zlogene@gentoo.org> binutils-config-4-r2.ebuild:
+  x86 stable wrt bug #547330
+
+  22 Apr 2015; Jeroen Roovers <jer@gentoo.org> binutils-config-4-r2.ebuild:
+  Stable for PPC64 (bug #547330).
+
+  22 Apr 2015; Jeroen Roovers <jer@gentoo.org> binutils-config-4-r2.ebuild:
+  Stable for HPPA (bug #547330).
+
+  22 Apr 2015; Mikle Kolyada <zlogene@gentoo.org> binutils-config-4-r2.ebuild:
+  amd64 stable wrt bug #547330
+
+*binutils-config-4-r2 (09 Feb 2015)
+
+  09 Feb 2015; Mike Frysinger <vapier@gentoo.org> +binutils-config-4-r2.ebuild,
+  files/binutils-config-4:
+  Fix by Ruud Koolen for ROOT handling with man/info paths #532610 by Ruud
+  Koolen.
+
+*binutils-config-4-r1 (30 Dec 2014)
+
+  30 Dec 2014; Anthony G. Basile <blueness@gentoo.org>
+  +binutils-config-4-r1.ebuild, -binutils-config-4.ebuild,
+  files/binutils-config-4:
+  Address bug #504120
 
 *binutils-config-4 (29 Jul 2014)
 
