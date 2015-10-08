@@ -57,8 +57,6 @@ eblit-perl-src_prepare() {
 		EPATCH_SINGLE_MSG="  ${patch} ..."
 		epatch "${WORKDIR}"/patches/${patch}
 	done < "${WORKDIR}"/patches/series
-	epatch "${FILESDIR}"/${PN}-cwd-prefix.patch
-	eprefixify dist/PathTools/Cwd.pm
 
 	src_prepare_update_patchlevel_h
 

@@ -4,7 +4,7 @@
 
 EAPI=5
 
-inherit eutils alternatives flag-o-matic toolchain-funcs multilib multiprocessing
+inherit eutils alternatives flag-o-matic toolchain-funcs multilib multiprocessing prefix
 
 PATCH_VER=1
 
@@ -100,7 +100,11 @@ eblit-run() {
 	eblit-run-maybe eblit-$1-post
 }
 
-src_prepare()	{ eblit-run src_prepare   v50160001 ; }
+src_prepare()	{
+	eblit-run src_prepare   v50160001
+	epatch "${FILESDIR}"/${P}-cwd-prefix.patch
+	eprefixify dist/PathTools/Cwd.pm
+}
 src_configure()	{ eblit-run src_configure v50180002 ; }
 #src_compile()	{ eblit-run src_compile   v50160001 ; }
 src_test()		{

@@ -1,6 +1,6 @@
 # Copyright 1999-2015 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/dev-lang/perl/perl-5.20.2-r1.ebuild,v 1.1 2015/05/09 21:49:38 dilfridge Exp $
+# $Id$
 
 EAPI=5
 
@@ -31,7 +31,7 @@ KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~s390 ~s
 IUSE="berkdb debug doc gdbm ithreads"
 
 RDEPEND="
-	berkdb? ( sys-libs/db )
+	berkdb? ( sys-libs/db:* )
 	gdbm? ( >=sys-libs/gdbm-1.8.3 )
 	app-arch/bzip2
 	sys-libs/zlib
@@ -102,7 +102,11 @@ eblit-run() {
 }
 
 #src_unpack()	{ eblit-run src_unpack    v50160001 ; }
-src_prepare()	{ eblit-run src_prepare   v50160001 ; }
+src_prepare()	{
+	eblit-run src_prepare   v50160001
+	epatch "${FILESDIR}"/${PN}-cwd-prefix.patch
+	eprefixify dist/PathTools/Cwd.pm
+}
 src_configure()	{ eblit-run src_configure v50180002 ; }
 #src_compile()	{ eblit-run src_compile   v50160001 ; }
 src_test()		{
