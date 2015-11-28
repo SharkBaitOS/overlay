@@ -541,9 +541,6 @@ multilib_src_install_all() {
 
 				popd >/dev/null || die
 			fi
-
-			# AddressSanitizer symbolizer (currently separate)
-			python_doscript "${S}"/projects/compiler-rt/lib/asan/scripts/asan_symbolize.py
 		}
 		python_foreach_impl python_inst
 	fi
