@@ -6,8 +6,8 @@ EAPI=5
 
 PYTHON_COMPAT=( python2_7 pypy )
 
-inherit eutils flag-o-matic multibuild multilib \
-	multilib-minimal python-r1 toolchain-funcs pax-utils check-reqs prefix
+inherit eutils flag-o-matic multibuild multilib linux-info \
+	multilib-minimal python-r1 toolchain-funcs pax-utils check-reqs prefix \
 
 DESCRIPTION="Low Level Virtual Machine"
 HOMEPAGE="http://llvm.org/"
@@ -22,7 +22,7 @@ SLOT="0/3.6"
 KEYWORDS="~amd64 ~arm ~arm64 ~ppc ~ppc64 ~sparc ~x86 ~amd64-fbsd ~x86-fbsd ~x64-freebsd ~amd64-linux ~arm-linux ~x86-linux ~ppc-macos ~x64-macos ~x86-macos"
 IUSE="clang debug doc gold libedit +libffi multitarget ncurses ocaml python
 	+static-analyzer test xml video_cards_radeon
-	kernel_Darwin kernel_FreeBSD"
+	kernel_Darwin kernel_FreeBSD rap"
 
 COMMON_DEPEND="
 	sys-libs/zlib:0=
@@ -201,6 +201,13 @@ src_prepare() {
 	# User patches
 	epatch_user
 
+	if kernel_is -lt 2 6 32; then
+		# on RHEL5, linux/perf_event.h (needing kernel >=2.6.32) is not available.
+		# https://llvm.org/bugs/show_bug.cgi?id=17901
+		elog "Removing compiler-rt on RHEL 5..."
+		rm -r projects/compiler-rt || die "Removing compiler-rt failed."
+	fi
+
 	python_setup
 }
 
@@ -235,6 +242,8 @@ multilib_src_configure() {
 		use video_cards_radeon && targets+=',r600'
 	fi
 	conf_flags+=( --enable-targets=${targets} )
+
+	use rap && conf_flags+=( --with-default-sysroot="${EPREFIX}" )
 
 	if multilib_is_native_abi; then
 		use gold && conf_flags+=( --with-binutils-include="${EPREFIX}"/usr/include/ )
