@@ -1,0 +1,48 @@
+commit eec0b18c91b3eb2178c64b7f8423d947b337de40
+Author: Fons Rademakers <Fons.Rademakers@cern.ch>
+Date:   Tue Oct 2 15:12:21 2012 +0000
+
+    Fix compilation problems with latest glibc headers (on Fedora 18). Fixes
+    issue 95267.
+    
+    
+    git-svn-id: http://root.cern.ch/svn/root/trunk@46272 27541ba8-7e3a-0410-8455-c3a389f83636
+
+diff --git a/build/rmkdepend/main.c b/build/rmkdepend/main.c
+index aba5130..f70de5f 100644
+--- a/build/rmkdepend/main.c
++++ b/build/rmkdepend/main.c
+@@ -60,7 +60,7 @@ extern int fchmod(int, int);
+ #  endif
+ # elif defined(__CYGWIN__)
+ extern int fchmod(int, mode_t);
+-#else
++# elif !defined(__GLIBC__) || __GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 16)
+ extern int fchmod(int, int);
+ # endif
+ #endif
+diff --git a/cint/tool/rmkdepend/main.c b/cint/tool/rmkdepend/main.c
+index 9251382..e28f48a 100644
+--- a/cint/tool/rmkdepend/main.c
++++ b/cint/tool/rmkdepend/main.c
+@@ -58,7 +58,7 @@ in this Software without prior written authorization from the X Consortium.
+ #if !defined(MAC_OS_X_VERSION_10_4)
+ extern int fchmod();
+ #endif
+-#else
++#elif !defined(__GLIBC__) || __GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 16)
+ extern int fchmod();
+ #endif
+ #endif
+diff --git a/core/unix/src/TUnixSystem.cxx b/core/unix/src/TUnixSystem.cxx
+index 88ebc93..ac3a19f 100644
+--- a/core/unix/src/TUnixSystem.cxx
++++ b/core/unix/src/TUnixSystem.cxx
+@@ -92,6 +92,7 @@
+ #include <pwd.h>
+ #include <grp.h>
+ #include <errno.h>
++#include <sys/resource.h>
+ #include <sys/wait.h>
+ #include <time.h>
+ #include <sys/time.h>

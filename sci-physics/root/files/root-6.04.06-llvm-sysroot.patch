@@ -1,0 +1,12 @@
+Index: root-6.04.06/interpreter/llvm/Module.mk
+===================================================================
+--- root-6.04.06.orig/interpreter/llvm/Module.mk
++++ root-6.04.06/interpreter/llvm/Module.mk
+@@ -183,6 +183,7 @@ $(LLVMDEPO): $(LLVMDEPS)
+ 		$$LLVM_TARGET \
+ 		$$LLVM_BUILD \
+ 		--prefix=$(ROOT_OBJDIR)/$(LLVMDIRI) \
++		--with-default-sysroot=@GENTOO_PORTAGE_EPREFIX@ \
+ 		--disable-docs --disable-bindings \
+ 		--disable-visibility-inlines-hidden \
+ 		--disable-clang-rewriter --disable-clang-static-analyzer \
