@@ -70,6 +70,10 @@ src_prepare() {
 		Source/WTF/WTF.pro \
 		Source/JavaScriptCore/Target.pri || die
 
+	# fix perl shebang
+	sed -i -r -e "1s,/usr,${EPREFIX}/usr," \
+		Tools/Scripts/build-webkit || die
+
 	# apply patches
 	[[ ${PATCHES[@]} ]] && epatch "${PATCHES[@]}"
 	epatch_user
