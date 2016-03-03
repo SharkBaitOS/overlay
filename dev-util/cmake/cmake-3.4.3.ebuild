@@ -5,7 +5,7 @@
 EAPI=5
 
 CMAKE_REMOVE_MODULES="no"
-inherit bash-completion-r1 elisp-common toolchain-funcs eutils versionator cmake-utils virtualx
+inherit bash-completion-r1 elisp-common toolchain-funcs eutils versionator cmake-utils virtualx prefix
 
 MY_P="${P/_/-}"
 
@@ -120,6 +120,8 @@ cmake_src_test() {
 
 src_prepare() {
 	cmake-utils_src_prepare
+
+	eprefixify Modules/FindQt4.cmake
 
 	# disable running of cmake in boostrap command
 	sed -i \
