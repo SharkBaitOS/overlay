@@ -65,6 +65,7 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-3.1.0-FindPythonInterp.patch
 
 	# upstream fixes (can usually be removed with a version bump)
+	"${FILESDIR}"/${PN}-3.4.3-utimensat-test.patch
 )
 
 cmake_src_bootstrap() {
