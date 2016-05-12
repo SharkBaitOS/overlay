@@ -2,9 +2,9 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 
-EAPI="6"
+EAPI="5"
 
-inherit versionator
+inherit eutils versionator
 
 if [[ ${PV/_beta} == ${PV} ]]; then
 	MY_P=${P}
@@ -36,8 +36,10 @@ DEPEND="${RDEPEND}
 
 S="${WORKDIR}/${MY_P}"
 
-PATCHES=( "${FILESDIR}"/${PN}-1.15-perl-escape-curly-bracket.patch
-	"${FILESDIR}"/${PN}-1.15-mdate-tz.patch ) #520818 #574492
+src_prepare() {
+	epatch "${FILESDIR}"/${PN}-1.15-perl-escape-curly-bracket.patch
+	epatch "${FILESDIR}"/${PN}-1.15-mdate-tz.patch #520818 #574492
+}
 
 src_test() {
 	emake check
