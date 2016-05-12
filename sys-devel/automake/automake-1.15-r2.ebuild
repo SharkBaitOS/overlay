@@ -37,7 +37,7 @@ DEPEND="${RDEPEND}
 S="${WORKDIR}/${MY_P}"
 
 PATCHES=( "${FILESDIR}"/${PN}-1.15-perl-escape-curly-bracket.patch
-		  "${FILESDIR}"/${PN}-1.15-mdate-tz.patch ) #520818 #574492
+	"${FILESDIR}"/${PN}-1.15-mdate-tz.patch ) #520818 #574492
 
 src_test() {
 	emake check
