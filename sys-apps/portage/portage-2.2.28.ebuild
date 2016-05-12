@@ -11,7 +11,7 @@ PYTHON_COMPAT=(
 )
 PYTHON_REQ_USE='bzip2(+)'
 
-inherit distutils-r1 multilib
+inherit eutils distutils-r1 multilib
 
 DESCRIPTION="Portage is the package management and distribution system for Gentoo"
 HOMEPAGE="https://wiki.gentoo.org/wiki/Project:Portage"
@@ -84,6 +84,8 @@ pkg_setup() {
 
 python_prepare_all() {
 	distutils-r1_python_prepare_all
+
+	epatch "${FILESDIR}"/${PN}-2.2.28-distcc-eprefix.patch
 
 	if ! use ipc ; then
 		einfo "Disabling ipc..."
