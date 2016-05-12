@@ -2,9 +2,9 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 
-EAPI="4"
+EAPI="6"
 
-inherit eutils versionator
+inherit versionator
 
 if [[ ${PV/_beta} == ${PV} ]]; then
 	MY_P=${P}
@@ -36,19 +36,8 @@ DEPEND="${RDEPEND}
 
 S="${WORKDIR}/${MY_P}"
 
-src_prepare() {
-	export WANT_AUTOCONF=2.5
-	epatch "${FILESDIR}"/${PN}-1.15-perl-escape-curly-bracket.patch
-	epatch "${FILESDIR}"/${PN}-1.15-mdate-tz.patch #520818 #574492
-}
-
-src_configure() {
-	econf --docdir="${EPREFIX}"/usr/share/doc/${PF} HELP2MAN=true
-}
-
-src_compile() {
-	emake APIVERSION="${SLOT}" pkgvdatadir="${EPREFIX}/usr/share/${PN}-${SLOT}"
-}
+PATCHES=( "${FILESDIR}"/${PN}-1.15-perl-escape-curly-bracket.patch
+		  "${FILESDIR}"/${PN}-1.15-mdate-tz.patch ) #520818 #574492
 
 src_test() {
 	emake check
@@ -84,8 +73,7 @@ slot_info_pages() {
 }
 
 src_install() {
-	emake DESTDIR="${D}" install \
-		APIVERSION="${SLOT}" pkgvdatadir="${EPREFIX}/usr/share/${PN}-${SLOT}"
+	emake DESTDIR="${D}" install
 	slot_info_pages
 	rm "${ED}"/usr/share/aclocal/README || die
 	rmdir "${ED}"/usr/share/aclocal || die
