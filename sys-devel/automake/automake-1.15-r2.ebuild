@@ -41,6 +41,10 @@ src_prepare() {
 	epatch "${FILESDIR}"/${PN}-1.15-mdate-tz.patch #520818 #574492
 }
 
+src_configure() {
+	econf --docdir="\$(datarootdir)/doc/${PF}"
+}
+
 src_test() {
 	emake check
 }
