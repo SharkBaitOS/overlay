@@ -19,15 +19,17 @@ IUSE=""
 RDEPEND=">=sys-apps/gentoo-functions-0.10"
 
 src_prepare() {
-	epatch "${FILESDIR}/${PN}-1.8-dont_source_functions_sh_from_etc_initd.patch" # 504118
+	mv wrapper.c wrapper.c.in || die
+	epatch "${FILESDIR}"/${PN}-prefix-${PV}-r221.patch
 }
 
 src_compile() {
-	emake CC="$(tc-getCC)"
+	emake EPREFIX="${EPREFIX}" CC="$(tc-getCC)"
 }
 
 src_install() {
 	emake \
+		EPREFIX="${EPREFIX}" \
 		DESTDIR="${D}" \
 		PV="${PV}" \
 		SUBLIBDIR="$(get_libdir)" \
@@ -36,14 +38,14 @@ src_install() {
 
 pkg_postinst() {
 	# Scrub eselect-compiler remains
-	rm -f "${ROOT}"/etc/env.d/05compiler &
+	rm -f "${EROOT}"/etc/env.d/05compiler &
 
 	# Make sure old versions dont exist #79062
-	rm -f "${ROOT}"/usr/sbin/gcc-config &
+	rm -f "${EROOT}"/usr/sbin/gcc-config &
 
 	# We not longer use the /usr/include/g++-v3 hacks, as
 	# it is not needed ...
-	rm -f "${ROOT}"/usr/include/g++{,-v3} &
+	rm -f "${EROOT}"/usr/include/g++{,-v3} &
 
 	# Do we have a valid multi ver setup ?
 	local x
