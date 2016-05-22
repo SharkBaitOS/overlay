@@ -139,7 +139,7 @@ IUSE="multislot regression-test vanilla"
 IUSE_DEF=( nls nptl )
 
 if [[ ${PN} != "kgcc64" && ${PN} != gcc-* ]] ; then
-	IUSE+=" altivec rap"
+	IUSE+=" altivec"
 	IUSE_DEF+=( cxx fortran )
 	[[ -n ${PIE_VER} ]] && IUSE+=" nopie"
 	[[ -n ${HTB_VER} ]] && IUSE+=" boundschecking"
@@ -988,15 +988,6 @@ toolchain_src_configure() {
 			confgcc+=( --disable-shared )
 		else
 			confgcc+=( --enable-shared )
-		fi
-
-		if use rap ; then
-			# use sysroot of toolchain to get currect include and library at compile time
-			confgcc+=( --with-sysroot="${EPREFIX}" )
-
-			# when doing cross compiling native for target, the build sysroot
-			# should be pointed to SYSROOT of the cross compiler.
-			tc-is-cross-compiler && confgcc+=( --with-build-sysroot="${ROOT}" )
 		fi
 
 		case ${CHOST} in
@@ -1853,18 +1844,6 @@ fix_libtool_libdir_paths() {
 		./${dir}/*.la
 
 	popd >/dev/null
-}
-
-prefix_gcc_dynamic_loader() {
-	local dlf
-
-	case $(tc-arch) in
-	amd64) dlf=i386/linux64.h ;;
-	arm) dlf=arm/linux-eabi.h ;;
-	x86) dlf=i386/linux.h ;;
-	esac
-
-	eprefixify gcc/config/${dlf}
 }
 
 create_gcc_env_entry() {
