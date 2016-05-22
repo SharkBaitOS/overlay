@@ -1,0 +1,21 @@
+Index: site-packages/portage/util/_dyn_libs/LinkageMapELF.py
+===================================================================
+--- site-packages.orig/portage/util/_dyn_libs/LinkageMapELF.py
++++ site-packages/portage/util/_dyn_libs/LinkageMapELF.py
+@@ -19,6 +19,7 @@ from portage.util import normalize_path
+ from portage.util import varexpand
+ from portage.util import writemsg_level
+ from portage.util._dyn_libs.NeededEntry import NeededEntry
++from portage.const import EPREFIX
+ 
+ # Map ELF e_machine values from NEEDED.ELF.2 to approximate multilib
+ # categories. This approximation will produce incorrect results on x32
+@@ -259,7 +260,7 @@ class LinkageMapELF(object):
+ 					continue
+ 				plibs.update((x, cpv) for x in items)
+ 		if plibs:
+-			args = ["/usr/bin/scanelf", "-qF", "%a;%F;%S;%r;%n"]
++			args = [EPREFIX + "/usr/bin/scanelf", "-qF", "%a;%F;%S;%r;%n"]
+ 			args.extend(os.path.join(root, x.lstrip("." + os.sep)) \
+ 				for x in plibs)
+ 			try:
