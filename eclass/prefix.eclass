@@ -12,6 +12,8 @@
 # located somewhere in the filesystem.  Prefix ebuilds require
 # additional functions and variables which are defined by this eclass.
 
+inherit eutils
+
 # @ECLASS-VARIABLE: EPREFIX
 # @DESCRIPTION:
 # The offset prefix of a Gentoo Prefix installation.  When Gentoo Prefix
@@ -48,5 +50,28 @@ eprefixify() {
 	return 0
 }
 
+# @FUNCTION: eprefixify_patch
+# @USAGE: <list of patch files to be eprefixified>
+# @DESCRIPTION:
+# copies the patch files to ${T} and eprefixify before applying.
+# dies if no arguments are given, a file does not exist, or changing a
+# file failed.
+eprefixity_patch() {
+	[[ $# -lt 1 ]] && die "at least one argument required"
+
+	local x f
+	for x in "$@" ; do
+		if [[ -e ${x} ]] ; then
+			f=${x##*/}
+			cp "${x}" "${T}" || die "failed to copy patch"
+			eprefixify "${T}"/${f}
+			epatch "${T}"/${f}
+		else
+			die "${x} does not exist"
+		fi
+	done
+
+	return 0
+}
 
 # vim: tw=72:
