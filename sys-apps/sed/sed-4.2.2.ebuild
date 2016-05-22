@@ -35,22 +35,16 @@ src_bootstrap_sed() {
 
 src_prepare() {
 	epatch "${FILESDIR}"/${PN}-4.1.5-alloca.patch
-	# don't use sed here if we have to recover a broken host sed
-}
 
-src_configure() {
+	# don't use sed before bootstrap if we have to recover a broken host sed
 	src_bootstrap_sed
 	# this has to be after the bootstrap portion
 	sed -i \
 		-e '/docdir =/s:=.*/doc:= $(datadir)/doc/'${PF}'/html:' \
 		doc/Makefile.in || die "sed html doc"
+}
 
-	local myconf=
-	if use userland_GNU; then
-		myconf="--exec-prefix=${EPREFIX}"
-	else
-		myconf="--program-prefix=g"
-	fi
+src_configure() {
 
 	# Should be able to drop this hack in next release. #333887
 	tc-is-cross-compiler && export gl_cv_func_working_acl_get_file=yes
@@ -60,5 +54,5 @@ src_configure() {
 	econf \
 		$(use_enable acl) \
 		$(use_enable nls) \
-		${myconf}
+		$(usex userland_GNU "--exec-prefix=${EPREFIX}" "--program-prefix=g")
 }
