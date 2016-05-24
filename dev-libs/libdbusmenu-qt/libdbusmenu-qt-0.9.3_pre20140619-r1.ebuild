@@ -73,8 +73,9 @@ multilib_src_configure() {
 	local mycmakeargs=(
 		$(cmake-utils_use_with doc)
 		-DUSE_QT${QT_MULTIBUILD_VARIANT}=ON
-		-DQT_QMAKE_EXECUTABLE="/usr/$(get_libdir)/qt${QT_MULTIBUILD_VARIANT}/bin/qmake"
+		-DQT_QMAKE_EXECUTABLE="${EPREFIX}/usr/bin/qmake"
 	)
+	export QT_SELECT=${QT_MULTIBUILD_VARIANT}
 	cmake-utils_src_configure
 }
 
