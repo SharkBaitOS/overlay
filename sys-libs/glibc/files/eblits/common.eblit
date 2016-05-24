@@ -1,6 +1,5 @@
-# Copyright 1999-2014 Gentoo Foundation
+# Copyright 1999-2015 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/sys-libs/glibc/files/eblits/common.eblit,v 1.45 2014/10/18 23:09:51 vapier Exp $
 
 : ${TPREFIX:=$(is_crosscompile && echo "" || echo ${EPREFIX})}
 
@@ -15,6 +14,8 @@
 # -------------------+-----------------------------+--------------+---------+-----------------------
 #  ebuild helper ED/   /usr/CTARGET/TPREFIX          /usr/CTARGET   NULL      $(alt_prefix)         
 alt_prefix() {
+# $Id$
+
 	if is_crosscompile; then
 		[[ $1 == root ]] && echo -n ${EPREFIX}
 		echo -n /usr/${CTARGET}
@@ -74,6 +75,13 @@ setup_target_flags() {
 	case $(tc-arch) in
 		x86)
 			# -march needed for #185404 #199334
+			# TODO: When creating the first glibc cross-compile, this test will
+			# always fail as it does a full link which in turn requires glibc.
+			# Probably also applies when changing multilib profile settings (e.g.
+			# enabling x86 when the profile was amd64-only previously).
+			# We could change main to _start and pass -nostdlib here so that we
+			# only test the gcc code compilation.  Or we could do a compile and
+			# then look for the symbol via scanelf.
 			if ! glibc_compile_test "" 'void f(int i, void *p) {if (__sync_fetch_and_add(&i, 1)) f(i, p);}\nint main(){return 0;}\n' 2>/dev/null ; then
 				local t=${CTARGET_OPT:-${CTARGET}}
 				t=${t%%-*}
@@ -84,15 +92,25 @@ setup_target_flags() {
 		;;
 		amd64)
 			# -march needed for #185404 #199334
+			# Note: This test only matters when the x86 ABI is enabled, so we could
+			# optimize a bit and elide it.
+			# TODO: See cross-compile issues listed above for x86.
 			if ! glibc_compile_test "${CFLAGS_x86}" 'void f(int i, void *p) {if (__sync_fetch_and_add(&i, 1)) f(i, p);}\nint main(){return 0;}\n' 2>/dev/null ; then
 				local t=${CTARGET_OPT:-${CTARGET}}
 				t=${t%%-*}
+				# Normally the target is x86_64-xxx, so turn that into the -march that
+				# gcc actually accepts. #528708
+				[[ ${t} == "x86_64" ]] && t="x86-64"
 				filter-flags '-march=*'
 				# ugly, ugly, ugly.  ugly.
 				CFLAGS_x86=$(CFLAGS=${CFLAGS_x86} filter-flags '-march=*'; echo "${CFLAGS}")
 				export CFLAGS_x86="${CFLAGS_x86} -march=${t}"
 				einfo "Auto adding -march=${t} to CFLAGS_x86 #185404"
 			fi
+		;;
+		mips)
+			# The mips abi cannot support the GNU style hashes. #233233
+			filter-ldflags -Wl,--hash-style=gnu -Wl,--hash-style=both
 		;;
 		ppc)
 			append-flags "-freorder-blocks"
@@ -101,62 +119,82 @@ setup_target_flags() {
 			# Both sparc and sparc64 can use -fcall-used-g6.  -g7 is bad, though.
 			filter-flags "-fcall-used-g7"
 			append-flags "-fcall-used-g6"
-			filter-flags "-mvis"
 
-			GLIBCMAJOR=$(get_version_component_range 1 ${PV})
-			GLIBCMINOR=$(get_version_component_range 2 ${PV})
+			# If the CHOST is the basic one (e.g. not sparcv9-xxx already),
+			# try to pick a better one so glibc can use cpu-specific .S files.
+			# We key off the CFLAGS to get a good value.  Also need to handle
+			# version skew.
+			# We can't force users to set their CHOST to their exact machine
+			# as many of these are not recognized by config.sub/gcc and such :(.
+			# Note: If the mcpu values don't scale, we might try probing CPP defines.
+			# Note: Should we factor in -Wa,-AvXXX flags too ?  Or -mvis/etc... ?
 
-			# set CTARGET_OPT so glibc can use cpu-specific .S files for better performance
-			# - UltraSPARC T1 (niagara) support requires >= glibc 2.8
-			# - UltraSPARC T2 (niagara2) support requires >= glibc 2.7
-
-			if is_crosscompile || [[ ${PROFILE_ARCH} == "sparc64" ]] || { has_multilib_profile && ! tc-is-cross-compiler; } ; then
-				case ${ABI}:${CTARGET} in
-					sparc64:*|\
-					default:sparc64*)
-						filter-flags -Wa,-xarch -Wa,-A
-
-						if is-flagq "-mcpu=niagara2" && [[ ${GLIBCMAJOR}.${GLIBCMINOR} > 2.7 ]] ; then
-							CTARGET_OPT="sparc64v2-unknown-linux-gnu"
-							append-flags "-Wa,-xarch=v9b"
-							export ASFLAGS="${ASFLAGS} -Wa,-xarch=v9b"
-						elif { is-flagq "-mcpu=niagara" || is-flagq "-mcpu=niagara2" ; } && [[ ${GLIBCMAJOR}.${GLIBCMINOR} > 2.6 ]] ; then
-							CTARGET_OPT="sparc64v-unknown-linux-gnu"
-							append-flags "-Wa,-xarch=v9b"
-							export ASFLAGS="${ASFLAGS} -Wa,-xarch=v9b"
-						elif is-flagq "-mcpu=ultrasparc3" || is-flagq "-mcpu=niagara" || is-flagq "-mcpu=niagara2"; then
-							CTARGET_OPT="sparc64b-unknown-linux-gnu"
-							append-flags "-Wa,-xarch=v9b"
-							export ASFLAGS="${ASFLAGS} -Wa,-xarch=v9b"
-						else
-							CTARGET_OPT="sparc64-unknown-linux-gnu"
-							append-flags "-Wa,-xarch=v9a"
-							export ASFLAGS="${ASFLAGS} -Wa,-xarch=v9a"
-						fi
+			local cpu
+			case ${CTARGET} in
+			sparc64-*)
+				case $(get-flag mcpu) in
+				niagara[234])
+					if version_is_at_least 2.8 ; then
+						cpu="sparc64v2"
+					elif version_is_at_least 2.4 ; then
+						cpu="sparc64v"
+					elif version_is_at_least 2.2.3 ; then
+						cpu="sparc64b"
+					fi
 					;;
-					*)
-						if is-flagq "-mcpu=niagara2" && [[ ${GLIBCMAJOR}.${GLIBCMINOR} > 2.7 ]] ; then
-							CTARGET_OPT="sparcv9v2-unknown-linux-gnu"
-						elif { is-flagq "-mcpu=niagara" || is-flagq "-mcpu=niagara2" ; } && [[ ${GLIBCMAJOR}.${GLIBCMINOR} > 2.6 ]] ; then
-							CTARGET_OPT="sparcv9v-unknown-linux-gnu"
-						elif is-flagq "-mcpu=ultrasparc3" || is-flagq "-mcpu=niagara" || is-flagq "-mcpu=niagara2"; then
-							CTARGET_OPT="sparcv9b-unknown-linux-gnu"
-						else
-							CTARGET_OPT="sparcv9-unknown-linux-gnu"
-						fi
+				niagara)
+					if version_is_at_least 2.4 ; then
+						cpu="sparc64v"
+					elif version_is_at_least 2.2.3 ; then
+						cpu="sparc64b"
+					fi
+					;;
+				ultrasparc3)
+					cpu="sparc64b"
+					;;
+				*)
+					# We need to force at least v9a because the base build doesn't
+					# work with just v9.
+					# https://sourceware.org/bugzilla/show_bug.cgi?id=19477
+					[[ -z ${cpu} ]] && append-flags "-Wa,-xarch=v9a"
 					;;
 				esac
-			else
-				if is-flagq "-mcpu=niagara2" && [[ ${GLIBCMAJOR}.${GLIBCMINOR} > 2.7 ]] ; then
-					CTARGET_OPT="sparcv9v2-unknown-linux-gnu"
-				elif { is-flagq "-mcpu=niagara" || is-flagq "-mcpu=niagara2" ; } && [[ ${GLIBCMAJOR}.${GLIBCMINOR} > 2.6 ]] ; then
-					CTARGET_OPT="sparcv9v-unknown-linux-gnu"
-				elif is-flagq "-mcpu=ultrasparc3" || is-flagq "-mcpu=niagara" || is-flagq "-mcpu=niagara2"; then
-					CTARGET_OPT="sparcv9b-unknown-linux-gnu"
-				elif { is_crosscompile && want_nptl; } || is-flagq "-mcpu=ultrasparc2" || is-flagq "-mcpu=ultrasparc"; then
-					CTARGET_OPT="sparcv9-unknown-linux-gnu"
-				fi
-			fi
+				;;
+			sparc-*)
+				case $(get-flag mcpu) in
+				niagara[234])
+					if version_is_at_least 2.8 ; then
+						cpu="sparcv9v2"
+					elif version_is_at_least 2.4 ; then
+						cpu="sparcv9v"
+					elif version_is_at_least 2.2.3 ; then
+						cpu="sparcv9b"
+					else
+						cpu="sparcv9"
+					fi
+					;;
+				niagara)
+					if version_is_at_least 2.4 ; then
+						cpu="sparcv9v"
+					elif version_is_at_least 2.2.3 ; then
+						cpu="sparcv9b"
+					else
+						cpu="sparcv9"
+					fi
+					;;
+				ultrasparc3)
+					cpu="sparcv9b"
+					;;
+				v9|ultrasparc)
+					cpu="sparcv9"
+					;;
+				v8|supersparc|hypersparc|leon|leon3)
+					cpu="sparcv8"
+					;;
+				esac
+			;;
+			esac
+			[[ -n ${cpu} ]] && CTARGET_OPT="${cpu}-${CTARGET#*-}"
 		;;
 	esac
 }
