@@ -9,7 +9,7 @@ CPPUNIT_REQUIRED="optional"
 DECLARATIVE_REQUIRED="always"
 OPENGL_REQUIRED="optional"
 KDE_HANDBOOK="optional"
-inherit kde4-base fdo-mime multilib toolchain-funcs flag-o-matic
+inherit kde4-base fdo-mime multilib toolchain-funcs flag-o-matic prefix
 
 EGIT_BRANCH="KDE/4.14"
 
@@ -150,6 +150,8 @@ pkg_pretend() {
 src_prepare() {
 	kde4-base_src_prepare
 
+	eprefixify cmake/modules/FindQt4.cmake
+
 	# Rename applications.menu (needs 01_gentoo_set_xdg_menu_prefix-1.patch to work)
 	sed -e 's|FILES[[:space:]]applications.menu|FILES applications.menu RENAME kde-4-applications.menu|g' \
 		-i kded/CMakeLists.txt || die "Sed on CMakeLists.txt for applications.menu failed."
@@ -218,6 +220,8 @@ src_configure() {
 		$(cmake-utils_use_with udev UDev)
 		$(cmake-utils_use_with udisks SOLID_UDISKS2)
 		$(cmake-utils_use_with zeroconf Avahi)
+		-Wno-dev
+		--debug-trycompile
 	)
 	kde4-base_src_configure
 }
