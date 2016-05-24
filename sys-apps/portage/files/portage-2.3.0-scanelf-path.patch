@@ -1,7 +1,5 @@
-Index: site-packages/portage/util/_dyn_libs/LinkageMapELF.py
-===================================================================
---- site-packages.orig/portage/util/_dyn_libs/LinkageMapELF.py
-+++ site-packages/portage/util/_dyn_libs/LinkageMapELF.py
+--- pym/portage/util/_dyn_libs/LinkageMapELF.py
++++ pym/portage/util/_dyn_libs/LinkageMapELF.py
 @@ -19,6 +19,7 @@ from portage.util import normalize_path
  from portage.util import varexpand
  from portage.util import writemsg_level
