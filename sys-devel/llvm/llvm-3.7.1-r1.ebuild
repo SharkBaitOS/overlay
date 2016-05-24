@@ -7,7 +7,7 @@ EAPI=6
 : ${CMAKE_MAKEFILE_GENERATOR:=ninja}
 PYTHON_COMPAT=( python2_7 )
 
-inherit check-reqs cmake-utils eutils flag-o-matic multilib \
+inherit check-reqs cmake-utils eutils flag-o-matic multilib linux-info \
 	multilib-minimal python-single-r1 toolchain-funcs pax-utils prefix
 
 DESCRIPTION="Low Level Virtual Machine"
@@ -24,7 +24,7 @@ SLOT="0/${PV}"
 KEYWORDS="~amd64 ~arm ~arm64 ~ppc ~ppc64 ~sparc ~x86 ~amd64-fbsd ~x86-fbsd ~x64-freebsd ~amd64-linux ~arm-linux ~x86-linux ~ppc-macos ~x64-macos ~x86-macos"
 IUSE="clang debug doc gold libedit +libffi lldb multitarget ncurses ocaml
 	python +static-analyzer test xml video_cards_radeon
-	kernel_Darwin kernel_FreeBSD"
+	kernel_Darwin kernel_FreeBSD rap"
 
 COMMON_DEPEND="
 	sys-libs/zlib:0=
@@ -232,6 +232,13 @@ src_prepare() {
 	# User patches
 	eapply_user
 
+	if kernel_is -lt 2 6 32; then
+		# on RHEL5, linux/perf_event.h (needing kernel >=2.6.32) is not available.
+		# https://llvm.org/bugs/show_bug.cgi?id=17901
+		elog "Removing compiler-rt on <linux-2.6.32..."
+		rm -r projects/compiler-rt || die "Removing compiler-rt failed."
+	fi
+
 	python_setup
 
 	# Native libdir is used to hold LLVMgold.so
@@ -277,6 +284,8 @@ multilib_src_configure() {
 
 		-DHAVE_HISTEDIT_H=$(usex libedit)
 	)
+
+	use rap && mycmakeargs+=( -DDEFAULT_SYSROOT="${EPREFIX}" )
 
 	if use clang; then
 		mycmakeargs+=(
@@ -527,9 +536,6 @@ multilib_src_install_all() {
 
 			popd >/dev/null || die
 		fi
-
-		# AddressSanitizer symbolizer (currently separate)
-		dobin "${S}"/projects/compiler-rt/lib/asan/scripts/asan_symbolize.py
 
 		popd >/dev/null || die
 
