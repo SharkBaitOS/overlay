@@ -6,7 +6,7 @@ toolchain-glibc_src_install() {
 	local builddir=$(builddir $(want_linuxthreads && echo linuxthreads || echo nptl))
 	cd "${builddir}"
 
-	emake install_root="${D}$(alt_prefix root)" install || die
+	emake install_root="${D}$(alt_prefix)" install || die
 
 	if want_linuxthreads && want_nptl ; then
 		einfo "Installing NPTL to $(alt_libdir)/tls/..."
@@ -202,7 +202,7 @@ toolchain-glibc_src_install() {
 toolchain-glibc_headers_install() {
 	local builddir=$(builddir "headers")
 	cd "${builddir}"
-	emake install_root="${D}$(alt_prefix root)" install-headers || die
+	emake install_root="${D}$(alt_prefix)" install-headers || die
 	if ! version_is_at_least 2.16 ; then
 		insinto $(alt_headers)/bits
 		doins bits/stdio_lim.h || die
