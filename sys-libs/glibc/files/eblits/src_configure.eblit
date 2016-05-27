@@ -104,14 +104,8 @@ glibc_do_configure() {
 		--host=${CTARGET_OPT:-${CTARGET}}
 		$(use_enable profile)
 		$(use_with gd)
-		--with-headers="$(alt_build_headers)"
-		--prefix="${TPREFIX}"/usr
-		--sysconfdir="${TPREFIX}"/etc
-		--localstatedir="${TPREFIX}"/var
-		--libdir="${TPREFIX}"/usr/$(get_libdir)
-		--mandir="${TPREFIX}"/usr/share/man
-		--infodir="${TPREFIX}"/usr/share/info
-		--libexecdir="${TPREFIX}"/usr/$(get_libdir)/misc/glibc
+		--with-headers=$(alt_build_headers)
+		--libexecdir="${EPREFIX}/usr/$(get_libdir)/misc/glibc"
 		--with-bugurl=http://bugs.gentoo.org/
 		--with-pkgversion="$(glibc_banner)"
 		$(use_multiarch || echo --disable-multi-arch)
@@ -132,8 +126,7 @@ glibc_do_configure() {
 
 	# There is no configure option for this and we need to export it
 	# since the glibc build will re-run configure on itself
-	export libc_cv_slibdir=${TPREFIX}/$(get_libdir)
-	export libc_cv_rootsbindir=${TPREFIX}/sbin
+	export libc_cv_slibdir="${EPREFIX}/$(get_libdir)"
 
 	# We take care of patching our binutils to use both hash styles,
 	# and many people like to force gnu hash style only, so disable
@@ -150,9 +143,7 @@ glibc_do_configure() {
 	local builddir=$(builddir "$1")
 	mkdir -p "${builddir}"
 	cd "${builddir}"
-	set -- "${S}"/configure "${myconf[@]}"
-	echo "$@"
-	"$@" || die "failed to configure glibc"
+	ECONF_SOURCE="${S}" econf "${myconf[@]}"
 
 	# ia64 static cross-compilers are a pita in so much that they
 	# can't produce static ELFs (as the libgcc.a is broken).  so
@@ -238,8 +229,7 @@ toolchain-glibc_headers_configure() {
 		--enable-bind-now
 		--build=${CBUILD_OPT:-${CBUILD}}
 		--host=${CTARGET_OPT:-${CTARGET}}
-		--with-headers="$(alt_build_headers)"
-		--prefix="${TPREFIX}"/usr
+		--with-headers=$(alt_build_headers)
 		${EXTRA_ECONF}
 	)
 
@@ -251,13 +241,11 @@ toolchain-glibc_headers_configure() {
 
 	# Nothing is compiled here which would affect the headers for the target.
 	# So forcing CC/CFLAGS is sane.
-	set -- "${S}"/configure "${myconf[@]}"
-	echo "$@"
 	CC="$(tc-getBUILD_CC)" \
 	CFLAGS="-O1 -pipe" \
 	CPPFLAGS="-U_FORTIFY_SOURCE" \
 	LDFLAGS="" \
-	"$@" || die "failed to configure glibc"
+	ECONF_SOURCE="${S}" econf "${myconf[@]}"
 }
 
 toolchain-glibc_src_configure() {

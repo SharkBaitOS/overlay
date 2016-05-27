@@ -1,26 +1,9 @@
 # Copyright 1999-2015 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-
-: ${TPREFIX:=$(is_crosscompile && echo "" || echo ${EPREFIX})}
-
-# ROOT variable is not used in src_*; emulate that with $(alt_prefix root).
-# P:=Prefix X:=Cross-Triplet PX: Cross-Triplet-Prefix
-#  phase               PX                            X              P         solution              
-# -------------------+-----------------------------+--------------+---------+-----------------------
-#  configure_headers   EPREFIX/usr/CTARGET/TPREFIX   /usr/CTARGET   EPREFIX   $EPREFIX$(alt_prefix) 
-#  configure_target    TPREFIX                       NULL           TPREFIX   $TPREFIX              
-# -------------------+-----------------------------+--------------+---------+-----------------------
-#  install_root D/     EPREFIX/usr/CTARGET           /usr/CTARGET   NULL      $(alt_prefix root)    
-# -------------------+-----------------------------+--------------+---------+-----------------------
-#  ebuild helper ED/   /usr/CTARGET/TPREFIX          /usr/CTARGET   NULL      $(alt_prefix)         
-alt_prefix() {
 # $Id$
 
-	if is_crosscompile; then
-		[[ $1 == root ]] && echo -n ${EPREFIX}
-		echo -n /usr/${CTARGET}
-		[[ $1 == root ]] || echo ${TPREFIX}
-	fi
+alt_prefix() {
+	is_crosscompile && echo /usr/${CTARGET}
 }
 
 if [[ ${EAPI:-0} == [012] ]] ; then
@@ -44,9 +27,9 @@ alt_headers() {
 }
 alt_build_headers() {
 	if [[ -z ${ALT_BUILD_HEADERS} ]] ; then
-		ALT_BUILD_HEADERS="${EPREFIX}"$(alt_headers)
+		ALT_BUILD_HEADERS="${EPREFIX}$(alt_headers)"
 		if tc-is-cross-compiler ; then
-			ALT_BUILD_HEADERS=${SYSROOT}"${EPREFIX}"$(alt_headers)
+			ALT_BUILD_HEADERS="${SYSROOT}${EPREFIX}$(alt_headers)"
 			if [[ ! -e ${ALT_BUILD_HEADERS}/linux/version.h ]] ; then
 				local header_path=$(echo '#include <linux/version.h>' | $(tc-getCPP ${CTARGET}) ${CFLAGS} 2>&1 | grep -o '[^"]*linux/version.h')
 				ALT_BUILD_HEADERS=${header_path%/linux/version.h}
@@ -335,8 +318,8 @@ setup_env() {
 	unset LD_RUN_PATH
 	unset LD_ASSUME_KERNEL
 
+	multilib_env ${CTARGET_OPT:-${CTARGET}}
 	if is_crosscompile || tc-is-cross-compiler ; then
-		multilib_env ${CTARGET_OPT:-${CTARGET}}
 		if ! use multilib ; then
 			MULTILIB_ABIS=${DEFAULT_ABI}
 		else
