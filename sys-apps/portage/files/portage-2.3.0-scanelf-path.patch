@@ -13,7 +13,7 @@
  				plibs.update((x, cpv) for x in items)
  		if plibs:
 -			args = ["/usr/bin/scanelf", "-qF", "%a;%F;%S;%r;%n"]
-+			args = [EPREFIX + "/usr/bin/scanelf", "-qF", "%a;%F;%S;%r;%n"]
++			args = [os.path.join(EPREFIX, "/usr/bin/scanelf"), "-qF", "%a;%F;%S;%r;%n"]
  			args.extend(os.path.join(root, x.lstrip("." + os.sep)) \
  				for x in plibs)
  			try:
