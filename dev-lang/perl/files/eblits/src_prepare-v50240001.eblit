@@ -66,5 +66,7 @@ eblit-perl-src_prepare() {
 		ln -s ${LIBPERL} libperl$(get_libname ${SHORT_PV}) || die
 		ln -s ${LIBPERL} libperl$(get_libname ) || die
 	fi
+
+	default
 }
 
