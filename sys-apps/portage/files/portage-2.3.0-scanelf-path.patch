@@ -1,4 +1,6 @@
---- pym/portage/util/_dyn_libs/LinkageMapELF.py
+Index: pym/portage/util/_dyn_libs/LinkageMapELF.py
+===================================================================
+--- pym/portage/util/_dyn_libs/LinkageMapELF.py.orig
 +++ pym/portage/util/_dyn_libs/LinkageMapELF.py
 @@ -19,6 +19,7 @@ from portage.util import normalize_path
  from portage.util import varexpand
@@ -13,7 +15,7 @@
  				plibs.update((x, cpv) for x in items)
  		if plibs:
 -			args = ["/usr/bin/scanelf", "-qF", "%a;%F;%S;%r;%n"]
-+			args = [os.path.join(EPREFIX, "/usr/bin/scanelf"), "-qF", "%a;%F;%S;%r;%n"]
++			args = [os.path.join(EPREFIX or "/", "usr/bin/scanelf"), "-qF", "%a;%F;%S;%r;%n"]
  			args.extend(os.path.join(root, x.lstrip("." + os.sep)) \
  				for x in plibs)
  			try:
