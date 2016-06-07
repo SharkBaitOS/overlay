@@ -8,8 +8,8 @@ inherit eutils unpacker toolchain-funcs multilib
 
 DESCRIPTION="utility to manage compilers"
 HOMEPAGE="https://gitweb.gentoo.org/proj/gcc-config.git/"
-SRC_URI="mirror://gentoo/${P}.tar.xz
-	https://dev.gentoo.org/~vapier/dist/${P}.tar.xz"
+SRC_URI="mirror://gentoo/${P}.tar.bz2
+	https://dev.gentoo.org/~heroxbd/${P}.tar.bz2"
 
 LICENSE="GPL-2"
 SLOT="0"
@@ -17,11 +17,7 @@ KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~s390 ~s
 IUSE=""
 
 RDEPEND=">=sys-apps/gentoo-functions-0.10"
-
-src_prepare() {
-	mv wrapper.c wrapper.c.in || die
-	epatch "${FILESDIR}"/${PN}-prefix-${PV}-r221.patch
-}
+S="${WORKDIR}/gcc-config-master"
 
 src_compile() {
 	emake EPREFIX="${EPREFIX}" CC="$(tc-getCC)"
