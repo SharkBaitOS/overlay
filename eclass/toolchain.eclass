@@ -50,8 +50,8 @@ is_crosscompile() {
 }
 
 if [[ ${EAPI:-0} == [012] ]] ; then
-        : ${ED:=${D}}
-        : ${EROOT:=${ROOT}}
+		: ${ED:=${D}}
+		: ${EROOT:=${ROOT}}
 fi
 
 # General purpose version check.  Without a second arg matches up to minor version (x.x.x)
@@ -1719,13 +1719,13 @@ toolchain_src_install() {
 	# Rather install the script, else portage with changing $FILESDIR
 	# between binary and source package borks things ....
 	if ! is_crosscompile ; then
-                cp "${GCC_FILESDIR}"/fix_libtool_files.sh "${T}"
-                cp "${GCC_FILESDIR}"/awk/fixlafiles.awk-no_gcc_la "${T}"
-                cp "${GCC_FILESDIR}"/awk/fixlafiles.awk "${T}"
+				cp "${GCC_FILESDIR}"/fix_libtool_files.sh "${T}"
+				cp "${GCC_FILESDIR}"/awk/fixlafiles.awk-no_gcc_la "${T}"
+				cp "${GCC_FILESDIR}"/awk/fixlafiles.awk "${T}"
 		eprefixify \
-                        "${T}"/fix_libtool_files.sh \
-                        "${T}"/fixlafiles.awk-no_gcc_la \
-                        "${T}"/fixlafiles.awk
+						"${T}"/fix_libtool_files.sh \
+						"${T}"/fixlafiles.awk-no_gcc_la \
+						"${T}"/fixlafiles.awk
 
 		insinto "${DATAPATH#${EPREFIX}}"
 		if tc_version_is_at_least 4.0 ; then
@@ -2031,13 +2031,13 @@ toolchain_pkg_postrm() {
 
 do_gcc_config() {
 	if ! should_we_gcc_config ; then
-		env -i ROOT="${ROOT}" gcc-config --use-old --force
+		env -i PATH="${PATH}" ROOT="${ROOT}" gcc-config --use-old --force
 		return 0
 	fi
 
 	local current_gcc_config="" current_specs="" use_specs=""
 
-	current_gcc_config=$(env -i ROOT="${ROOT}" gcc-config -c ${CTARGET} 2>/dev/null)
+	current_gcc_config=$(env -i PATH="${PATH}" ROOT="${ROOT}" gcc-config -c ${CTARGET} 2>/dev/null)
 	if [[ -n ${current_gcc_config} ]] ; then
 		# figure out which specs-specific config is active
 		current_specs=$(gcc-config -S ${current_gcc_config} | awk '{print $3}')
@@ -2061,12 +2061,12 @@ should_we_gcc_config() {
 	# if the current config is invalid, we definitely want a new one
 	# Note: due to bash quirkiness, the following must not be 1 line
 	local curr_config
-	curr_config=$(env -i ROOT="${ROOT}" gcc-config -c ${CTARGET} 2>&1) || return 0
+	curr_config=$(env -i PATH="${PATH}" ROOT="${ROOT}" gcc-config -c ${CTARGET} 2>&1) || return 0
 
 	# if the previously selected config has the same major.minor (branch) as
 	# the version we are installing, then it will probably be uninstalled
 	# for being in the same SLOT, make sure we run gcc-config.
-	local curr_config_ver=$(env -i ROOT="${ROOT}" gcc-config -S ${curr_config} | awk '{print $2}')
+	local curr_config_ver=$(env -i PATH="${PATH}" ROOT="${ROOT}" gcc-config -S ${curr_config} | awk '{print $2}')
 
 	local curr_branch_ver=$(get_version_component_range 1-2 ${curr_config_ver})
 
