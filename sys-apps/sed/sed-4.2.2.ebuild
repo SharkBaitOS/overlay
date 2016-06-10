@@ -45,6 +45,12 @@ src_prepare() {
 }
 
 src_configure() {
+	local myconf=()
+	if use userland_GNU; then
+		myconf+=( --exec-prefix="${EPREFIX}" )
+	else
+		myconf+=( --program-prefix=g )
+	fi
 
 	# Should be able to drop this hack in next release. #333887
 	tc-is-cross-compiler && export gl_cv_func_working_acl_get_file=yes
@@ -54,5 +60,5 @@ src_configure() {
 	econf \
 		$(use_enable acl) \
 		$(use_enable nls) \
-		$(usex userland_GNU "--exec-prefix=${EPREFIX}" "--program-prefix=g")
+		"${myconf[@]}"
 }
