@@ -207,11 +207,6 @@ eblit-src_unpack-post() {
 				epatch "${FILESDIR}"/${PV}/${P}-vdso-disable.patch
 			fi
 		fi
-
-		epatch "${FILESDIR}"/2.17/${PN}-2.17-runtime-prefix.patch
-			eprefixify sysdeps/{{generic,unix/sysv/linux}/paths.h,posix/system.c} \
-			libio/iopopen.c
-		epatch "${FILESDIR}"/${PV}/${P}-configurable-paths.patch
 	fi
 }
 
