@@ -192,6 +192,15 @@ tc-binutils_apply_patches() {
 		-e '/^gnulocaledir = /s:$(prefix)/share:$(datadir):' \
 		*/po/Make-in || die "sed po's failed"
 
+	if use prefix && ! use prefix-guest; then
+		ebegin "Prefixifying native library path"
+		sed -i -r "/NATIVE_LIB_DIRS/s@((/usr(/local|)|)/lib)@${TPREFIX}\1@g" ld/configure.tgt
+		eend $?
+		ebegin "Prefixifying path to /etc/ld.so.conf"
+		sed -i -r "s@\"/etc@\"${TPREFIX}/etc@" ld/emultempl/elf32.em
+		eend $?
+	fi
+
 	# Run misc portage update scripts
 	gnuconfig_update
 	elibtoolize --portage --no-uclibc
@@ -209,7 +218,8 @@ toolchain-binutils_src_prepare() {
 }
 
 _eprefix_init() {
-	has "${EAPI:-0}" 0 1 2 && ED=${D} EPREFIX= EROOT=${ROOT}
+	# The target prefix defaults to the host prefix, except for cross compilers, which targets the empty prefix by default.
+	has "${EAPI:-0}" 0 1 2 && ED=${D} EPREFIX= EROOT=${ROOT} : ${TPREFIX:=$(is_cross || echo "${EPREFIX}")}
 }
 
 # Intended for ebuilds to override to set their own versioning information.
@@ -472,6 +482,7 @@ toolchain-binutils_src_install() {
 
 toolchain-binutils_pkg_postinst() {
 	_eprefix_init
+	export EPREFIX # for binutils-config
 	# Make sure this ${CTARGET} has a binutils version selected
 	[[ -e ${EROOT}/etc/env.d/binutils/config-${CTARGET} ]] && return 0
 	binutils-config ${CTARGET}-${BVER}
@@ -479,6 +490,7 @@ toolchain-binutils_pkg_postinst() {
 
 toolchain-binutils_pkg_postrm() {
 	_eprefix_init
+	export EPREFIX # for binutils-config
 	local current_profile=$(binutils-config -c ${CTARGET})
 
 	# If no other versions exist, then uninstall for this
