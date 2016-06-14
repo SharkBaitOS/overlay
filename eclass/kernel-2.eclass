@@ -518,12 +518,15 @@ else
 	die "Unknown ETYPE=\"${ETYPE}\", must be \"sources\" or \"headers\""
 fi
 
+# The target prefix defaults to the host prefix, except for cross compilers, which targets the empty prefix by default.
+: ${TPREFIX:=$([[ ${CTARGET} == ${CHOST} ]] && echo "${EPREFIX}")}
+
 # Cross-compile support functions
 #==============================================================
 kernel_header_destdir() {
 	[[ ${CTARGET} == ${CHOST} ]] \
 		&& echo "${EPREFIX}"/usr/include \
-		|| echo "${EPREFIX}"/usr/${CTARGET}/usr/include
+		|| echo "${EPREFIX}"/usr/${CTARGET}"${TPREFIX}"/usr/include
 }
 
 cross_pre_c_headers() {
