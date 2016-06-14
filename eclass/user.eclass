@@ -107,6 +107,10 @@ egetent() {
 # Default uid is (pass -1 for this) next available, default shell is
 # /bin/false, default homedir is /dev/null, and there are no default groups.
 enewuser() {
+	if [[ ${EUID} != 0 ]] ; then
+		einfo "Donot have enough privilege to execute ${FUNCNAME[0]}"
+		return 0
+	fi
 	_assert_pkg_ebuild_phase ${FUNCNAME}
 
 	# get the username
@@ -247,7 +251,7 @@ enewuser() {
 		;;
 
 	*)
-		useradd -r "${opts[@]}" "${euser}" || use prefix || die
+		useradd -r "${opts[@]}" "${euser}" || die
 		;;
 	esac
 
@@ -267,6 +271,10 @@ enewuser() {
 # do the rest.  You may specify the gid for the group or allow the group to
 # allocate the next available one.
 enewgroup() {
+	if [[ ${EUID} != 0 ]] ; then
+		einfo "Donot have enough privilege to execute ${FUNCNAME[0]}"
+		return 0
+	fi
 	_assert_pkg_ebuild_phase ${FUNCNAME}
 
 	# get the group
@@ -340,7 +348,7 @@ enewgroup() {
 			opts="-g ${egid}"
 		fi
 		# We specify -r so that we get a GID in the system range from login.defs
-		groupadd -r ${opts} "${egroup}" || use prefix || die
+		groupadd -r ${opts} "${egroup}" || die
 		;;
 	esac
 }
