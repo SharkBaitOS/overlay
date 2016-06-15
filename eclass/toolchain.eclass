@@ -54,6 +54,9 @@ if [[ ${EAPI:-0} == [012] ]] ; then
 		: ${EROOT:=${ROOT}}
 fi
 
+# The target prefix defaults to the host prefix, except for cross compilers, which targets the empty prefix by default.
+: ${TPREFIX:=$(is_crosscompile || echo "${EPREFIX}")}
+
 # General purpose version check.  Without a second arg matches up to minor version (x.x.x)
 tc_version_is_at_least() {
 	version_is_at_least "$1" "${2:-${GCC_RELEASE_VER}}"
@@ -574,6 +577,25 @@ toolchain_src_prepare() {
 		sed -i -e 's/\(install-data-am:\).*/\1/' "${S}"/libffi/include/Makefile.in || die
 	fi
 
+	if use prefix && use !prefix-guest ; then
+		# Prefixify the dynamic linker location...
+		sed -i "s@-dynamic-linker @-dynamic-linker ${TPREFIX}@g" $(find gcc/config -name '*.h')
+		# ... and the startfile locations.
+		echo "
+#undef MD_EXEC_PREFIX
+#undef MD_STARTFILE_PREFIX
+#undef MD_STARTFILE_PREFIX_1
+#undef STANDARD_STARTFILE_PREFIX_1
+#undef STANDARD_STARTFILE_PREFIX_2
+#define MD_EXEC_PREFIX \"\"
+#define MD_STARTFILE_PREFIX \"\"
+#define MD_STARTFILE_PREFIX_1 \"\"
+#define STANDARD_STARTFILE_PREFIX_1 \"${TPREFIX}/lib/\"
+#define STANDARD_STARTFILE_PREFIX_2 \"${TPREFIX}/usr/lib/\"
+
+" >> gcc/gcc.h
+	fi
+
 	# Fixup libtool to correctly generate .la files with portage
 	elibtoolize --portage --shallow --no-uclibc
 
@@ -1027,6 +1049,13 @@ toolchain_src_configure() {
 		confgcc+=( --enable-__cxa_atexit )
 		;;
 	esac
+
+	# In prefix-libc, prefixify the system include directories
+	if use prefix && ! use prefix-guest; then
+		# TODO: This is >=4.7 only. Add support for <4.7 at some point.
+		confgcc+=( --with-native-system-header-dir="${TPREFIX}"/usr/include )
+		confgcc+=( --with-local-prefix="${TPREFIX}"/usr/local )
+	fi
 
 	### arch options
 
@@ -2030,6 +2059,8 @@ toolchain_pkg_postrm() {
 }
 
 do_gcc_config() {
+	export EPREFIX
+
 	if ! should_we_gcc_config ; then
 		env -i PATH="${PATH}" ROOT="${ROOT}" gcc-config --use-old --force
 		return 0
@@ -2058,6 +2089,8 @@ do_gcc_config() {
 }
 
 should_we_gcc_config() {
+	export EPREFIX
+
 	# if the current config is invalid, we definitely want a new one
 	# Note: due to bash quirkiness, the following must not be 1 line
 	local curr_config
