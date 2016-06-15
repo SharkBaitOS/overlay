@@ -88,11 +88,7 @@ src_prepare() {
 	epatch "${FILESDIR}"/${PN}-4.3-mapfile-improper-array-name-validation.patch
 	epatch "${FILESDIR}"/${PN}-4.3-arrayfunc.patch
 
-	epatch "${FILESDIR}"/${PN}-4.0-configs-prefix.patch
-	eprefixify pathnames.h.in
-	# modify the bashrc file for prefix
-	cp "${FILESDIR}"/bashrc "${T}"/ || die
-	eprefixify "${T}"/bashrc
+	fprefixify epatch "${FILESDIR}"/${PN}-4.0-configs-prefix.patch
 
 	epatch_user
 }
@@ -183,7 +179,7 @@ src_install() {
 
 	insinto /etc/bash
 	doins "${FILESDIR}"/bash_logout
-	doins "${T}"/bashrc
+	fprefixify doins "${FILESDIR}"/bashrc
 	keepdir /etc/bash/bashrc.d
 	insinto /etc/skel
 	for f in bash{_logout,_profile,rc} ; do
