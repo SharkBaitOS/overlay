@@ -81,6 +81,7 @@ SRC_URI="mirror://gentoo/${PN}-${TARBALL_PV}.tar.bz2
 PATCHES=("${FILESDIR}/portage-2.3.0_rc1.patch"
 	"${FILESDIR}"/${PN}-2.2.28-distcc-eprefix.patch
 	"${FILESDIR}"/${PN}-2.3.0-scanelf-path.patch
+	"${FILESDIR}"/${PN}-2.3.0-prefix-path-only.patch
 )
 
 pkg_setup() {
