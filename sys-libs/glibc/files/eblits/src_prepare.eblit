@@ -37,6 +37,22 @@ eblit-glibc-src_prepare() {
 		fi
 	fi
 
+	for f in libio/iopopen.c \
+			shadow/lckpwdf.c resolv/{netdb,resolv}.h elf/rtld.c \
+			nis/nss_compat/compat-{grp,initgroups,{,s}pwd}.c \
+			nss/{bug-erange,nss_files/files-init{,groups}}.c \
+			sysdeps/{{generic,unix/sysv/linux}/paths.h,posix/system.c}
+	do
+		ebegin "  Updating $f"
+		sed -i -r "s@([:\"])/(etc|usr|bin|var)@\1${TPREFIX}/\2@g" $f
+		eend $?
+	done
+	ebegin "  Updating nss/db-Makefile"
+	sed -i -r \
+		-e "s@/(etc|var)@${EPREFIX}/\1@g" \
+		nss/db-Makefile
+	eend $?
+
 	epatch_user
 
 	gnuconfig_update
