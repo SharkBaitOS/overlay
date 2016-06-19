@@ -82,6 +82,7 @@ PATCHES=("${FILESDIR}/portage-2.3.0_rc1.patch"
 	"${FILESDIR}"/${PN}-2.2.28-distcc-eprefix.patch
 	"${FILESDIR}"/${PN}-2.3.0-scanelf-path.patch
 	"${FILESDIR}"/${PN}-2.3.0-prefix-path-only.patch
+	"${FILESDIR}"/${PN}-2.3.0-ldconfig-path.patch
 )
 
 pkg_setup() {
