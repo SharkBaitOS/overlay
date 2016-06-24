@@ -1833,8 +1833,8 @@ gcc_movelibs() {
 	# that you want to link against when building tools rather than building
 	# code to run on the target.
 	if tc_version_is_at_least 5 && is_crosscompile ; then
-		dodir "${HOSTLIBPATH}"
-		mv "${D}"/usr/$(get_libdir)/libcc1* "${D}${HOSTLIBPATH}" || die
+		dodir "${HOSTLIBPATH#${EPREFIX}}"
+		mv "${ED}"/usr/$(get_libdir)/libcc1* "${D}${HOSTLIBPATH}" || die
 	fi
 
 	# For all the libs that are built for CTARGET, move them into the
