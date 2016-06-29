@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 
-EAPI="5"
+EAPI="4"
 
 inherit eutils flag-o-matic toolchain-funcs multilib
 
@@ -29,22 +29,20 @@ patches() {
 }
 
 # The version of readline this bash normally ships with.
-READLINE_VER="7.0_beta"
+READLINE_VER="6.3"
 
 DESCRIPTION="The standard GNU Bourne again shell"
 HOMEPAGE="http://tiswww.case.edu/php/chet/bash/bashtop.html"
-case ${PV} in
-*_alpha*|*_beta*|*_rc*) SRC_URI+=" ftp://ftp.cwru.edu/pub/bash/${MY_P}.tar.gz" ;;
-*) SRC_URI="mirror://gnu/bash/${MY_P}.tar.gz $(patches)" ;;
-esac
+SRC_URI="mirror://gnu/bash/${MY_P}.tar.gz $(patches)"
+[[ ${PV} == *_rc* ]] && SRC_URI+=" ftp://ftp.cwru.edu/pub/bash/${MY_P}.tar.gz"
 
 LICENSE="GPL-3"
 SLOT="0"
-#KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86 ~amd64-fbsd ~sparc-fbsd ~x86-fbsd"
+KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86 ~amd64-fbsd ~sparc-fbsd ~x86-fbsd"
 IUSE="afs bashlogger examples mem-scramble +net nls plugins +readline vanilla"
 
-DEPEND=">=sys-libs/ncurses-5.2-r2:0=
-	readline? ( >=sys-libs/readline-${READLINE_VER}:0= )
+DEPEND=">=sys-libs/ncurses-5.2-r2
+	readline? ( >=sys-libs/readline-${READLINE_VER} )
 	nls? ( virtual/libintl )"
 RDEPEND="${DEPEND}
 	!<sys-apps/portage-2.1.6.7_p1
@@ -85,6 +83,10 @@ src_prepare() {
 	sed -i -r '/^(HS|RL)USER/s:=.*:=:' doc/Makefile.in || die
 	touch -r . doc/*
 
+	epatch "${FILESDIR}"/${PN}-4.3-mapfile-improper-array-name-validation.patch
+	epatch "${FILESDIR}"/${PN}-4.3-arrayfunc.patch
+	epatch "${FILESDIR}"/${PN}-4.3-protos.patch
+
 	epatch_user
 }
 
@@ -94,10 +96,10 @@ src_configure() {
 	# For descriptions of these, see config-top.h
 	# bashrc/#26952 bash_logout/#90488 ssh/#24762 mktemp/#574426
 	append-cppflags \
-		-DDEFAULT_PATH_VALUE=\'\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"\' \
-		-DSTANDARD_UTILS_PATH=\'\"/bin:/usr/bin:/sbin:/usr/sbin\"\' \
-		-DSYS_BASHRC=\'\"/etc/bash/bashrc\"\' \
-		-DSYS_BASH_LOGOUT=\'\"/etc/bash/bash_logout\"\' \
+		-DDEFAULT_PATH_VALUE=\'\"${EPREFIX}/usr/local/sbin:${EPREFIX}/usr/local/bin:${EPREFIX}/usr/sbin:${EPREFIX}/usr/bin:${EPREFIX}/sbin:${EPREFIX}/bin\"\' \
+		-DSTANDARD_UTILS_PATH=\'\"${EPREFIX}/bin:${EPREFIX}/usr/bin:${EPREFIX}/sbin:${EPREFIX}/usr/sbin\"\' \
+		-DSYS_BASHRC=\'\"${EPREFIX}/etc/bash/bashrc\"\' \
+		-DSYS_BASH_LOGOUT=\'\"${EPREFIX}/etc/bash/bash_logout\"\' \
 		-DNON_INTERACTIVE_LOGIN_SHELLS \
 		-DSSH_SOURCE_BASHRC \
 		-DUSE_MKTEMP -DUSE_MKSTEMP \
@@ -116,7 +118,7 @@ src_configure() {
 	# be safe.
 	# Exact cached version here doesn't really matter as long as it
 	# is at least what's in the DEPEND up above.
-	export ac_cv_rl_version=${READLINE_VER%%_*}
+	export ac_cv_rl_version=${READLINE_VER}
 
 	# Force linking with system curses ... the bundled termcap lib
 	# sucks bad compared to ncurses.  For the most part, ncurses
