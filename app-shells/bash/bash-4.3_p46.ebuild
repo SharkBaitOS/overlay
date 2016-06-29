@@ -4,7 +4,7 @@
 
 EAPI="4"
 
-inherit eutils flag-o-matic toolchain-funcs multilib
+inherit eutils flag-o-matic toolchain-funcs multilib prefix
 
 # Official patchlevel
 # See ftp://ftp.cwru.edu/pub/bash/bash-4.3-patches/
@@ -86,6 +86,7 @@ src_prepare() {
 	epatch "${FILESDIR}"/${PN}-4.3-mapfile-improper-array-name-validation.patch
 	epatch "${FILESDIR}"/${PN}-4.3-arrayfunc.patch
 	epatch "${FILESDIR}"/${PN}-4.3-protos.patch
+	fprefixify epatch "${FILESDIR}"/${PN}-4.0-configs-prefix.patch
 
 	epatch_user
 }
@@ -176,7 +177,7 @@ src_install() {
 
 	insinto /etc/bash
 	doins "${FILESDIR}"/bash_logout
-	doins "${FILESDIR}"/bashrc
+	fprefixify doins "${FILESDIR}"/bashrc
 	keepdir /etc/bash/bashrc.d
 	insinto /etc/skel
 	for f in bash{_logout,_profile,rc} ; do
