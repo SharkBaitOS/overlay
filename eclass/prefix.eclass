@@ -27,25 +27,17 @@ fi
 # @FUNCTION: eprefixify
 # @USAGE: <list of to be eprefixified files>
 # @DESCRIPTION:
-# replaces @GENTOO_PORTAGE_EPREFIX@ with ${EPREFIX} for the given files,
-# tries a set of heuristics if @GENTOO_PORTAGE_EPREFIX@ is not found,
-# dies if no arguments are given, a file does not exist, or changing a
+# Replaces @GENTOO_PORTAGE_EPREFIX@ with ${EPREFIX} for the given files,
+# Dies if no arguments are given, a file does not exist, or changing a
 # file failed.
 eprefixify() {
-	[[ $# -lt 1 ]] && die "at least one argument required"
-
+	[[ $# -lt 1 ]] && die "at least one file operand is required"
 	einfo "Adjusting to prefix ${EPREFIX:-/}"
 	local x
 	for x in "$@" ; do
 		if [[ -e ${x} ]] ; then
 			ebegin "  ${x##*/}"
-			if grep -q @GENTOO_PORTAGE_EPREFIX@ "${x}" ; then
-				sed -i -e "s|@GENTOO_PORTAGE_EPREFIX@|${EPREFIX}|g" "${x}"
-			else
-				sed -r \
-					-e "s,([^[:alnum:]}])/(usr|etc|bin|sbin|var|opt)/,\1${EPREFIX}/\2/,g" \
-					-i "${x}"
-			fi
+			sed -i -e "s|@GENTOO_PORTAGE_EPREFIX@|${EPREFIX}|g" "${x}"
 			eend $? || die "failed to eprefixify ${x}"
 		else
 			die "${x} does not exist"
@@ -55,28 +47,78 @@ eprefixify() {
 	return 0
 }
 
+# @FUNCTION: hprefixify
+# @USAGE: [ -w <line matching regex> ] [-e <extended regex>] <list of files>
+# @DESCRIPTION:
+#
+# Tries a set of heuristics to prefixify the given files, Dies if no
+# arguments are given, a file does not exist, or changing a file failed.
+#
+# Additional extended regular expression can be passed by -e or
+# environment variable PREFIX_EXTRA_REGEX.  The default heuristics can
+# be constrained to lines matching regular expressions passed by -w or
+# environment variable PREFIX_LINE_MATCH.
+hprefixify() {
+	local PREFIX_EXTRA_REGEX PREFIX_LINE_MATCH xl=() x
+	while [[ $# -gt 0 ]]; do
+		case $1 in
+			-e)
+				PREFIX_EXTRA_REGEX="$2"
+				shift
+				;;
+			-w)
+				PREFIX_LINE_MATCHING="$2"
+				shift
+				;;
+			*)
+				xl+=( "$1" )
+				;;
+		esac
+		shift
+	done
+
+	[[ ${#xl[@]} -lt 1 ]] && die "at least one file operand is required"
+	einfo "Adjusting to prefix ${EPREFIX:-/}"
+	for x in "${xl[@]}" ; do
+		if [[ -e ${x} ]] ; then
+			ebegin "  ${x##*/}"
+			sed -r \
+				-e "${PREFIX_LINE_MATCH}s,([^[:alnum:]}\)\.])/(usr|lib(|[onx]?32|n?64)|etc|bin|sbin|var|opt),\1${EPREFIX}/\2,g" \
+				-e "${PREFIX_EXTRA_REGEX}" \
+				-i "${x}"
+			eend $? || die "failed to prefixify ${x}"
+		else
+			die "${x} does not exist"
+		fi
+	done
+}
+
 # @FUNCTION: __temp_prefixify
-# @USAGE: on a single file
+# @USAGE: a single file. Internal use only.
 # @DESCRIPTION:
 # copies the files to ${T}, calls eprefixify, echos the new file.
 __temp_prefixify() {
 	if [[ -e $1 ]] ; then
 		local f=${1##*/}
 		cp "$1" "${T}" || die "failed to copy file"
-		eprefixify "${T}"/${f} > /dev/null
-		echo "${T}"/${f}
+		local x="${T}"/${f}
+		if grep -qs @GENTOO_PORTAGE_EPREFIX@ "${x}" ; then
+			eprefixify "${T}"/${f} > /dev/null
+		else
+			hprefixify "${T}"/${f} > /dev/null
+		fi
+		echo "${x}"
 	else
 		die "$1 does not exist"
 	fi
 }
 
 # @FUNCTION: fprefixify
-# @USAGE: fprefixfy function files
+# @USAGE: <function> <files>
 # @DESCRIPTION:
 # prefixify a function call.
 # copies the files to ${T}, calls eprefixify, and calls the function.
-#
-# For example:
+# @EXAMPLE:
 # fprefixify doexe ${FILESDIR}/fix_libtool_files.sh
 # fprefixify epatch ${FILESDIR}/${PN}-4.0.2-path.patch
 fprefixify() {
@@ -100,6 +142,7 @@ fprefixify() {
 				${func} "${f}"
 				eend $? || die "failed to execute ${func}"
 			done
+			;;
 	esac
 
 	return 0
