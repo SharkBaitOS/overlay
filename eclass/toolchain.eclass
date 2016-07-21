@@ -1711,7 +1711,7 @@ toolchain_src_install() {
 	# Now do the fun stripping stuff
 	env RESTRICT="" CHOST=${CHOST} prepstrip "${D}${BINPATH}"
 	is_crosscompile && \
-		env RESTRICT="" CHOST=${CHOST} prepstrip "${D}/${HOSTLIBPATH}"
+		env RESTRICT="" CHOST=${CHOST} prepstrip "${D}${HOSTLIBPATH}"
 	env RESTRICT="" CHOST=${CTARGET} prepstrip "${D}${LIBPATH}"
 	# gcc used to install helper binaries in lib/ but then moved to libexec/
 	[[ -d ${D}${PREFIX}/libexec/gcc ]] && \
@@ -1719,7 +1719,7 @@ toolchain_src_install() {
 
 	cd "${S}"
 	if is_crosscompile; then
-		rm -rf "${D}"/usr/share/{man,info}
+		rm -rf "${ED}"usr/share/{man,info}
 		rm -rf "${D}"${DATAPATH}/{man,info}
 	else
 		if tc_version_is_at_least 3.0 ; then
@@ -1729,10 +1729,10 @@ toolchain_src_install() {
 			fi
 		fi
 		has noinfo ${FEATURES} \
-			&& rm -r "${D}/${DATAPATH}"/info \
+			&& rm -r "${D}${DATAPATH}"/info \
 			|| prepinfo "${DATAPATH#${EPREFIX}}"
 		has noman ${FEATURES} \
-			&& rm -r "${D}/${DATAPATH}"/man \
+			&& rm -r "${D}${DATAPATH}"/man \
 			|| prepman "${DATAPATH#${EPREFIX}}"
 	fi
 	# prune empty dirs left behind
@@ -1834,7 +1834,7 @@ gcc_movelibs() {
 	# code to run on the target.
 	if tc_version_is_at_least 5 && is_crosscompile ; then
 		dodir "${HOSTLIBPATH#${EPREFIX}}"
-		mv "${ED}"/usr/$(get_libdir)/libcc1* "${D}${HOSTLIBPATH}" || die
+		mv "${ED}"usr/$(get_libdir)/libcc1* "${D}${HOSTLIBPATH}" || die
 	fi
 
 	# For all the libs that are built for CTARGET, move them into the
