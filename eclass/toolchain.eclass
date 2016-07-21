@@ -1749,9 +1749,9 @@ toolchain_src_install() {
 	# between binary and source package borks things ....
 	if ! is_crosscompile ; then
 		insinto "${DATAPATH#${EPREFIX}}"
-		fprefixify newins "${GCC_FILESDIR}"/awk/fixlafiles.awk-no_gcc_la fixlafiles.awk || die
+		newins "$(prefixify_ro "${GCC_FILESDIR}"/awk/fixlafiles.awk-no_gcc_la)" fixlafiles.awk || die
 		exeinto "${DATAPATH#${EPREFIX}}"
-		fprefixify doexe "${GCC_FILESDIR}"/fix_libtool_files.sh || die
+		doexe "$(prefixify_ro "${GCC_FILESDIR}"/fix_libtool_files.sh)" || die
 		doexe "${GCC_FILESDIR}"/c{89,99} || die
 	fi
 
