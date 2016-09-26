@@ -4,7 +4,7 @@
 
 EAPI="5"
 
-inherit eutils flag-o-matic toolchain-funcs multilib
+inherit eutils flag-o-matic toolchain-funcs multilib prefix
 
 # Official patchlevel
 # See ftp://ftp.cwru.edu/pub/bash/bash-4.3-patches/
@@ -92,6 +92,7 @@ src_prepare() {
 	touch -r . doc/*
 
 	epatch "${PATCHES[@]}"
+	epatch $(prefixify_ro "${FILESDIR}"/${PN}-4.0-configs-prefix.patch)
 
 	epatch_user
 }
@@ -182,7 +183,7 @@ src_install() {
 
 	insinto /etc/bash
 	doins "${FILESDIR}"/bash_logout
-	doins "${FILESDIR}"/bashrc
+	doins $(prefixify_ro "${FILESDIR}"/bashrc)
 	keepdir /etc/bash/bashrc.d
 	insinto /etc/skel
 	for f in bash{_logout,_profile,rc} ; do
