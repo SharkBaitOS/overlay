@@ -80,6 +80,8 @@ SRC_URI="mirror://gentoo/${PN}-${TARBALL_PV}.tar.bz2
 
 PATCHES=(
 	"${FILESDIR}/2.3.1-doc-Revert-URI-changes-related-to-docbook-schema.patch"
+	"${FILESDIR}"/${PN}-2.3.0-ldconfig-path.patch
+	"${FILESDIR}"/${PN}-2.3.0-prefix-path-only.patch
 )
 
 pkg_setup() {
