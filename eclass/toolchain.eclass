@@ -1251,7 +1251,7 @@ toolchain_src_configure() {
 	echo "${S}"/configure "${confgcc[@]}"
 	# Older gcc versions did not detect bash and re-exec itself, so force the
 	# use of bash.  Newer ones will auto-detect, but this is not harmeful.
-	CONFIG_SHELL="/bin/bash" \
+	CONFIG_SHELL="${EPREFIX}/bin/bash" \
 	bash "${S}"/configure "${confgcc[@]}" || die "failed to run configure"
 
 	# return to whatever directory we were in before
