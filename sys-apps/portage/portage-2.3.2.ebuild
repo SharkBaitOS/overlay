@@ -78,6 +78,11 @@ TARBALL_PV=${PV}
 SRC_URI="mirror://gentoo/${PN}-${TARBALL_PV}.tar.bz2
 	$(prefix_src_archives ${PN}-${TARBALL_PV}.tar.bz2)"
 
+PATCHES=(
+	"${FILESDIR}"/${PN}-2.3.0-ldconfig-path.patch
+	"${FILESDIR}"/${PN}-2.3.0-prefix-path-only.patch
+)
+
 pkg_setup() {
 	use epydoc && DISTUTILS_ALL_SUBPHASE_IMPLS=( python2.7 )
 }
