@@ -1,9 +1,0 @@
-# and we don't need to spam the user about news until after a --sync
-# because the tools aren't available to read the news item yet anyway.
-
-FEATURES="${FEATURES} -news"
-
-# Disable the STALE warning because the snapshot frequently gets stale.
-# DON'T REMOVE this one, stage3's tree check relies on this one
-
-PORTAGE_SYNC_STALE=0

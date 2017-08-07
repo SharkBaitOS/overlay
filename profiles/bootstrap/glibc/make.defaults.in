@@ -1,4 +1,0 @@
-# Set correct PYTHONPATH for Portage, since our Python lives in
-# $EPREFIX/tmp, bug #407573
-
-PYTHONPATH=@GENTOO_PORTAGE_EPREFIX@/usr/lib/portage/pym
