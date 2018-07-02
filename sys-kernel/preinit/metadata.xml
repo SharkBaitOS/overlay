@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+<maintainer type="person">
+<email>i@jsteward.moe</email>
+</maintainer>
+<longdescription lang="en">
+Preinit contains initramfs and abootimg information to build boot.img, which is the kernel and initramfs image format for Android bootloaders.
+</longdescription>
+</pkgmetadata>

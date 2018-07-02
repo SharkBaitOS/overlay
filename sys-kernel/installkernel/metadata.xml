@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+<maintainer type="person">
+<email>i@jsteward.moe</email>
+</maintainer>
+<longdescription lang="en">
+Script to automatically generate Android boot.img for flashing the kernel on
+Portage-powered Android systems.
+</longdescription>
+</pkgmetadata>
