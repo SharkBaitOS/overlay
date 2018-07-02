@@ -29,7 +29,7 @@ src_install() {
 
 pkg_postinst() {
 	device=$(sed -E -n 's/.*androidboot.hardware=(\S*).*/\1/p' /proc/cmdline)
-	if [ -d "/usr/lib/preinit/$device" ] ; then
+	if [ -d "/usr/lib/preinit/devices/$device" ] ; then
 		eselect preinit set $device
 		einfo "Preinit files selected for device $device. If this device is not"
 		einfo "$device, choose the correct one with \`eselect preinit set <codename>\`."
