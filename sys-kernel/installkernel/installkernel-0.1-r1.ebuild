@@ -20,6 +20,6 @@ dev-util/abootimg
 "
 
 src_install() {
-	into /bin
+	into /
 	dobin installkernel
 }

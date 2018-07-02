@@ -15,12 +15,12 @@ CKV="${PVR/-r/-git}"
 
 # only use this if it's not an _rc/_pre release
 [ "${PV/_pre}" == "${PV}" ] && [ "${PV/_rc}" == "${PV}" ] && OKV="${PV}"
-inherit kernel-2
+inherit git-r3 kernel-2
 detect_version
 
 DESCRIPTION="Device-specific kernel sources from AOSP project adapted for Gentoo"
 HOMEPAGE="https://www.kernel.org"
-SRC_URI="https://github.com/KireinaHoro/android_kernel_huawei_angler"
+EGIT_REPO_URI="https://github.com/KireinaHoro/android_kernel_huawei_angler"
 
 KEYWORDS="~arm64"
 IUSE=""
