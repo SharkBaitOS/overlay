@@ -23,3 +23,12 @@ src_install() {
 	into /
 	dobin installkernel
 }
+
+pkg_postinst() {
+	if [ -L "/root/bin/installkernel" ]; then
+		einfo "Installkernel is successfully installed. However, the paths that kernel source's"
+		einfo "install.sh tries to call is /root/bin/installkernel and /sbin/installkernel. Please"
+		einfo "run the following as root to symlink /bin/installkernel:"
+		einfo "    mkdir -p /root/bin && ln -s /bin/installkernel /root/bin/"
+	fi
+}
