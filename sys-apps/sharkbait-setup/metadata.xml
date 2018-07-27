@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+<maintainer type="person">
+<email>i@jsteward.moe</email>
+</maintainer>
+<longdescription lang="en">
+	SharkBait-setup conducts the first setup for SharkBait (Portage-powered Android) systems.
+</longdescription>
+</pkgmetadata>
