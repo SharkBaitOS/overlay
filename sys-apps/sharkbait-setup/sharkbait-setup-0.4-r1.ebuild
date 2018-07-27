@@ -26,7 +26,7 @@ src_install() {
 	target="${EPREFIX}"/usr/lib/sharkbait-setup
 	insinto	"${target}"
 	exeinto	"${target}"
-	for a in config devices; do
+	for a in config devices scripts; do
 		doins -r "${a}"
 	done
 	for a in "${exec_list[@]}"; do
