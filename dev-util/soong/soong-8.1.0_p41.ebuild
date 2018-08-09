@@ -8,8 +8,8 @@ inherit ninja-utils
 A_URI=https://android.googlesource.com/platform/build
 
 # blueprint is a source level dependency of soong.
-SRC_URI="${A_URI}/${PN}/+archive/3d83ebe1768d676c90e8fa3d508157f4654821e5.tar.gz -> ${P}.tar.gz
-	${A_URI}/blueprint/+archive/a011038d864e3faa528ec1037a568e5824955a0f.tar.gz -> blueprint-${PV}.tar.gz"
+SRC_URI="${A_URI}/${PN}/+archive/android-${PV/p/r}.tar.gz -> ${P}.tar.gz
+	${A_URI}/blueprint/+archive/android-${PV/p/r}.tar.gz -> blueprint-${PV}.tar.gz"
 DESCRIPTION="JSON-like build system for Android."
 HOMEPAGE="${A_URI}/${PN}"
 LICENSE="Apache-2.0"
