@@ -1,0 +1,13 @@
+Index: soong-8.1.0_p41/build/soong/Android.bp
+===================================================================
+--- soong-8.1.0_p41.orig/build/soong/Android.bp
++++ soong-8.1.0_p41/build/soong/Android.bp
+@@ -315,8 +315,3 @@ toolchain_library {
+         },
+     },
+ }
+-
+-kernel_headers {
+-    name: "device_kernel_headers",
+-    vendor: true,
+-}

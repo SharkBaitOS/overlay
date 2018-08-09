@@ -20,6 +20,12 @@ DEPEND="dev-lang/go
 	dev-util/ninja"
 RDEPEND="dev-lang/go"
 
+PATCHES=(
+	"${FILESDIR}"/blueprint-test-go-1.10.patch
+	"${FILESDIR}"/soong-bootstrap-clean.patch
+	"${FILESDIR}"/soong-no-kernel-header.patch
+)
+
 src_unpack() {
 	mkdir -p "${WORKDIR}"/${P}/build || die
 	cd "${WORKDIR}"/${P}/build || die
@@ -35,7 +41,7 @@ src_unpack() {
 src_prepare() {
 	default
 	ln -s build/soong/root.bp Android.bp || die
-	ln -s build/soong/bootstrap.bash
+	ln -s build/soong/bootstrap.bash || die
 }
 
 src_compile() {
@@ -51,4 +57,7 @@ src_compile() {
 src_install() {
 	dobin out/.bootstrap/bin/*
 	dodoc out/.bootstrap/docs/*
+	sed -n '/\/\/.*host bionic/,$p' < build/soong/Android.bp > "${T}"/Android.bp
+	insinto /usr/share/soong
+	doins "${T}"/Android.bp
 }
