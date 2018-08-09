@@ -5,7 +5,7 @@ EAPI=6
 
 inherit ninja-utils
 
-A_URI=https://android.googlesource.com/platform/build
+A_URI=http://aosp.airelinux.org/platform/build
 
 # blueprint is a source level dependency of soong.
 SRC_URI="${A_URI}/${PN}/+archive/android-${PV/p/r}.tar.gz -> ${P}.tar.gz
