@@ -11,7 +11,7 @@ A_URI=http://aosp.airelinux.org/platform/build
 # blueprint is a source level dependency of soong.
 MPV=8.1.0_p41
 SRC_URI="${A_URI}/blueprint/+archive/android-${MPV/p/r}.tar.gz -> blueprint-${MPV}.tar.gz
-	https://github.com/LineageOS/android_vendor_lineage/archive/lineage-15.1.tar.gz"
+	https://github.com/LineageOS/android_vendor_lineage/archive/lineage-15.1.tar.gz -> vendor-lineage-15.1.tar.gz"
 DESCRIPTION="JSON-like build system for Android."
 HOMEPAGE="${A_URI}/${PN}"
 LICENSE="Apache-2.0"
