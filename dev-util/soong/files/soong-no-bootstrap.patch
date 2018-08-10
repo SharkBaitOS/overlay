@@ -1,0 +1,12 @@
+Index: soong-9999/build/blueprint/bootstrap/command.go
+===================================================================
+--- soong-9999.orig/build/blueprint/bootstrap/command.go
++++ soong-9999/build/blueprint/bootstrap/command.go
+@@ -115,7 +115,6 @@ func Main(ctx *blueprint.Context, config
+ 	ctx.RegisterModuleType("bootstrap_go_binary", newGoBinaryModuleFactory(bootstrapConfig, StagePrimary))
+ 	ctx.RegisterModuleType("blueprint_go_binary", newGoBinaryModuleFactory(bootstrapConfig, StageMain))
+ 	ctx.RegisterTopDownMutator("bootstrap_stage", propagateStageBootstrap)
+-	ctx.RegisterSingletonType("bootstrap", newSingletonFactory(bootstrapConfig))
+ 
+ 	ctx.RegisterSingletonType("glob", globSingletonFactory(ctx))
+ 

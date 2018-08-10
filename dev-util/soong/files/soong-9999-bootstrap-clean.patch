@@ -1,0 +1,57 @@
+diff --git a/build/soong/bootstrap.bash b/build/soong/bootstrap.bash
+index aedbe94..1eb864e 100755
+--- a/build/soong/bootstrap.bash
++++ b/build/soong/bootstrap.bash
+@@ -1,16 +1,7 @@
+ #!/bin/bash
+ 
+-set -e
+-
+-ORIG_SRCDIR=$(dirname "${BASH_SOURCE[0]}")
+-if [[ "$ORIG_SRCDIR" != "." ]]; then
+-  if [[ ! -z "$BUILDDIR" ]]; then
+-    echo "error: To use BUILDDIR, run from the source directory"
+-    exit 1
+-  fi
+-  export BUILDDIR=$("${ORIG_SRCDIR}/build/soong/scripts/reverse_path.py" "$ORIG_SRCDIR")
+-  cd $ORIG_SRCDIR
+-fi
++set -exv
++
+ if [[ -z "$BUILDDIR" ]]; then
+   echo "error: Run ${BASH_SOURCE[0]} from the build output directory"
+   exit 1
+@@ -22,21 +13,6 @@ export TOPNAME="Android.bp"
+ export BOOTSTRAP_MANIFEST="${SRCDIR}/build/soong/build.ninja.in"
+ export RUN_TESTS="-t"
+ 
+-case $(uname) in
+-    Linux)
+-	export GOOS="linux"
+-	export PREBUILTOS="linux-x86"
+-	;;
+-    Darwin)
+-	export GOOS="darwin"
+-	export PREBUILTOS="darwin-x86"
+-	;;
+-    *) echo "unknown OS:" $(uname) && exit 1;;
+-esac
+-#export GOROOT="${SRCDIR}/prebuilts/go/$PREBUILTOS/"
+-#export GOARCH="amd64"
+-#export GOCHAR="6"
+-
+ if [[ $# -eq 0 ]]; then
+     mkdir -p $BUILDDIR
+ 
+Index: soong-8.1.0_p41/build/blueprint/bootstrap.bash
+===================================================================
+--- soong-8.1.0_p41.orig/build/blueprint/bootstrap.bash
++++ soong-8.1.0_p41/build/blueprint/bootstrap.bash
+@@ -22,7 +22,7 @@
+ # The invoking script should then run this script, passing along all of its
+ # command line arguments.
+ 
+-set -e
++set -exv
+ 
+ EXTRA_ARGS=""
