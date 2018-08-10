@@ -58,6 +58,7 @@ src_install() {
 	dobin out/.bootstrap/bin/*
 	dodoc out/.bootstrap/docs/*
 	sed -n '/\/\/.*host bionic/,$p' < build/soong/Android.bp > "${T}"/Android.bp
+	sed '/build = \[/,+3d' < build/soong/root.bp > "${T}"/root.bp
 	insinto /usr/share/soong
-	doins "${T}"/Android.bp
+	doins "${T}"/{Android,root}.bp
 }
