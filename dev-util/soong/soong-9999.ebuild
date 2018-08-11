@@ -27,6 +27,7 @@ PATCHES=(
 	"${FILESDIR}"/soong-9999-bootstrap-clean.patch
 	"${FILESDIR}"/soong-no-kernel-header.patch
 	"${FILESDIR}"/soong-no-bootstrap.patch
+	"${FILESDIR}"/soong-gentoo-toolchain.patch
 )
 
 src_unpack() {
@@ -34,7 +35,7 @@ src_unpack() {
 
 	mkdir -p "${S}"/vendor || die
 	cd "${S}"/vendor || die
-	unpack lineage-15.1.tar.gz
+	unpack vendor-lineage-15.1.tar.gz
 	mv android_vendor_lineage-lineage-15.1 lineage || die
 
 	mkdir -p "${S}"/build/blueprint || die

@@ -1,0 +1,78 @@
+Index: soong-9999/build/soong/cc/builder.go
+===================================================================
+--- soong-9999.orig/build/soong/cc/builder.go
++++ soong-9999/build/soong/cc/builder.go
+@@ -20,7 +20,6 @@ package cc
+ 
+ import (
+ 	"fmt"
+-	"path/filepath"
+ 	"runtime"
+ 	"strconv"
+ 	"strings"
+@@ -44,7 +43,6 @@ var (
+ 			Depfile:     "${out}.d",
+ 			Deps:        blueprint.DepsGCC,
+ 			Command:     "$relPwd ${config.CcWrapper}$ccCmd -c $cFlags -MD -MF ${out}.d -o $out $in",
+-			CommandDeps: []string{"$ccCmd"},
+ 		},
+ 		"ccCmd", "cFlags")
+ 
+@@ -52,7 +50,6 @@ var (
+ 		blueprint.RuleParams{
+ 			Command: "$ldCmd ${crtBegin} @${out}.rsp " +
+ 				"${libFlags} ${crtEnd} -o ${out} ${ldFlags}",
+-			CommandDeps:    []string{"$ldCmd"},
+ 			Rspfile:        "${out}.rsp",
+ 			RspfileContent: "${in}",
+ 		},
+@@ -61,14 +58,12 @@ var (
+ 	partialLd = pctx.AndroidStaticRule("partialLd",
+ 		blueprint.RuleParams{
+ 			Command:     "$ldCmd -nostdlib -Wl,-r ${in} -o ${out} ${ldFlags}",
+-			CommandDeps: []string{"$ldCmd"},
+ 		},
+ 		"ldCmd", "ldFlags")
+ 
+ 	ar = pctx.AndroidStaticRule("ar",
+ 		blueprint.RuleParams{
+ 			Command:        "rm -f ${out} && $arCmd $arFlags $out @${out}.rsp",
+-			CommandDeps:    []string{"$arCmd"},
+ 			Rspfile:        "${out}.rsp",
+ 			RspfileContent: "${in}",
+ 		},
+@@ -385,7 +380,6 @@ func TransformSourceToObj(ctx android.Mo
+ 		ccDesc := ccCmd
+ 
+ 		if flags.clang {
+-			ccCmd = "${config.ClangBin}/" + ccCmd
+ 		} else {
+ 			ccCmd = gccCmd(flags.toolchain, ccCmd)
+ 		}
+@@ -568,7 +562,7 @@ func TransformObjToDynamicBinary(ctx and
+ 
+ 	var ldCmd string
+ 	if flags.clang {
+-		ldCmd = "${config.ClangBin}/clang++"
++		ldCmd = "clang++"
+ 	} else {
+ 		ldCmd = gccCmd(flags.toolchain, "g++")
+ 	}
+@@ -714,7 +708,7 @@ func TransformObjsToObj(ctx android.Modu
+ 
+ 	var ldCmd string
+ 	if flags.clang {
+-		ldCmd = "${config.ClangBin}/clang++"
++		ldCmd = "clang++"
+ 	} else {
+ 		ldCmd = gccCmd(flags.toolchain, "g++")
+ 	}
+@@ -817,7 +811,7 @@ func CopyGccLib(ctx android.ModuleContex
+ }
+ 
+ func gccCmd(toolchain config.Toolchain, cmd string) string {
+-	return filepath.Join(toolchain.GccRoot(), "bin", toolchain.GccTriple()+"-"+cmd)
++	return cmd
+ }
+ 
+ func splitListForSize(list android.Paths, limit int) (lists []android.Paths, err error) {
