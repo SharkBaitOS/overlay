@@ -69,4 +69,5 @@ src_install() {
 	sed '/build = \[/,+3d' < build/soong/root.bp > "${T}"/root.bp
 	insinto /usr/share/soong
 	doins "${T}"/{Android,root}.bp
+	doins -r build/soong/scripts
 }

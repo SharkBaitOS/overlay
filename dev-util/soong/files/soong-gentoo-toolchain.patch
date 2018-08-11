@@ -41,7 +41,32 @@ Index: soong-9999/build/soong/cc/builder.go
  			Rspfile:        "${out}.rsp",
  			RspfileContent: "${in}",
  		},
-@@ -385,7 +380,6 @@ func TransformSourceToObj(ctx android.Mo
+@@ -101,14 +96,11 @@ var (
+ 		},
+ 		"objcopyCmd", "prefix")
+ 
+-	_ = pctx.SourcePathVariable("stripPath", "build/soong/scripts/strip.sh")
+-
+ 	strip = pctx.AndroidStaticRule("strip",
+ 		blueprint.RuleParams{
+ 			Depfile:     "${out}.d",
+ 			Deps:        blueprint.DepsGCC,
+-			Command:     "CROSS_COMPILE=$crossCompile $stripPath ${args} -i ${in} -o ${out} -d ${out}.d",
+-			CommandDeps: []string{"$stripPath"},
++			Command:     "strip ${args} -i ${in} -o ${out} -d ${out}.d",
+ 		},
+ 		"args", "crossCompile")
+ 
+@@ -124,7 +116,7 @@ var (
+ 			Depfile:     "${out}.d",
+ 			Deps:        blueprint.DepsGCC,
+ 			Command:     "$copyGccLibPath $out $ccCmd $cFlags -print-file-name=${libName}",
+-			CommandDeps: []string{"$copyGccLibPath", "$ccCmd"},
++			CommandDeps: []string{"$copyGccLibPath"},
+ 		},
+ 		"ccCmd", "cFlags", "libName")
+ 
+@@ -385,7 +377,6 @@ func TransformSourceToObj(ctx android.Mo
  		ccDesc := ccCmd
  
  		if flags.clang {
@@ -49,7 +74,7 @@ Index: soong-9999/build/soong/cc/builder.go
  		} else {
  			ccCmd = gccCmd(flags.toolchain, ccCmd)
  		}
-@@ -568,7 +562,7 @@ func TransformObjToDynamicBinary(ctx and
+@@ -568,7 +559,7 @@ func TransformObjToDynamicBinary(ctx and
  
  	var ldCmd string
  	if flags.clang {
@@ -58,7 +83,7 @@ Index: soong-9999/build/soong/cc/builder.go
  	} else {
  		ldCmd = gccCmd(flags.toolchain, "g++")
  	}
-@@ -714,7 +708,7 @@ func TransformObjsToObj(ctx android.Modu
+@@ -714,7 +705,7 @@ func TransformObjsToObj(ctx android.Modu
  
  	var ldCmd string
  	if flags.clang {
@@ -67,7 +92,7 @@ Index: soong-9999/build/soong/cc/builder.go
  	} else {
  		ldCmd = gccCmd(flags.toolchain, "g++")
  	}
-@@ -817,7 +811,7 @@ func CopyGccLib(ctx android.ModuleContex
+@@ -817,7 +808,7 @@ func CopyGccLib(ctx android.ModuleContex
  }
  
  func gccCmd(toolchain config.Toolchain, cmd string) string {
