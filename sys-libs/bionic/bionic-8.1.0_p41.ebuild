@@ -62,6 +62,9 @@ EOF
 }
 
 src_configure() {
+	# relocation packer is a toxic technique with no portability.
+	# https://chromium.googlesource.com/chromium/src.git/+/76ef458065798bc70114854cf4b51827005448a1/tools/relocation_packer/README.TXT
+	DISABLE_RELOCATION_PACKER=true \
 	soong_build -t -b out/ -d out/build.ninja.d -o out/build.ninja Android.bp || die
 }
 
