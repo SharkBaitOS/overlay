@@ -33,7 +33,7 @@ src_prepare() {
 	default
 	# We are building a minimal bionic for toolchains. Ignore the
 	# advanced optional features like tests and debug tools.
-	rm -r ${PN}/{tests,tools,benchmarks,libc/malloc_debug} || die
+	rm -r ${PN}/{tests,tools,benchmarks,libc/malloc_debug} build/tools/acp || die
 
 	cp "${EPREFIX}"/usr/share/soong/root.bp Android.bp || die
 	cat >> Android.bp <<EOF || die
@@ -63,6 +63,8 @@ EOF
 	sed -e '/ANDROIDMK TRANSLATION ERROR/,$d' -i external/compiler-rt/lib/asan/Android.bp || die
 	sed -e '/llvm-headers/d' -i system/core/libbacktrace/Android.bp || die
 	mkdir out || die
+	echo "{}" >> out/soong.config || die
+	cp "${FILESDIR}"/${ARCH}-soong.variables out/soong.variables || die
 	rm ${PN}/libc/versioner-dependencies/common/clang-builtins || die
 }
 

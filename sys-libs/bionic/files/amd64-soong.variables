@@ -1,0 +1,72 @@
+{
+"Lineage": {
+    "Has_legacy_camera_hal1": false,
+    "Needs_text_relocations": false,
+    "Specific_camera_parameter_library": "",
+    "Target_shim_libs": "",
+    "Uses_generic_camera_parameter_library": true,
+    "Uses_nvidia_enhancements": false,
+    "Uses_qcom_bsp_legacy": false,
+    "Uses_qti_camera_device": false
+},
+
+    "Make_suffix": "-aosp_x86_64",
+
+    "Platform_sdk_version": 27,
+    "Platform_version_all_codenames": ["REL"],
+    "Unbundled_build": false,
+    "Brillo": false,
+    "Malloc_not_svelte": true,
+    "Allow_missing_dependencies": true,
+    "SanitizeHost": [],
+    "SanitizeDevice": [],
+    "SanitizeDeviceDiag": [],
+    "SanitizeDeviceArch": [],
+    "HostStaticBinaries": false,
+    "Binder32bit": false,
+    "DevicePrefer32BitExecutables": false,
+    "UseGoma": false,
+    "Debuggable": true,
+    "Eng": true,
+    "VendorPath": "vendor",
+
+    "ClangTidy": false,
+    "TidyChecks": "",
+
+    "NativeCoverage": false,
+    "CoveragePaths": [],
+    "CoverageExcludePaths": [],
+
+    "DeviceName": "generic_x86_64",
+    "DeviceArch": "x86_64",
+    "DeviceArchVariant": "x86_64",
+    "DeviceCpuVariant": "",
+    "DeviceAbi": ["x86_64", ""],
+    "DeviceUsesClang": true,
+    "DeviceVndkVersion": "",
+
+    "DeviceSecondaryArch": "x86",
+    "DeviceSecondaryArchVariant": "x86_64",
+    "DeviceSecondaryCpuVariant": "",
+    "DeviceSecondaryAbi": ["x86", ""],
+
+    "HostArch": "x86_64",
+    "HostSecondaryArch": "x86",
+
+    "CrossHost": "windows",
+    "CrossHostArch": "x86",
+    "CrossHostSecondaryArch": "x86_64",
+    "Safestack": false,
+    "EnableCFI": true,
+    "IntegerOverflowExcludePaths": ["",""],
+    "Device_uses_hwc2": true,
+    "Override_rs_driver": "",
+    "Treble": true,
+    "Pdk": false,
+
+    "ArtUseReadBarrier": true,
+
+    "BtConfigIncludeDir": "",
+
+    "DeviceKernelHeaders": []
+}
