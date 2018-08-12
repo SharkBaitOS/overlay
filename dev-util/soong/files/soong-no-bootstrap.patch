@@ -10,3 +10,23 @@ Index: soong-9999/build/blueprint/bootstrap/command.go
  
  	ctx.RegisterSingletonType("glob", globSingletonFactory(ctx))
  
+Index: soong-9999/build/blueprint/bootstrap/glob.go
+===================================================================
+--- soong-9999.orig/build/blueprint/bootstrap/glob.go
++++ soong-9999/build/blueprint/bootstrap/glob.go
+@@ -40,14 +40,13 @@ import (
+ // in a build failure with a "missing and no known rule to make it" error.
+ 
+ var (
+-	globCmd = filepath.Join("$BinDir", "bpglob")
++	globCmd = "bpglob"
+ 
+ 	// globRule rule traverses directories to produce a list of files that match $glob
+ 	// and writes it to $out if it has changed, and writes the directories to $out.d
+ 	GlobRule = pctx.StaticRule("GlobRule",
+ 		blueprint.RuleParams{
+ 			Command:     fmt.Sprintf(`%s -o $out $excludes "$glob"`, globCmd),
+-			CommandDeps: []string{globCmd},
+ 			Description: "glob $glob",
+ 
+ 			Restat:  true,

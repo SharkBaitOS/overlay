@@ -28,6 +28,7 @@ PATCHES=(
 	"${FILESDIR}"/soong-no-kernel-header.patch
 	"${FILESDIR}"/soong-no-bootstrap.patch
 	"${FILESDIR}"/soong-gentoo-toolchain.patch
+	"${FILESDIR}"/soong-gentoo-host-bin.patch
 )
 
 src_unpack() {
@@ -58,15 +59,18 @@ src_compile() {
 	eninja -v -f out/.minibootstrap/build.ninja
 	eninja -v -f out/.bootstrap/build.ninja
 
+	cd "${S}"/build/${PN}/cmd/sbox
+	go build -v -work
 	# go run cmd/microfactory/microfactory.go -s cmd/microfactory \
 	#    -pkg-path android/soong=. -o out/soong_ui android/soong/cmd/soong_ui
 	# eninja -v -f .bootstrap/build.ninja
 }
 
 src_install() {
-	dobin out/.bootstrap/bin/*
+	dobin out/.bootstrap/bin/* build/${PN}/cmd/sbox/sbox
+
 	sed -n '/\/\/.*host bionic/,$p' < build/soong/Android.bp > "${T}"/Android.bp
-	sed '/build = \[/,+3d' < build/soong/root.bp > "${T}"/root.bp
+	sed -e '/build = \[/,+3d' -e '/vendor/d' < build/soong/root.bp > "${T}"/root.bp
 	insinto /usr/share/soong
 	doins "${T}"/{Android,root}.bp
 	doins -r build/soong/scripts

@@ -1,0 +1,29 @@
+Index: soong-9999/build/soong/android/package_ctx.go
+===================================================================
+--- soong-9999.orig/build/soong/android/package_ctx.go
++++ soong-9999/build/soong/android/package_ctx.go
+@@ -82,11 +82,10 @@ func (p AndroidPackageContext) SourcePat
+ func (p AndroidPackageContext) HostBinToolVariable(name, path string) blueprint.Variable {
+ 	return p.VariableFunc(name, func(config interface{}) (string, error) {
+ 		ctx := &configErrorWrapper{p, config.(Config), []error{}}
+-		p := PathForOutput(ctx, "host", ctx.config.PrebuiltOS(), "bin", path)
+ 		if len(ctx.errors) > 0 {
+ 			return "", ctx.errors[0]
+ 		}
+-		return p.String(), nil
++		return path, nil
+ 	})
+ }
+ 
+Index: soong-9999/build/soong/genrule/genrule.go
+===================================================================
+--- soong-9999.orig/build/soong/genrule/genrule.go
++++ soong-9999/build/soong/genrule/genrule.go
+@@ -229,7 +229,6 @@ func (g *generator) GenerateAndroidBuild
+ 
+ 	ruleParams := blueprint.RuleParams{
+ 		Command:     sandboxCommand,
+-		CommandDeps: []string{"$sboxCmd"},
+ 	}
+ 	var args []string
+ 	if g.properties.Depfile {
