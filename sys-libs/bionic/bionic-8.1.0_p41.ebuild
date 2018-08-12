@@ -20,6 +20,8 @@ LICENSE="Apache-2.0"
 
 DEPEND="dev-util/soong"
 
+PATCHES=( "${FILESDIR}"/bionic-glibc-port.patch )
+
 src_unpack() {
 	for m in ${SM[@]}; do
 		mkdir -p ${P}/${m} || die
@@ -36,11 +38,6 @@ src_prepare() {
 	rm -r ${PN}/{tests,tools,benchmarks,libc/malloc_debug} build/tools/acp || die
 
 	cp "${EPREFIX}"/usr/share/soong/root.bp Android.bp || die
-	cat >> Android.bp <<EOF || die
-cc_defaults {
-	name: "llvm-defaults"
-}
-EOF
 	ln -s "${EPREFIX}"/usr/share/soong build || die
 
 	# Remove ndk libraries. But keep ndk headers, because they are the

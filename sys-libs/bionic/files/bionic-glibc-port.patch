@@ -1,0 +1,24 @@
+Index: bionic-8.1.0_p41/system/core/libbacktrace/include/backtrace/Backtrace.h
+===================================================================
+--- bionic-8.1.0_p41.orig/system/core/libbacktrace/include/backtrace/Backtrace.h
++++ bionic-8.1.0_p41/system/core/libbacktrace/include/backtrace/Backtrace.h
+@@ -68,7 +68,6 @@ struct __darwin_ucontext;
+ typedef __darwin_ucontext ucontext_t;
+ #else
+ struct ucontext;
+-typedef ucontext ucontext_t;
+ #endif
+ 
+ struct backtrace_stackinfo_t {
+Index: bionic-8.1.0_p41/external/libcxx/include/__locale
+===================================================================
+--- bionic-8.1.0_p41.orig/external/libcxx/include/__locale
++++ bionic-8.1.0_p41/external/libcxx/include/__locale
+@@ -36,7 +36,6 @@
+ # include <support/newlib/xlocale.h>
+ #elif (defined(__GLIBC__) || defined(__APPLE__)      || defined(__FreeBSD__) \
+     || defined(__EMSCRIPTEN__) || defined(__IBMCPP__))
+-# include <xlocale.h>
+ #elif defined(_LIBCPP_HAS_MUSL_LIBC)
+ # include <support/musl/xlocale.h>
+ #endif // __GLIBC__ || __APPLE__ || __FreeBSD__ || __sun__ || __EMSCRIPTEN__ || __IBMCPP__
