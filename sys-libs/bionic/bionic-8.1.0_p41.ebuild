@@ -43,6 +43,10 @@ cc_defaults {
 EOF
 	ln -s "${EPREFIX}"/usr/share/soong build || die
 
+	# Remove ndk libraries. But keep ndk headers, because they are the
+	# headers of the GNU/Linux sense.
+	sed -e '/ndk_library/,/subdir/{/subdir/p;d}' -i bionic/libc/Android.bp || die
+
 	local core_keep=( base liblog debuggerd libziparchive libbacktrace libcutils demangle \
 						   Android.bp include libutils libsystem libvndksupport )
 	mv system/core{,_delete} || die
@@ -54,6 +58,7 @@ EOF
 
 	find "${WORKDIR}" -name Android.bp -exec sed -e '/cc_test.*{/,$d' \
 		 -e "/\ssdk_version/d" \
+		 -e '/ndk_library/,$d' \
 		 -i {} \; || die
 	sed -e '/ANDROIDMK TRANSLATION ERROR/,$d' -i external/compiler-rt/lib/asan/Android.bp || die
 	sed -e '/llvm-headers/d' -i system/core/libbacktrace/Android.bp || die
