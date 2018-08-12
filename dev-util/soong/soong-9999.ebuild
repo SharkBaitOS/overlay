@@ -27,6 +27,7 @@ PATCHES=(
 	"${FILESDIR}"/soong-9999-bootstrap-clean.patch
 	"${FILESDIR}"/soong-no-kernel-header.patch
 	"${FILESDIR}"/soong-no-bootstrap.patch
+	"${FILESDIR}"/soong-no-sysroot.patch
 	"${FILESDIR}"/soong-gentoo-toolchain.patch
 	"${FILESDIR}"/soong-gentoo-host-bin.patch
 )
