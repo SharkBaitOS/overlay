@@ -75,4 +75,5 @@ src_install() {
 	insinto /usr/share/soong
 	doins "${T}"/{Android,root}.bp
 	doins -r build/soong/scripts
+	fperms +x /usr/share/soong/scripts/copygcclib.sh
 }
