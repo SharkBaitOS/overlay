@@ -9,7 +9,8 @@ DESCRIPTION="Lightweight libc of Android."
 HOMEPAGE="https://android.googlesource.com/platform/bionic"
 KEYWORDS="~amd64"
 
-SM=( ${PN} build external/{safe-iop,libcxx{,abi},compiler-rt,libunwind{,_llvm},lzma,zlib,jemalloc} system/core )
+SM=( ${PN} build external/{llvm,safe-iop,libcxx{,abi},compiler-rt,libunwind{,_llvm},lzma,zlib,jemalloc}
+	 system/core )
 
 for m in ${SM[@]}; do
 	SRC_URI+="http://aosp.airelinux.org/platform/${m}/+archive/android-${PV/p/r}.tar.gz -> ${m##*/}-${PV}.tar.gz"$'\n'
@@ -18,9 +19,15 @@ SLOT=0
 
 LICENSE="Apache-2.0"
 
-DEPEND="dev-util/soong"
+DEPEND="dev-util/soong
+	dev-libs/libpcre2
+	net-libs/libtirpc"
 
-PATCHES=( "${FILESDIR}"/bionic-glibc-port.patch )
+PATCHES=( "${FILESDIR}"/bionic-glibc-port.patch
+		  "${FILESDIR}"/bionic-binutils-port.patch
+		  "${FILESDIR}"/bionic-unwind-gcc_s.patch
+		  "${FILESDIR}"/bionic-no-visibility-hack.patch
+		)
 
 src_unpack() {
 	for m in ${SM[@]}; do
@@ -39,10 +46,19 @@ src_prepare() {
 
 	cp "${EPREFIX}"/usr/share/soong/root.bp Android.bp || die
 	ln -s "${EPREFIX}"/usr/share/soong build || die
+	ln -s "${EPREFIX}"/usr/include/tirpc external/ || die
 
 	# Remove ndk libraries. But keep ndk headers, because they are the
 	# headers of the GNU/Linux sense.
 	sed -e '/ndk_library/,/subdir/{/subdir/p;d}' -i bionic/libc/Android.bp || die
+	# only llvm headers and llvm_tblgen are needed.
+	sed -e '/^force_build_llvm/,$d' -i external/llvm/Android.bp || die
+	cat >> external/llvm/Android.bp <<EOF
+subdirs = [ "utils/TableGen", "lib/TableGen", "lib/Support" ]
+EOF
+
+	# -O0 is not compatible with -DFORTIFY_SOURCE
+	sed -e '/cflags.*O0/d' -i system/core/libbacktrace/Android.bp || die
 
 	local core_keep=( base liblog debuggerd libziparchive libbacktrace libcutils demangle \
 						   Android.bp include libutils libsystem libvndksupport )
@@ -53,12 +69,22 @@ src_prepare() {
 	done
 	rm -r system/core_delete || die
 
+	# do not need binaries for a libc.
+	sed -e '/cc_binary {/,$d' -i system/core/demangle/Android.bp \
+		-i external/zlib/Android.bp || die
+
 	find "${WORKDIR}" -name Android.bp -exec sed -e '/cc_test.*{/,$d' \
 		 -e "/\ssdk_version/d" \
 		 -e '/ndk_library/,$d' \
 		 -i {} \; || die
+
+	# remove windows recipes.
+	for f in $(find "${WORKDIR}" -name Android.bp); do
+		pcre2grep -M -v '\swindows: (\{(?>[^{}]|(?1))*\})' < "${f}" > "${f}".tmp || die
+		mv "${f}".tmp "${f}" || die
+	done
+
 	sed -e '/ANDROIDMK TRANSLATION ERROR/,$d' -i external/compiler-rt/lib/asan/Android.bp || die
-	sed -e '/llvm-headers/d' -i system/core/libbacktrace/Android.bp || die
 	mkdir out || die
 	echo "{}" >> out/soong.config || die
 	cp "${FILESDIR}"/${ARCH}-soong.variables out/soong.variables || die
@@ -74,4 +100,9 @@ src_configure() {
 
 src_compile() {
 	eninja -f out/build.ninja -v
+}
+
+src_install() {
+	insinto /
+	doins -r out/target/product/*/system
 }

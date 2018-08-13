@@ -1,0 +1,36 @@
+Index: bionic-8.1.0_p41/bionic/libc/Android.bp
+===================================================================
+--- bionic-8.1.0_p41.orig/bionic/libc/Android.bp
++++ bionic-8.1.0_p41/bionic/libc/Android.bp
+@@ -1800,6 +1800,7 @@ cc_library {
+     shared_libs: ["libdl"],
+     whole_static_libs: ["libc_common", "libjemalloc"],
+ 
++    ldflags: ["-Wl,--no-eh-frame-hdr"],
+     nocrt: true,
+ 
+     arch: {
+Index: bionic-8.1.0_p41/bionic/libm/Android.bp
+===================================================================
+--- bionic-8.1.0_p41.orig/bionic/libm/Android.bp
++++ bionic-8.1.0_p41/bionic/libm/Android.bp
+@@ -277,6 +277,7 @@ cc_library {
+         },
+     },
+ 
++    ldflags: ["-Wl,--no-eh-frame-hdr"],
+     // arch-specific settings
+     arch: {
+         arm: {
+Index: bionic-8.1.0_p41/bionic/linker/Android.bp
+===================================================================
+--- bionic-8.1.0_p41.orig/bionic/linker/Android.bp
++++ bionic-8.1.0_p41/bionic/linker/Android.bp
+@@ -78,6 +78,7 @@ cc_binary {
+         "-shared",
+         "-Wl,-Bsymbolic",
+         "-Wl,--exclude-libs,ALL",
++        "-Wl,--no-eh-frame-hdr"
+     ],
+ 
+     cflags: [

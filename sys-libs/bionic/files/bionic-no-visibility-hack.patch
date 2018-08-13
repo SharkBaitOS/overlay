@@ -1,0 +1,13 @@
+Index: bionic-8.1.0_p41/system/core/libutils/Android.bp
+===================================================================
+--- bionic-8.1.0_p41.orig/system/core/libutils/Android.bp
++++ bionic-8.1.0_p41/system/core/libutils/Android.bp
+@@ -99,8 +99,6 @@ cc_library {
+                 "Trace.cpp",
+             ],
+ 
+-            cflags: ["-fvisibility=protected"],
+-
+             shared_libs: [
+                 "libbacktrace",
+                 "libcutils",

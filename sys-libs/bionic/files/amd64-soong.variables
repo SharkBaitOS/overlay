@@ -53,9 +53,6 @@
     "HostArch": "x86_64",
     "HostSecondaryArch": "x86",
 
-    "CrossHost": "windows",
-    "CrossHostArch": "x86",
-    "CrossHostSecondaryArch": "x86_64",
     "Safestack": false,
     "EnableCFI": true,
     "IntegerOverflowExcludePaths": ["",""],
