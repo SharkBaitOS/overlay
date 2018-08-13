@@ -2,7 +2,7 @@ Index: soong-9999/build/soong/android/package_ctx.go
 ===================================================================
 --- soong-9999.orig/build/soong/android/package_ctx.go
 +++ soong-9999/build/soong/android/package_ctx.go
-@@ -82,11 +82,10 @@ func (p AndroidPackageContext) SourcePat
+@@ -82,11 +82,16 @@ func (p AndroidPackageContext) SourcePat
  func (p AndroidPackageContext) HostBinToolVariable(name, path string) blueprint.Variable {
  	return p.VariableFunc(name, func(config interface{}) (string, error) {
  		ctx := &configErrorWrapper{p, config.(Config), []error{}}
@@ -11,7 +11,13 @@ Index: soong-9999/build/soong/android/package_ctx.go
  			return "", ctx.errors[0]
  		}
 -		return p.String(), nil
-+		return path, nil
++
++		if (path == "llvm-tblgen") {
++			p := PathForOutput(ctx, "host", ctx.config.PrebuiltOS(), "bin", path)
++			return p.String(), nil
++		} else {
++			return path, nil
++		}
  	})
  }
  

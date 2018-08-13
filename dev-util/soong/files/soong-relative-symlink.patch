@@ -1,0 +1,13 @@
+Index: soong-9999/build/soong/android/defs.go
+===================================================================
+--- soong-9999.orig/build/soong/android/defs.go
++++ soong-9999/build/soong/android/defs.go
+@@ -62,7 +62,7 @@ var (
+ 	// A symlink rule.
+ 	Symlink = pctx.AndroidStaticRule("Symlink",
+ 		blueprint.RuleParams{
+-			Command:     "ln -f -s $fromPath $out",
++			Command:     "ln -r -f -s $fromPath $out",
+ 			Description: "symlink $out",
+ 		},
+ 		"fromPath")

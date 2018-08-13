@@ -7,10 +7,11 @@ inherit ninja-utils git-r3
 EGIT_REPO_URI=https://github.com/KireinaHoro/android_build_${PN}
 EGIT_CHECKOUT_DIR=${WORKDIR}/${P}/build/${PN}
 
-A_URI=http://aosp.airelinux.org/platform/build
+A_URI=http://aosp.airelinux.org/platform
 # blueprint is a source level dependency of soong.
 MPV=8.1.0_p41
-SRC_URI="${A_URI}/blueprint/+archive/android-${MPV/p/r}.tar.gz -> blueprint-${MPV}.tar.gz
+SRC_URI="${A_URI}/build/blueprint/+archive/android-${MPV/p/r}.tar.gz -> blueprint-${MPV}.tar.gz
+	${A_URI}/external/llvm/+archive/android-${MPV/p/r}.tar.gz -> llvm-${MPV}.tar.gz
 	https://github.com/LineageOS/android_vendor_lineage/archive/lineage-15.1.tar.gz -> vendor-lineage-15.1.tar.gz"
 DESCRIPTION="JSON-like build system for Android."
 HOMEPAGE="${A_URI}/${PN}"
@@ -19,7 +20,8 @@ KEYWORDS="~amd64"
 SLOT=0
 
 DEPEND="dev-lang/go
-	dev-util/ninja"
+	dev-util/ninja
+	dev-libs/libpcre2"
 RDEPEND="dev-lang/go"
 
 PATCHES=(
@@ -28,8 +30,10 @@ PATCHES=(
 	"${FILESDIR}"/soong-no-kernel-header.patch
 	"${FILESDIR}"/soong-no-bootstrap.patch
 	"${FILESDIR}"/soong-no-sysroot.patch
-	"${FILESDIR}"/soong-gentoo-toolchain.patch
+	"${FILESDIR}"/soong-no-strip.patch
+	"${FILESDIR}"/soong-gentoo-toolchain.patch # disable strip, as strip is managed by portage.
 	"${FILESDIR}"/soong-gentoo-host-bin.patch
+	"${FILESDIR}"/soong-relative-symlink.patch
 )
 
 src_unpack() {
@@ -43,6 +47,10 @@ src_unpack() {
 	mkdir -p "${S}"/build/blueprint || die
 	cd "${S}"/build/blueprint || die
 	unpack blueprint-${MPV}.tar.gz
+
+	mkdir -p "${S}"/external/llvm || die
+	cd "${S}"/external/llvm || die
+	unpack llvm-${MPV}.tar.gz
 }
 
 src_prepare() {
@@ -70,10 +78,11 @@ src_compile() {
 src_install() {
 	dobin out/.bootstrap/bin/* build/${PN}/cmd/sbox/sbox
 
-	sed -n '/\/\/.*host bionic/,$p' < build/soong/Android.bp > "${T}"/Android.bp
-	sed -e '/build = \[/,+3d' -e '/vendor/d' < build/soong/root.bp > "${T}"/root.bp
+	pcre2grep -M -v '\swindows: (\{(?>[^{}]|(?1))*\})' < build/soong/Android.bp > "${T}"/Android.bp || die
+	sed -n '/\/\/.*host bionic/,$p' -i "${T}"/Android.bp || die
+	sed -e '/build = \[/,+3d' -e '/vendor/d' < build/soong/root.bp > "${T}"/root.bp || die
 	insinto /usr/share/soong
 	doins "${T}"/{Android,root}.bp
 	doins -r build/soong/scripts
-	fperms +x /usr/share/soong/scripts/copygcclib.sh
+	fperms +x /usr/share/soong/scripts/{copygcclib,toc}.sh
 }

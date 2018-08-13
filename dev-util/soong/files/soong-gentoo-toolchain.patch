@@ -26,11 +26,13 @@ Index: soong-9999/build/soong/cc/builder.go
  			Rspfile:        "${out}.rsp",
  			RspfileContent: "${in}",
  		},
-@@ -61,14 +58,12 @@ var (
+@@ -60,15 +57,13 @@ var (
+ 
  	partialLd = pctx.AndroidStaticRule("partialLd",
  		blueprint.RuleParams{
- 			Command:     "$ldCmd -nostdlib -Wl,-r ${in} -o ${out} ${ldFlags}",
+-			Command:     "$ldCmd -nostdlib -Wl,-r ${in} -o ${out} ${ldFlags}",
 -			CommandDeps: []string{"$ldCmd"},
++			Command:     "$ldCmd -nostdlib -r ${in} -o ${out} ${ldFlags}",
  		},
  		"ldCmd", "ldFlags")
  
@@ -57,7 +59,7 @@ Index: soong-9999/build/soong/cc/builder.go
  			Deps:        blueprint.DepsGCC,
 -			Command:     "CROSS_COMPILE=$crossCompile $stripPath ${args} -i ${in} -o ${out} -d ${out}.d",
 -			CommandDeps: []string{"$stripPath"},
-+			Command:     "strip ${args} -i ${in} -o ${out} -d ${out}.d",
++			Command:     "ln -f ${in} ${out}",
  		},
  		"args", "crossCompile")
  

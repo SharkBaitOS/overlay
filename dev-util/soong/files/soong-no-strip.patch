@@ -1,0 +1,34 @@
+Index: soong-9999/build/soong/cc/binary.go
+===================================================================
+--- soong-9999.orig/build/soong/cc/binary.go
++++ soong-9999/build/soong/cc/binary.go
+@@ -297,12 +297,6 @@ func (binary *binaryDecorator) link(ctx
+ 
+ 	builderFlags := flagsToBuilderFlags(flags)
+ 
+-	if binary.stripper.needsStrip(ctx) {
+-		strippedOutputFile := outputFile
+-		outputFile = android.PathForModuleOut(ctx, "unstripped", fileName)
+-		binary.stripper.strip(ctx, outputFile, strippedOutputFile, builderFlags)
+-	}
+-
+ 	if binary.Properties.Prefix_symbols != "" {
+ 		afterPrefixSymbols := outputFile
+ 		outputFile = android.PathForModuleOut(ctx, "unprefixed", fileName)
+Index: soong-9999/build/soong/cc/library.go
+===================================================================
+--- soong-9999.orig/build/soong/cc/library.go
++++ soong-9999/build/soong/cc/library.go
+@@ -545,12 +545,6 @@ func (library *libraryDecorator) linkSha
+ 		library.relocationPacker.pack(ctx, outputFile, packedOutputFile, builderFlags)
+ 	}
+ 
+-	if library.stripper.needsStrip(ctx) {
+-		strippedOutputFile := outputFile
+-		outputFile = android.PathForModuleOut(ctx, "unstripped", fileName)
+-		library.stripper.strip(ctx, outputFile, strippedOutputFile, builderFlags)
+-	}
+-
+ 	sharedLibs := deps.SharedLibs
+ 	sharedLibs = append(sharedLibs, deps.LateSharedLibs...)
+ 
