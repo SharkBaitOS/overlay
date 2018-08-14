@@ -3,7 +3,8 @@
 
 EAPI=7
 
-inherit ninja-utils
+PYTHON_COMPAT=( python2_7 )
+inherit ninja-utils python-any-r1
 
 DESCRIPTION="Lightweight libc of Android."
 HOMEPAGE="https://android.googlesource.com/platform/bionic"
@@ -20,8 +21,7 @@ SLOT=0
 LICENSE="Apache-2.0"
 
 BDEPEND="dev-util/soong
-	dev-libs/libpcre2
-	dev-lang/python:2.7"
+	dev-libs/libpcre2"
 DEPEND="net-libs/libtirpc"
 
 PATCHES=( "${FILESDIR}"/bionic-glibc-port.patch
@@ -41,7 +41,6 @@ src_unpack() {
 
 src_prepare() {
 	default
-	sed -e '1s/python/python2/' -i build/tools/fs_config/fs_config_generator.py || die
 
 	# We are building a minimal bionic for toolchains. Ignore the
 	# advanced optional features like tests and debug tools.
