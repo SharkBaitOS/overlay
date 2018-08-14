@@ -1,7 +1,7 @@
 # Copyright 1999-2018 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=6
+EAPI=7
 
 inherit ninja-utils
 
@@ -19,9 +19,10 @@ SLOT=0
 
 LICENSE="Apache-2.0"
 
-DEPEND="dev-util/soong
+BDEPEND="dev-util/soong
 	dev-libs/libpcre2
-	net-libs/libtirpc"
+	dev-lang/python:2.7"
+DEPEND="net-libs/libtirpc"
 
 PATCHES=( "${FILESDIR}"/bionic-glibc-port.patch
 		  "${FILESDIR}"/bionic-binutils-port.patch
@@ -40,6 +41,8 @@ src_unpack() {
 
 src_prepare() {
 	default
+	sed -e '1s/python/python2/' -i build/tools/fs_config/fs_config_generator.py || die
+
 	# We are building a minimal bionic for toolchains. Ignore the
 	# advanced optional features like tests and debug tools.
 	rm -r ${PN}/{tests,tools,benchmarks,libc/malloc_debug} build/tools/acp || die
