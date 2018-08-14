@@ -105,4 +105,5 @@ src_compile() {
 src_install() {
 	insinto /
 	doins -r out/target/product/*/system
+	fperms 0755 /system/bin/linker*
 }
