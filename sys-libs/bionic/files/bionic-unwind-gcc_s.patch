@@ -6,7 +6,7 @@ Index: bionic-8.1.0_p41/external/libcxx/Android.bp
      target: {
          android: {
              shared_libs: ["libdl"],
-+            ldflags: ["-Wl,-lgcc_s"],
++            ldflags: ["-Wl,-lgcc_eh"],
          },
          android_arm: {
              static_libs: ["libunwind_llvm"],
@@ -18,7 +18,7 @@ Index: bionic-8.1.0_p41/external/libunwind/Android.bp
      target: {
          android: {
              shared_libs: ["libdl"],
-+            ldflags: ["-Wl,-lgcc_s"],
++            ldflags: ["-Wl,-lgcc_eh"],
          },
          linux: {
              ldflags: ["-nostdlib"],
@@ -30,11 +30,11 @@ Index: bionic-8.1.0_p41/bionic/linker/Android.bp
      target: {
          android: {
              static_libs: ["libdebuggerd_client"],
-+            ldflags: ["-Wl,-lgcc_s"],
++            ldflags: ["-Wl,-lgcc_eh"],
          },
          android64: {
              cflags: ["-DTARGET_IS_64_BIT"],
-+            ldflags: ["-Wl,-lgcc_s"],
++            ldflags: ["-Wl,-lgcc_eh"],
          },
          linux_bionic: {
              cflags: ["-DTARGET_IS_64_BIT"],
