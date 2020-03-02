@@ -4,8 +4,8 @@
 EAPI=6
 
 DESCRIPTION="Preinit files for Portage-powered Android systems"
-HOMEPAGE="https://github.com/KireinaHoro/preinit"
-SRC_URI="https://github.com/KireinaHoro/${PN}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
+HOMEPAGE="https://github.com/SharkBaitOS/preinit"
+SRC_URI="https://github.com/SharkBaitOS/${PN}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-3"
 SLOT="0"
