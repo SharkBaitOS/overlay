@@ -12,12 +12,12 @@ detect_version
 detect_arch
 
 inherit git-r3
-EGIT_REPO_URI="https://github.com/WantGuns/android_kernel_xiaomi_lavender-1"
-EGIT_BRANCH="lxc"
+EGIT_REPO_URI="https://github.com/WantGuns/android_kernel_xiaomi_sdm660"
+EGIT_BRANCH="sharkbait"
 EGIT_CHECKOUT_DIR="${WORKDIR}/linux-${PV}-lavender"
 
 DESCRIPTION="Xiaomi Redmi Note 7 kernel sources"
-HOMEPAGE="https://github.com/WantGuns/android_kernel_xiaomi_lavender"
+HOMEPAGE="https://github.com/WantGuns/android_kernel_xiaomi_sdm660"
 
 KEYWORDS="~arm64"
 
