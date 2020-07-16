@@ -1,4 +1,4 @@
-# Copyright 1999-2018 Gentoo Foundation
+# Copyright 1999-2020 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI="6"
@@ -11,13 +11,13 @@ detect_arch
 
 inherit git-r3
 EGIT_REPO_URI="https://github.com/WantGuns/android_kernel_xiaomi_sdm660"
-EGIT_BRANCH="sharkbait"
+EGIT_BRANCH="native"
 EGIT_CHECKOUT_DIR="${WORKDIR}/linux-${PV}"
 
 KEYWORDS="~arm64"
 
 DEPEND="app-arch/xz-utils
-	dev-lang/perl"
+		dev-lang/perl"
 RDEPEND="!!media-sound/alsa-headers"
 
 src_unpack() {
